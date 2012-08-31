@@ -1,6 +1,7 @@
 package org.collectionspace.services.batch.nuxeo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Date;
 import java.io.FileWriter;
@@ -9,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import java.util.HashMap;
@@ -22,14 +25,22 @@ import javax.xml.parsers.SAXParserFactory;
 import org.collectionspace.services.client.CollectionSpaceClientUtils;
 import org.collectionspace.services.client.CollectionObjectClient;
 import org.collectionspace.services.client.MediaClient;
+import org.collectionspace.services.client.PayloadOutputPart;
+import org.collectionspace.services.client.PoxPayload;
+import org.collectionspace.services.client.PoxPayloadOut;
 import org.collectionspace.services.client.RelationClient;
 import org.collectionspace.services.batch.BatchInvocable;
 import org.collectionspace.services.common.ResourceMap;
 import org.collectionspace.services.common.ResourceBase;
 import org.collectionspace.services.common.invocable.InvocationContext;
 import org.collectionspace.services.common.invocable.InvocationResults;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.Node;
 
 import org.jboss.resteasy.client.ClientResponse;
+import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.jboss.security.Base64Encoder;
 
 import org.xml.sax.Attributes;
@@ -113,35 +124,71 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 
 		String mediaCsid = context.getSingleCSID();
 		trace("Looking up: " + mediaCsid);
-		MediaClient client = new MediaClient();
-		trace("Reading client: " + mediaCsid);
-		ClientResponse<String> res = client.read(mediaCsid);
-		trace("Done reading client: " + mediaCsid);
 
-		if (res.getStatus() == Response.Status.OK.getStatusCode())
-			trace("Reading Media with CSID " + mediaCsid + ". "
-					+ "Status code = " + res.getStatus());
-		else
-			trace("Error reading media record. Status code = "
-					+ res.getStatus());
-
+//		MediaClient client = new MediaClient();
+//		trace("Reading client: " + mediaCsid);
+//		ClientResponse<String> res = client.read(mediaCsid);
+//		trace("Done reading client: " + mediaCsid);
+//
+//		if (res.getStatus() == Response.Status.OK.getStatusCode()) {
+//			trace("Reading Media with CSID " + mediaCsid + ". "
+//					+ "Status code = " + res.getStatus());
+//		}
+//		else {
+//			trace("Error reading media record. Status code = "
+//					+ res.getStatus());
+//			trace("Status reason:" + res.getResponseStatus().toString());
+//		}
+		
 		printContextInfo();
 
+		// We don't have access to the ResourceBase.get method that just returns a PoxPayloadOut,
+		// so we need to call the method that returns a serialized one, and deserialize it.
+
+		ResourceBase resource = resourceMap.get(MediaClient.SERVICE_NAME);
+		byte[] response = resource.get(getUriInfo(), mediaCsid);
+		trace(new String(response));
+		
+		PoxPayloadOut payload = null;		
+		
+		try {
+			payload = new PoxPayloadOut(response);
+		} catch (DocumentException e) {
+			trace(e.getMessage());
+		}
+		
+		String identificationNumber = getFieldValue(payload, "media_common", "identificationNumber");
+		String tenantId = getFieldValue(payload, "collectionspace_core", "tenantId");
+		String title = getFieldValue(payload, "media_common", "title");
+		String scientificTaxonomy = getFieldValue(payload, "media_ucjeps", "scientificTaxonomy");
+
+		trace("identificationNumber: " + identificationNumber);
+		trace("tenantId: " + tenantId);
+		trace("title: " + title);
+		trace("scientificTaxonomy: " + scientificTaxonomy);
+		
+		MediaInfo mediaInfo = new MediaInfo();
+		mediaInfo.setCsid(mediaCsid);
+		mediaInfo.setIdentificationNumber(identificationNumber);
+		mediaInfo.setTenantId(tenantId);
+		mediaInfo.setTitle(title);
+		mediaInfo.addScientificTaxonomy(scientificTaxonomy);		
+		
 		String statusMsg = "Catalog and Relation creation failed.";
 		completionStatus = STATUS_ERROR;
 
-		String mediaXML = fetchMediaXML(mediaCsid);
-		trace("mediaXML: "
-				+ ((mediaXML == null) ? "No xml document" : mediaXML));
-
-		BatchJobParserHandler handler = null;
-		MediaInfo mediaInfo = null;
-
-		if (mediaXML != null) {
-			handler = new BatchJobParserHandler(mediaXML);
-			handler.parseXMlDocument();
-			mediaInfo = handler.getMediaInfo();
-		}
+//		String mediaXML = fetchMediaXML(mediaCsid);
+//		trace("mediaXML: "
+//				+ ((mediaXML == null) ? "No xml document" : mediaXML));
+//
+//		BatchJobParserHandler handler = null;
+//		MediaInfo mediaInfo = null;
+//
+//		if (mediaXML != null) {
+//			handler = new BatchJobParserHandler(mediaXML);
+//			handler.parseXMlDocument();
+//			mediaInfo = handler.getMediaInfo();
+//		}
 
 		if (createCatalogRecord(mediaInfo) == STATUS_COMPLETE) {
 			statusMsg = "Catalog created successfully.";
@@ -169,6 +216,46 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 		// completionStatus = STATUS_COMPLETE;
 		trace(statusMsg);
 		traceClose("Closing");
+	}
+
+	/**
+	 * Create a stub UriInfo
+	 */
+	private UriInfo getUriInfo() {
+		URI absolutePath = null;
+		URI baseUri = null;
+		
+		try {
+			absolutePath = new URI("");
+			baseUri = new URI("");
+		} catch (URISyntaxException e) {
+			trace(e.getMessage());
+		}
+		
+		return new UriInfoImpl(absolutePath, baseUri, "", "", Collections.EMPTY_LIST);
+	}
+
+	/**
+	 * Get a field value from a PoxPayloadOut, given a part name and xpath expression.
+	 * This implementation uses an xpath query on the DOM, but it could in theory
+	 * use a JAXB object (obtained via PoxPayload.toObject), and not deal with the
+	 * DOM at all. The problem with the latter is that we haven't been creating JAXB
+	 * schemas for extensions.
+	 */
+	private String getFieldValue(PoxPayloadOut payload, String partLabel, String fieldPath) {
+		String value = null;
+		PayloadOutputPart part = payload.getPart(partLabel);
+
+		if (part != null) {
+			Element element = part.asElement();
+			Node node = element.selectSingleNode(fieldPath);
+
+			if (node != null) {
+				value = node.getText();
+			}
+		}
+		
+		return value;
 	}
 
 	private String fetchMediaRecord(String csid) {
