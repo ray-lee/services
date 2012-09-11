@@ -34,6 +34,7 @@ import org.collectionspace.services.common.ResourceMap;
 import org.collectionspace.services.common.ResourceBase;
 import org.collectionspace.services.common.invocable.InvocationContext;
 import org.collectionspace.services.common.invocable.InvocationResults;
+import org.collectionspace.services.jaxb.AbstractCommonList;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
@@ -43,6 +44,7 @@ import org.jboss.resteasy.client.ClientResponse;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.jboss.security.Base64Encoder;
 
+import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
@@ -141,12 +143,12 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 //		}
 		
 		printContextInfo();
-
+		
 		// We don't have access to the ResourceBase.get method that just returns a PoxPayloadOut,
 		// so we need to call the method that returns a serialized one, and deserialize it.
 
 		ResourceBase resource = resourceMap.get(MediaClient.SERVICE_NAME);
-		byte[] response = resource.get(getUriInfo(), mediaCsid);
+		byte[] response = resource.get(createUriInfo(), mediaCsid);
 		trace(new String(response));
 		
 		PoxPayloadOut payload = null;		
@@ -166,7 +168,14 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 		trace("tenantId: " + tenantId);
 		trace("title: " + title);
 		trace("scientificTaxonomy: " + scientificTaxonomy);
+
+		List<String> collectionObjectCsids = findCollectionObjectsByObjectNumber(identificationNumber);
+		trace(collectionObjectCsids.size() + " existing CollectionObjects");
 		
+		for (String csid : collectionObjectCsids) {
+			trace("csid: " + csid);
+		}
+
 		MediaInfo mediaInfo = new MediaInfo();
 		mediaInfo.setCsid(mediaCsid);
 		mediaInfo.setIdentificationNumber(identificationNumber);
@@ -217,11 +226,32 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 		trace(statusMsg);
 		traceClose("Closing");
 	}
+	
+	private List<String> findCollectionObjectsByObjectNumber(String objectNumber) {
+		List<String> csids = new ArrayList<String>();
+		ResourceBase resource = resourceMap.get(CollectionObjectClient.SERVICE_NAME);
+		AbstractCommonList list = resource.getList(createObjectNumberSearchUriInfo(objectNumber));
+		
+		for (AbstractCommonList.ListItem item : list.getListItem()) {
+			for (org.w3c.dom.Element element : item.getAny()) {
+				if (element.getTagName().equals("csid")) {
+					csids.add(element.getTextContent());
+					break;
+				}
+			}
+		}
+		
+		return csids;
+	}
 
 	/**
 	 * Create a stub UriInfo
 	 */
-	private UriInfo getUriInfo() {
+	private UriInfo createUriInfo() {
+		return createUriInfo("");
+	}
+	
+	private UriInfo createUriInfo(String queryString) {
 		URI absolutePath = null;
 		URI baseUri = null;
 		
@@ -232,7 +262,23 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 			trace(e.getMessage());
 		}
 		
-		return new UriInfoImpl(absolutePath, baseUri, "", "", Collections.EMPTY_LIST);
+		return new UriInfoImpl(absolutePath, baseUri, "", queryString, Collections.EMPTY_LIST);
+	}
+	
+	private UriInfo createObjectNumberSearchUriInfo(String objectNumber) {
+		String queryString = "as=( (collectionobjects_common:objectNumber ILIKE \"" + objectNumber + "\") )&wf_deleted=false";
+		
+		URI uri = null;
+		
+		try {
+			uri = new URI(null, null, null, queryString, null);
+		} catch (URISyntaxException e) {
+			trace(e.getMessage());
+		}
+		
+		trace("search query: " + uri.getRawQuery());
+		
+		return createUriInfo(uri.getRawQuery());		
 	}
 
 	/**
@@ -608,7 +654,7 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 			// trace( statusMsg );
 		}
 	}
-
+	
 	private void trace(String msg) {
 		if (traceLog == null) {
 			try {
