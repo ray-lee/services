@@ -124,7 +124,14 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 		trace("Entering run() method");
 		completionStatus = STATUS_MIN_PROGRESS;
 
+		printContextInfo();
+
 		String mediaCsid = context.getSingleCSID();
+		
+		createCatalogFromMedia(mediaCsid);
+	}
+	
+	public void createCatalogFromMedia(String mediaCsid) {
 		trace("Looking up: " + mediaCsid);
 
 //		MediaClient client = new MediaClient();
@@ -141,9 +148,7 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 //					+ res.getStatus());
 //			trace("Status reason:" + res.getResponseStatus().toString());
 //		}
-		
-		printContextInfo();
-		
+				
 		// We don't have access to the ResourceBase.get method that just returns a PoxPayloadOut,
 		// so we need to call the method that returns a serialized one, and deserialize it.
 
@@ -202,9 +207,8 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 		if (createCatalogRecord(mediaInfo) == STATUS_COMPLETE) {
 			statusMsg = "Catalog created successfully.";
 			String catalogId = results.getPrimaryURICreated();
-			String mediaId = context.getSingleCSID();
 
-			if (createRelation(catalogId, mediaId, RELATION_TYPE) == STATUS_COMPLETE) {
+			if (createRelation(catalogId, mediaCsid, RELATION_TYPE) == STATUS_COMPLETE) {
 				statusMsg = "Catalog and Relation created successfully.";
 			} else
 				completionStatus = STATUS_ERROR;
@@ -224,7 +228,7 @@ public class CreateCatalogFromMedia implements BatchInvocable {
 		// Temporary, do not leave this here.
 		// completionStatus = STATUS_COMPLETE;
 		trace(statusMsg);
-		traceClose("Closing");
+		traceClose("Closing");		
 	}
 	
 	private List<String> findCollectionObjectsByObjectNumber(String objectNumber) {

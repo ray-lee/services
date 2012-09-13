@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <component name="org.collectionspace.nuxeo.ucjeps.ecm.types">
 	<extension target="org.nuxeo.ecm.core.event.EventServiceComponent" point="listener">
-		<listener name="updatelistener" async="true" postCommit="false"
+		<listener name="updatelistener" async="false" postCommit="false"
 			class="org.collectionspace.services.nuxeo.extension.ucjeps.UpdateListener" priority="999">
 			<event>documentCreated</event>
-			<event>beforeDocumentModification</event>
+			<!-- <event>beforeDocumentModification</event> -->
 		</listener>
 	</extension>
 </component>
