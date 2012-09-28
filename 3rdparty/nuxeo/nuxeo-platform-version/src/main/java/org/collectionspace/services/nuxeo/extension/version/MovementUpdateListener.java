@@ -36,6 +36,9 @@ public class MovementUpdateListener implements EventListener {
             	
             	//properties.put("addVersion", true);
             	//context.setProperties(properties);
+        		
+        		//Change the csid - this works
+        		//context.getCoreSession().move(doc.getRef(), doc.getParentRef(), "foobar");
             }
         }
     }
