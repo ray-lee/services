@@ -1,8 +1,15 @@
 <?xml version="1.0"?>
 <component name="org.collectionspace.nuxeo.version.ecm.types">	
-	<extension target="org.nuxeo.ecm.core.event.EventServiceComponent" point="listener">
+	<!-- <extension target="org.nuxeo.ecm.core.event.EventServiceComponent" point="listener">
 		<listener name="createversionlistener" async="false" postCommit="false"
 			class="org.collectionspace.services.nuxeo.extension.version.CreateVersionListener" priority="999">
+			<event>documentCreated</event>
+			<event>documentModified</event>
+		</listener>
+	</extension> -->
+	<extension target="org.nuxeo.ecm.core.event.EventServiceComponent" point="listener">
+		<listener name="createhistorydocumentlistener" async="false" postCommit="false"
+			class="org.collectionspace.services.nuxeo.extension.version.CreateHistoryDocumentListener" priority="999">
 			<event>documentCreated</event>
 			<event>documentModified</event>
 		</listener>
