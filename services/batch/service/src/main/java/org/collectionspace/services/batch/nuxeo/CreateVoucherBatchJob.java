@@ -34,6 +34,9 @@ import org.collectionspace.services.relation.RelationsCommonList;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.nameparser.NameParser;
+import org.gbif.nameparser.UnparsableException;
 import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +53,14 @@ public class CreateVoucherBatchJob implements BatchInvocable {
 	private int completionStatus;
 	private InvocationResults results;	
 	private InvocationError errorInfo;	
-
+	private NameParser nameParser;
+	
 	final Logger logger = LoggerFactory.getLogger(CreateVoucherBatchJob.class);
 
 	public CreateVoucherBatchJob() {
 		this.completionStatus = STATUS_UNSTARTED;
 		this.results = new InvocationResults();
+		this.nameParser = new NameParser();
 	}
 
 	public List<String> getSupportedInvocationModes() {
@@ -121,7 +126,19 @@ public class CreateVoucherBatchJob implements BatchInvocable {
 
 	public InvocationResults createVoucherFromCataloging(String collectionObjectCsid) throws ResourceException {
 		InvocationResults results = new InvocationResults();
-
+		
+		String taxon = "Stagonospora polyspora M.T. Lucas & Sousa da Câmara 1934";
+		
+		try {
+			ParsedName parsedName = nameParser.parse(taxon);
+		
+			logger.debug("genusOrAbove=" + parsedName.getGenusOrAbove());
+			logger.debug("specificEpithet=" + parsedName.getSpecificEpithet());
+			logger.debug("authorship=" + parsedName.getAuthorship());
+		} catch (UnparsableException e) {
+			logger.error("error parsing taxon: taxon=" + taxon + " message=" + e.getMessage());
+		}
+		
 		String voucherCsid = createVoucher();
 		logger.debug("voucher created: voucherCsid=" + voucherCsid);
 		
