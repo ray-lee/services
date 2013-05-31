@@ -32,4 +32,9 @@ public class PersonConstants {
     public final static String NUXEO_DOCTYPE = "Person";
     public final static String NUXEO_SCHEMA_NAME = "person";
     public final static String NUXEO_DC_TITLE = "CollectionSpace-Person";
+    
+    public final static String COMMON_SCHEMA_NAME = "persons_common";
+    
+    public final static String DISPLAY_NAME_SCHEMA_NAME = COMMON_SCHEMA_NAME;
+    public final static String DISPLAY_NAME_FIELD_NAME = "personTermGroupList/personTermGroup/termDisplayName";
 }

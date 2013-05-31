@@ -32,4 +32,12 @@ public class OrganizationConstants {
     public final static String NUXEO_DOCTYPE = "Organization";
     public final static String NUXEO_SCHEMA_NAME = "organization";
     public final static String NUXEO_DC_TITLE = "CollectionSpace-Organization";
+    
+    public final static String COMMON_SCHEMA_NAME = "organizations_common";
+    
+    public final static String DISPLAY_NAME_SCHEMA_NAME = COMMON_SCHEMA_NAME;
+    public final static String DISPLAY_NAME_FIELD_NAME = "orgTermGroupList/orgTermGroup/termDisplayName";
+    
+    public final static String CONTACT_SCHEMA_NAME = COMMON_SCHEMA_NAME;
+    public final static String CONTACT_FIELD_NAME = "contactNames/contactName";   
 }
