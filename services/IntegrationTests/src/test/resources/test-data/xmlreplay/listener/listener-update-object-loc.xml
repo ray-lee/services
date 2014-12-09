@@ -347,67 +347,24 @@
         
         <!--
             This test verifies that the computedCurrentLocation field
-            value has been set to null, because that field will *not*
-            be emitted in the response payload when it has a null value.
-            
-            This is an inherently fragile test, in comparing tree structures,
-            and will break if there are any changes to any of the relevant
-            schemas, including collectionspace_core, collectionobjects_common,
-            and account_permission.
-            
-            Uncomment only when working on the computed current location
-            event listener / handler. - ADR - 2013-02-14
+            value in the CollectionObject record will NOT be set to null,
+            if the most recent movement has an empty (blank) current location.
+            per CSPACE-6308.
         -->
-        <!--
         <test ID="readCollectionObject1AfterMovement3BlankCurrentLocationUpdate">
             <method>GET</method>
             <uri>/cspace-services/collectionobjects/${createCollectionObject1.CSID}</uri>
             <response>
-                <filename>listener/res/collectionobject-without-current-location.res.xml</filename>
-                <expected level="TREE" />
-                <parts>
-                    <part>
-                        <label>collectionobjects_common</label>
-                    </part>
-                </parts>
+                <expected level="ADDOK" />
+                <filename>listener/res/collectionobject.res.xml</filename>
+                <vars>
+                    <!-- The current location value most recently stored in this -->
+                    <!-- CollectionObject should still be present. -->
+                    <var ID="computedCurrentLocationValue">${updateMovement3.currentLocation}</var>
+                </vars>
             </response>
             <expectedCodes>200</expectedCodes>
         </test>
-        -->
-        
-        <test ID="updateMovement3WithBlankCurrentLocationSecondTime">
-            <method>PUT</method>
-            <uri>/cspace-services/movements/${createMovement2.CSID}</uri>
-            <filename>listener/movement.xml</filename>
-            <vars>
-                <var ID="currentLocation"></var>
-                <var ID="locationDate">1800-02-01</var>
-            </vars>
-            <expectedCodes>200</expectedCodes>
-        </test>
-        
-        <!--        
-            Uncomment only when working on the computed current location
-            event listener / handler. - ADR - 2013-02-14
-            
-            (See comments above for more details.)
-        -->
-        <!--
-        <test ID="readCollectionObject1AfterMovement3BlankCurrentLocationUpdateSecondTime">
-            <method>GET</method>
-            <uri>/cspace-services/collectionobjects/${createCollectionObject1.CSID}</uri>
-            <response>
-                <filename>listener/res/collectionobject-without-current-location.res.xml</filename>
-                <expected level="TREE" />
-                <parts>
-                    <part>
-                        <label>collectionobjects_common</label>
-                    </part>
-                </parts>
-            </response>
-            <expectedCodes>200</expectedCodes>
-        </test>
-        -->
         
         <test ID="updateMovement3WithNonBlankCurrentLocation">
             <method>PUT</method>
@@ -433,17 +390,20 @@
             <expectedCodes>200</expectedCodes>
         </test>
         
-        <!-- CSPACE-6019: A Movement with a later creation timestamp is -->
+        <!-- CSPACE-6309: A Movement with a later update timestamp is -->
         <!-- deemed to have taken place later than a Movement with an earlier -->
-        <!-- creation timestamp, if both have identical location dates. -->
+        <!-- update timestamp, if both have identical location dates. -->
         
+        <!-- The following block is temporarily commented out while sorting out CSPACE-6338 -->
+        <!--
         <test ID="createMovement6">
             <method>POST</method>
             <uri>/cspace-services/movements</uri>
             <filename>listener/movement.xml</filename>
             <vars>
                 <var ID="currentLocation">urn:cspace:core.collectionspace.org:locationauthorities:name(offsite_sla):item:name(Spokane1358215545524)'Spokane, WA, USA'</var>
-                <var ID="locationDate">${updateMovement3WithNonBlankCurrentLocation.locationDate}</var> <!-- Identical to Movement 3 -->
+                <Note: value below is identical to that of Movement 3:>
+                <var ID="locationDate">${updateMovement3WithNonBlankCurrentLocation.locationDate}</var>
             </vars>
             <expectedCodes>201</expectedCodes>
         </test>
@@ -473,9 +433,13 @@
             </vars>
             <expectedCodes>201</expectedCodes>
         </test>
+        -->
         
         <!-- See comment on updateMovement1 for an explanation of why this -->
         <!-- update is needed, after creating a new relation -->
+        
+        <!-- The following block is temporarily commented out while sorting out CSPACE-6338 -->
+        <!--
         <test ID="updateMovement6">
             <method>PUT</method>
             <uri>/cspace-services/movements/${createMovement6.CSID}</uri>
@@ -499,6 +463,32 @@
             </response>
             <expectedCodes>200</expectedCodes>
         </test>
+        
+        <test ID="updateMovement3">
+            <method>PUT</method>
+            <uri>/cspace-services/movements/${createMovement3.CSID}</uri>
+            <filename>listener/movement.xml</filename>
+            <vars>
+                <var ID="currentLocation">${createMovement3.currentLocation}</var>
+                <Note: value below is identical to that of Movement 6:>
+                <var ID="locationDate">${updateMovement3WithNonBlankCurrentLocation.locationDate}</var>
+            </vars>
+            <expectedCodes>200</expectedCodes>
+        </test>
+        
+        <test ID="readCollectionObject1AfterUpdateOfMovement3">
+            <method>GET</method>
+            <uri>/cspace-services/collectionobjects/${createCollectionObject1.CSID}</uri>
+            <response>
+                <expected level="ADDOK" />
+                <filename>listener/res/collectionobject.res.xml</filename>
+                <vars>
+                    <var ID="computedCurrentLocationValue">${createMovement3.currentLocation}</var>
+                </vars>
+            </response>
+            <expectedCodes>200</expectedCodes>
+        </test>
+        -->
         
     </testGroup>
  

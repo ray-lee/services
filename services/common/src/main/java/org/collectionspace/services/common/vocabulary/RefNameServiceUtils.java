@@ -36,10 +36,12 @@ import org.nuxeo.ecm.core.api.model.PropertyException;
 import org.nuxeo.ecm.core.api.model.PropertyNotFoundException;
 import org.nuxeo.ecm.core.api.model.impl.primitives.StringProperty;
 import org.nuxeo.ecm.core.api.repository.RepositoryInstance;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.collectionspace.services.client.CollectionSpaceClient;
+import org.collectionspace.services.client.IQueryManager;
 import org.collectionspace.services.client.IRelationsManager;
 import org.collectionspace.services.client.PoxPayloadIn;
 import org.collectionspace.services.client.PoxPayloadOut;
@@ -65,6 +67,7 @@ import org.collectionspace.services.common.query.QueryManager;
 import org.collectionspace.services.common.relation.RelationUtils;
 import org.collectionspace.services.common.repository.RepositoryClient;
 import org.collectionspace.services.nuxeo.client.java.DocHandlerBase;
+import org.collectionspace.services.nuxeo.client.java.RepositoryInstanceInterface;
 import org.collectionspace.services.nuxeo.client.java.RepositoryJavaClientImpl;
 import org.collectionspace.services.common.security.SecurityUtils;
 import org.collectionspace.services.config.service.ServiceBindingType;
@@ -213,9 +216,9 @@ public class RefNameServiceUtils {
     public static void updateRefNamesInRelations(
             ServiceContext<PoxPayloadIn, PoxPayloadOut> ctx,
             RepositoryClient<PoxPayloadIn, PoxPayloadOut> repoClient,
-            RepositoryInstance repoSession,
+            RepositoryInstanceInterface repoSession,
             String oldRefName,
-            String newRefName) {
+            String newRefName) throws Exception {
     	//
     	// First, look for and update all the places where the refName is the "subject" of the relationship
     	//
@@ -240,7 +243,7 @@ public class RefNameServiceUtils {
     }
 
     public static AuthorityRefDocList getAuthorityRefDocs(
-            RepositoryInstance repoSession,
+    		RepositoryInstanceInterface repoSession,
             ServiceContext<PoxPayloadIn, PoxPayloadOut> ctx,
             UriTemplateRegistry uriTemplateRegistry,
             RepositoryClient<PoxPayloadIn, PoxPayloadOut> repoClient,
@@ -266,9 +269,16 @@ public class RefNameServiceUtils {
             // the following call, as they pertain to the list of authority
             // references to be returned, not to the list of documents to be
             // scanned for those references.
-            DocumentModelList docList = findAuthorityRefDocs(ctx, repoClient, repoSession,
+            
+            // Get a list of possibly referencing documents. This list is
+            // lazily loaded, page by page. Ideally, only one page will
+            // need to be loaded to fill one page of results. Some number
+            // of possibly referencing documents will be false positives,
+            // so use a page size of double the requested page size to
+            // account for those.
+            DocumentModelList docList = findAllAuthorityRefDocs(ctx, repoClient, repoSession,
                     serviceTypes, refName, refPropName, queriedServiceBindings, authRefFieldsByService,
-                    filter.getWhereClause(), null, 0 /* pageSize */, 0 /* pageNum */, computeTotal);
+                    filter.getWhereClause(), null, 2*pageSize, computeTotal);
 
             if (docList == null) { // found no authRef fields - nothing to process
                 return wrapperList;
@@ -395,7 +405,7 @@ public class RefNameServiceUtils {
     public static int updateAuthorityRefDocs(
             ServiceContext<PoxPayloadIn, PoxPayloadOut> ctx,
             RepositoryClient<PoxPayloadIn, PoxPayloadOut> repoClient,
-            RepositoryInstance repoSession,
+            RepositoryInstanceInterface repoSession,
             String oldRefName,
             String newRefName,
             String refPropName) throws Exception {
@@ -407,7 +417,8 @@ public class RefNameServiceUtils {
         int currentPage = 0;
         int docsInCurrentPage = 0;
         final String WHERE_CLAUSE_ADDITIONS_VALUE = null;
-        final String ORDER_BY_VALUE = CollectionSpaceClient.CORE_CREATED_AT; // "collectionspace_core:createdAt";
+        final String ORDER_BY_VALUE = CollectionSpaceClient.CORE_CREATED_AT  // "collectionspace_core:createdAt";
+                                          + ", " + IQueryManager.NUXEO_UUID; // CSPACE-6333: Add secondary sort on uuid, in case records have the same createdAt timestamp.
 
         if (repoClient instanceof RepositoryJavaClientImpl == false) {
             throw new InternalError("updateAuthorityRefDocs() called with unknown repoClient type!");
@@ -465,10 +476,28 @@ public class RefNameServiceUtils {
         return nRefsFound;
     }
 
-    private static DocumentModelList findAuthorityRefDocs(
+    private static DocumentModelList findAllAuthorityRefDocs(
             ServiceContext<PoxPayloadIn, PoxPayloadOut> ctx,
             RepositoryClient<PoxPayloadIn, PoxPayloadOut> repoClient,
-            RepositoryInstance repoSession, List<String> serviceTypes,
+            RepositoryInstanceInterface repoSession, List<String> serviceTypes,
+            String refName,
+            String refPropName,
+            Map<String, ServiceBindingType> queriedServiceBindings,
+            Map<String, List<AuthRefConfigInfo>> authRefFieldsByService,
+            String whereClauseAdditions,
+            String orderByClause,
+            int pageSize,
+            boolean computeTotal) throws DocumentException, DocumentNotFoundException {
+    	    	
+    	return new LazyAuthorityRefDocList(ctx, repoClient, repoSession,
+    			serviceTypes, refName, refPropName, queriedServiceBindings, authRefFieldsByService,
+    			whereClauseAdditions, orderByClause, pageSize, computeTotal);
+    }
+    
+    protected static DocumentModelList findAuthorityRefDocs(
+            ServiceContext<PoxPayloadIn, PoxPayloadOut> ctx,
+            RepositoryClient<PoxPayloadIn, PoxPayloadOut> repoClient,
+            RepositoryInstanceInterface repoSession, List<String> serviceTypes,
             String refName,
             String refPropName,
             Map<String, ServiceBindingType> queriedServiceBindings,

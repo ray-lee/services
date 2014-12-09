@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.collectionspace.services</groupId>
         <artifactId>org.collectionspace.services.main</artifactId>
-        <version>4.0-SNAPSHOT</version>
+        <version>4.1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -149,11 +149,22 @@
 			<version>1.4</version>
         </dependency>
         <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
       		<groupId>org.apache.tomcat</groupId>
       		<artifactId>dbcp</artifactId>
       		<version>6.0.33</version>
       		<scope>provided</scope>
   		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>catalina</artifactId>
+      		<version>6.0.33</version>
+      		<scope>provided</scope>
+		</dependency>
 
         <!-- javax -->
         <dependency>
@@ -378,32 +389,12 @@
             <version>${spring.security.version}</version>
             <scope>provided</scope>
         </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
+			<version>${spring.version}</version>
+		</dependency>        
     </dependencies>
-
-    <repositories>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <id>el4jReleaseRepositoryExternal</id>
-            <name>External release repository of the EL4J project</name>
-            <url>http://public-el4.elca-services.ch/el4j/maven2repository</url>
-        </repository>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <id>Apache</id>
-            <name>External release repository of the Apache projects</name>
-            <url>https://repository.apache.org/content/groups/public/</url>
-        </repository>
-    </repositories>
 
     <build>
         <finalName>collectionspace-services-common</finalName>

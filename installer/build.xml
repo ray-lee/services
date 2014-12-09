@@ -1,4 +1,3 @@
-
 <project name="trunk-install" default="package" basedir=".">
     <description>
         collectionspace services
@@ -60,9 +59,9 @@
 		<target name="create_nuxeo_db" 
 							description="create nuxeo database">
 			<sql driver="${db.jdbc.driver.class}"
-							 url="${db.jdbc.baseurl}"
-							 userid="${db.user}"
-							 password="${db.user.password}"
+							 url="${db.jdbc.csadmin.url.encoded}"
+							 userid="${db.csadmin.user}"
+							 password="${db.csadmin.user.password}"
 							 autocommit="true"
 							 src="${db.script.dir}/init_nuxeo_db.sql"
 							 >
@@ -76,9 +75,9 @@
 		<target name="create_cspace_db" 
 			description="create cspace database">
 			<sql driver="${db.jdbc.driver.class}"
-							 url="${db.jdbc.baseurl}"
-							 userid="${db.user}"
-							 password="${db.user.password}"
+							 url="${db.jdbc.csadmin.url.encoded}"
+							 userid="${db.csadmin.user}"
+							 password="${db.csadmin.user.password}"
 							 autocommit="true"
 							 src="${db.script.dir}/init_cspace_db.sql"
 							 >
