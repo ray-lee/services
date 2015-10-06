@@ -65,7 +65,7 @@ import java.util.Set;
 //import org.collectionspace.services.common.FileUtils;
 import org.collectionspace.services.authorization.PermissionResource;
 import org.collectionspace.services.authorization.RoleResource;
-import org.collectionspace.services.common.ResourceBase;	  	
+import org.collectionspace.services.common.NuxeoBasedResource;	  	
 import org.collectionspace.services.common.ResourceMap;
 import org.collectionspace.services.common.ResourceMapHolder;
 import org.collectionspace.services.common.ResourceMapImpl;
@@ -120,6 +120,7 @@ public class CollectionSpaceJaxRsApplication extends Application
         addResourceToMapAndSingletons(new RelationResource());
         addResourceToMapAndSingletons(new LoaninResource());
         addResourceToMapAndSingletons(new LoanoutResource());
+        addResourceToMapAndSingletons(new ExhibitionResource());
         addResourceToMapAndSingletons(new ConditioncheckResource());
         addResourceToMapAndSingletons(new ValuationcontrolResource());
         addResourceToMapAndSingletons(new ObjectExitResource());
@@ -128,7 +129,6 @@ public class CollectionSpaceJaxRsApplication extends Application
         addResourceToMapAndSingletons(new BlobResource());
         addResourceToMapAndSingletons(new MovementResource());
         addResourceToMapAndSingletons(new ClaimResource());
-        addResourceToMapAndSingletons(new ExhibitionResource());
         addResourceToMapAndSingletons(new OsteologyResource());
         addResourceToMapAndSingletons(new ReportResource());
         addResourceToMapAndSingletons(new PublicItemResource());
@@ -142,7 +142,7 @@ public class CollectionSpaceJaxRsApplication extends Application
 //        singletons.add(new PingResource());
     }
     
-    private void addResourceToMapAndSingletons(ResourceBase resource) {
+    private void addResourceToMapAndSingletons(NuxeoBasedResource resource) {
         singletons.add(resource);
         resourceMap.put(resource.getServiceName(), resource);
     }

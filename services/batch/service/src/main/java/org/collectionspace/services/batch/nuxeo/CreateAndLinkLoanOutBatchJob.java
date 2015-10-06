@@ -8,14 +8,14 @@ import javax.ws.rs.core.Response;
 
 import org.collectionspace.services.batch.BatchInvocable;
 import org.collectionspace.services.client.CollectionSpaceClientUtils;
-import org.collectionspace.services.common.ResourceBase;
+import org.collectionspace.services.common.NuxeoBasedResource;
 import org.collectionspace.services.common.ResourceMap;
 import org.collectionspace.services.common.api.GregorianCalendarDateTimeUtils;
 import org.collectionspace.services.common.invocable.InvocationContext;
 import org.collectionspace.services.common.invocable.InvocationResults;
 import org.collectionspace.services.client.LoanoutClient;
 import org.collectionspace.services.client.RelationClient;
-import org.collectionspace.services.nuxeo.client.java.RepositoryInstanceInterface;
+import org.collectionspace.services.nuxeo.client.java.CoreSessionInterface;
 
 public class CreateAndLinkLoanOutBatchJob implements BatchInvocable {
 
@@ -50,7 +50,7 @@ public class CreateAndLinkLoanOutBatchJob implements BatchInvocable {
 	}
 
     @Override
-    public void setRepoSession(RepositoryInstanceInterface repoSession) {
+    public void setRepoSession(CoreSessionInterface repoSession) {
     }
 
     @Override
@@ -143,7 +143,7 @@ public class CreateAndLinkLoanOutBatchJob implements BatchInvocable {
 
 		// First, create the Loanout
 		// We fetch the resource class by service name
-		ResourceBase resource = resourceMap.get( LoanoutClient.SERVICE_NAME); 
+		NuxeoBasedResource resource = resourceMap.get( LoanoutClient.SERVICE_NAME); 
 		Response response = resource.create(resourceMap, null, loanoutPayload);
 		if(response.getStatus() != CREATED_STATUS) {
 			completionStatus = STATUS_ERROR;
@@ -169,7 +169,7 @@ public class CreateAndLinkLoanOutBatchJob implements BatchInvocable {
 			+   "<relationshipType>"+RELATION_TYPE+"</relationshipType>"
 			+   "<predicateDisplayName>"+RELATION_PREDICATE_DISP+"</predicateDisplayName>"
 			+ "</ns2:relations_common></document>";
-		ResourceBase resource = resourceMap.get(RelationClient.SERVICE_NAME);
+		NuxeoBasedResource resource = resourceMap.get(RelationClient.SERVICE_NAME);
 		Response response = resource.create(resourceMap, null, relationPayload);
 		if(response.getStatus() != CREATED_STATUS) {
 			completionStatus = STATUS_ERROR;
