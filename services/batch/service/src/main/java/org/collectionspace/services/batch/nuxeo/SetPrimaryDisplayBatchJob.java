@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.collectionspace.services.client.CollectionObjectClient;
-import org.collectionspace.services.common.ResourceBase;
+import org.collectionspace.services.common.NuxeoBasedResource;
 import org.collectionspace.services.common.ResourceMap;
 import org.collectionspace.services.relation.RelationsCommonList.RelationListItem;
 import org.nuxeo.runtime.transaction.TransactionHelper;
@@ -90,7 +90,7 @@ public class SetPrimaryDisplayBatchJob extends AbstractBatchJob {
         ResourceMap resourcemap = getResourceMap();
 
         log.debug("ResouceMap: " + resourcemap + " and call before get Media client resource base");
-        ResourceBase mediaResource = resourcemap.get(MediaClient.SERVICE_NAME);
+        NuxeoBasedResource mediaResource = resourcemap.get(MediaClient.SERVICE_NAME);
       
         /*
          * Updates current media with the new payload
