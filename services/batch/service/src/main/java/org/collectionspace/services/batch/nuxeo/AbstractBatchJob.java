@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +56,8 @@ public abstract class AbstractBatchJob extends AbstractBatchInvocable {
 
 	final Logger logger = LoggerFactory.getLogger(AbstractBatchJob.class);
 
+	private Map<String, String> authorityServiceNamesByDocType;
+	
 	public abstract void run();
 	
 	protected String getFieldXml(Map<String, String> fields, String fieldName) {
@@ -313,6 +316,7 @@ public abstract class AbstractBatchJob extends AbstractBatchInvocable {
 		for (String vocabularyCsid : vocabularyCsids) {
 			logger.debug("vocabularyCsid=" + vocabularyCsid);
 			
+			// FIXME: This throws DocumentNotFoundException, so will never go to the next vocabulary
 			itemPayload = findAuthorityItemByCsid(serviceName, vocabularyCsid, csid);
 			
 			if (itemPayload != null) {
@@ -330,6 +334,25 @@ public abstract class AbstractBatchJob extends AbstractBatchInvocable {
 		PoxPayloadOut payload = new PoxPayloadOut(response);
 
 		return payload;
+	}
+	
+	protected String getAuthorityServiceNameForDocType(String authorityDocType) {
+		if (authorityServiceNamesByDocType == null) {
+			authorityServiceNamesByDocType = new HashMap<String, String>();
+			
+			for (String serviceName : getResourceMap().keySet()) {
+				ResourceBase resource = getResourceMap().get(serviceName);
+				
+				if (resource instanceof AuthorityResource) {
+					AuthorityResource<?, ?> authorityResource = (AuthorityResource<?, ?>) resource;
+					String docType = authorityResource.getItemDocType(getTenantId());
+					
+					authorityServiceNamesByDocType.put(docType, serviceName);
+				}
+			}
+		}
+		
+		return authorityServiceNamesByDocType.get(authorityDocType);
 	}
 	
 	protected PoxPayloadOut findTaxonByCsid(String csid) throws URISyntaxException, DocumentException {
@@ -514,6 +537,22 @@ public abstract class AbstractBatchJob extends AbstractBatchInvocable {
 
 		return value;
 	}
+	
+	protected String getFieldValue(PoxPayloadOut payload, String fieldPath) {
+		String value = null;
+
+		for (PayloadOutputPart part : payload.getParts()) {
+			Element element = part.asElement();
+			Node node = element.selectSingleNode(fieldPath);
+
+			if (node != null) {
+				value = node.getText();
+				break;
+			}
+		}
+		
+		return value;
+	}
 
 	protected boolean getBooleanFieldValue(PoxPayloadOut payload, String partLabel, String fieldPath) {
 		String value = getFieldValue(payload, partLabel, fieldPath);
@@ -552,7 +591,7 @@ public abstract class AbstractBatchJob extends AbstractBatchInvocable {
 		
 		return csid;
 	}
-	
+
 	protected class ResourceException extends Exception {
 		private static final long serialVersionUID = 1L;
 
