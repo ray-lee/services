@@ -3,17 +3,24 @@ package org.collectionspace.services.batch.nuxeo;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.collectionspace.services.client.PayloadOutputPart;
 import org.collectionspace.services.client.PoxPayloadOut;
-import org.collectionspace.services.common.ResourceBase;
+import org.collectionspace.services.client.workflow.WorkflowClient;
+import org.collectionspace.services.common.api.RefNameUtils;
+import org.collectionspace.services.common.api.RefNameUtils.AuthorityTermInfo;
+import org.collectionspace.services.common.authorityref.AuthorityRefDocList;
 import org.collectionspace.services.common.invocable.InvocationContext.Params.Param;
 import org.collectionspace.services.common.invocable.InvocationResults;
 import org.collectionspace.services.common.vocabulary.AuthorityResource;
+import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -103,7 +110,11 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 		}
 	}
 
-	public InvocationResults merge(String docType, String targetCsid, List<String> sourceCsids) throws Exception {
+	public InvocationResults merge(String docType, String targetCsid, String sourceCsid) throws URISyntaxException, DocumentException {
+		return merge(docType, targetCsid, Arrays.asList(sourceCsid));
+	}
+	
+	public InvocationResults merge(String docType, String targetCsid, List<String> sourceCsids) throws URISyntaxException, DocumentException {
 		String serviceName = getAuthorityServiceNameForDocType(docType);
 		
 		PoxPayloadOut targetItemPayload = findAuthorityItemByCsid(serviceName, targetCsid);
@@ -116,29 +127,53 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 		return merge(docType, targetItemPayload, sourceItemPayloads);
 	}
 	
-	public InvocationResults merge(String docType, String targetCsid, String sourceCsid) throws URISyntaxException, DocumentException {
-		String serviceName = getAuthorityServiceNameForDocType(docType);
-
-		if (serviceName == null) {
-			throw new IllegalArgumentException("unrecognized authority docType " + docType);
-		}
-		
-		PoxPayloadOut targetItemPayload = findAuthorityItemByCsid(serviceName, targetCsid);
-		PoxPayloadOut sourceItemPayload = findAuthorityItemByCsid(serviceName, sourceCsid);
-
-		return merge(docType, targetItemPayload, sourceItemPayload);
-	}
-	
-	private InvocationResults merge(String docType, PoxPayloadOut targetItemPayload, List<PoxPayloadOut> sourceItemPayloads) throws URISyntaxException {
+	private InvocationResults merge(String docType, PoxPayloadOut targetItemPayload, List<PoxPayloadOut> sourceItemPayloads) throws URISyntaxException, DocumentException {
 		int numAffected = 0;
 		List<String> userNotes = new ArrayList<String>();
 
-		for (PoxPayloadOut sourceItemPayload : sourceItemPayloads) {
-			InvocationResults results = merge(docType, targetItemPayload, sourceItemPayload);
-			numAffected += results.getNumAffected();
-			userNotes.add(results.getUserNote());
-		}
+		Element targetTermGroupListElement = getTermGroupListElement(targetItemPayload);
+		Element mergedTermGroupListElement = targetTermGroupListElement.createCopy();
 
+		String targetCsid = getCsid(targetItemPayload);
+		String targetRefName = getRefName(targetItemPayload);
+		String inAuthority = getFieldValue(targetItemPayload, "inAuthority");
+			
+		for (PoxPayloadOut sourceItemPayload : sourceItemPayloads) {
+			String sourceCsid = getCsid(sourceItemPayload);
+			Element sourceTermGroupListElement = getTermGroupListElement(sourceItemPayload);
+			
+			try {
+				mergeTermGroupLists(mergedTermGroupListElement, sourceTermGroupListElement);
+			}
+			catch(RuntimeException e) {
+				throw new RuntimeException("Error merging source record " + sourceCsid + " into target record " + targetCsid + ": " + e.getMessage(), e);
+			}
+		}
+		
+		updateAuthorityItem(docType, inAuthority, targetCsid, getUpdatePayload(mergedTermGroupListElement));
+		
+		userNotes.add("Updated target record " + targetCsid + " (" + targetRefName + ")");
+		numAffected++;
+		
+		String serviceName = getAuthorityServiceNameForDocType(docType);
+
+		for (PoxPayloadOut sourceItemPayload : sourceItemPayloads) {
+			String sourceCsid = getCsid(sourceItemPayload);
+			String sourceRefName = getRefName(sourceItemPayload);
+			
+			updateReferences(serviceName, inAuthority, sourceCsid, sourceRefName, targetRefName);
+		}
+		
+		for (PoxPayloadOut sourceItemPayload : sourceItemPayloads) {
+			String sourceCsid = getCsid(sourceItemPayload);
+			String sourceRefName = getRefName(sourceItemPayload);
+
+			deleteAuthorityItem(docType, getFieldValue(targetItemPayload, "inAuthority"), getCsid(targetItemPayload), getUpdatePayload(mergedTermGroupListElement));
+			
+			userNotes.add("Deleted source record " + sourceCsid + " (" + sourceRefName + ")");
+			numAffected++;
+		}
+		
 		InvocationResults results = new InvocationResults();
 		results.setNumAffected(numAffected);
 		results.setUserNote(StringUtils.join(userNotes, "\n"));
@@ -146,79 +181,125 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 		return results;
 	}
 	
-	private InvocationResults merge(String docType, PoxPayloadOut targetItemPayload, PoxPayloadOut sourceItemPayload) throws URISyntaxException {
-		List<Element> mergedTermGroups = new ArrayList<Element>();
+	private void updateReferences(String serviceName, String inAuthority, String sourceCsid, String sourceRefName, String targetRefName) throws URISyntaxException, DocumentException {
+		int pageNum = 0;
+		int pageSize = 100;
+		List<AuthorityRefDocList.AuthorityRefDocItem> items;
 		
-		Map<String, Element> targetTermGroups = getTermGroups(targetItemPayload);
-		Map<String, Element> sourceTermGroups = getTermGroups(sourceItemPayload);
-		
-		// Copy target term groups, merging in any source term groups that have
-		// a matching display name.
-
-		for (String displayName : targetTermGroups.keySet()) {	
-			Element targetTermGroupElement = targetTermGroups.get(displayName);
-			Element mergedTermGroupElement = null;
+		do {
+			// The pageNum/pageSize parameters don't work properly for refobj requests!
+			// It should be safe to repeatedly fetch page 0 for a large-ish page size,
+			// and update that page, until no references are left.
 			
-			if (sourceTermGroups.containsKey(displayName)) {
-				Element sourceTermGroupElement = sourceTermGroups.get(displayName);
+			items = findReferencingFields(serviceName, inAuthority, sourceCsid, null, pageNum, pageSize);
+			Map<String, ReferencingRecord> referencingRecordsByCsid = new LinkedHashMap<String, ReferencingRecord>();
+			
+			for (AuthorityRefDocList.AuthorityRefDocItem item : items) {
+				// If a record contains a reference to the record multiple times, multiple items are returned,
+				// but only the first has a non-null workflow state. A bug?
 				
-				try {
-					mergedTermGroupElement = mergeTermGroups(targetTermGroupElement, sourceTermGroupElement);
-				}
-				catch(Exception e) {
-					logger.error(e.getMessage(), e);
+				String itemCsid = item.getDocId();
+				ReferencingRecord record = referencingRecordsByCsid.get(itemCsid);
+				
+				if (record == null) {
+					if (item.getWorkflowState() != null && !item.getWorkflowState().equals(WorkflowClient.WORKFLOWSTATE_DELETED)) {
+						record = new ReferencingRecord(item.getUri());
+						referencingRecordsByCsid.put(itemCsid, record);
+					}
 				}
 				
-				sourceTermGroups.remove(displayName);
+				if (record != null) {
+					String[] sourceFieldElements = item.getSourceField().split(":");
+					String partName = sourceFieldElements[0];
+					String fieldName = sourceFieldElements[1];
+					
+					Map<String, Set<String>> fields = record.getFields();
+					Set<String> fieldsInPart = fields.get(partName);
+							
+					if (fieldsInPart == null) {
+						fieldsInPart = new HashSet<String>();
+						fields.put(partName, fieldsInPart);
+					}
+					
+					fieldsInPart.add(fieldName);
+				}
+			}
+			
+			List<ReferencingRecord> referencingRecords = new ArrayList<ReferencingRecord>(referencingRecordsByCsid.values());
+			
+			for (ReferencingRecord record : referencingRecords) {
+				updateReferencingRecord(record, sourceRefName, targetRefName);
+			}
+			
+			pageNum++;
+		}
+		//TODO: retrieve more pages
+		//while (items.size() > 0);
+		while (false);
+	}
+	
+	private void updateReferencingRecord(ReferencingRecord record, String fromRefName, String toRefName) throws URISyntaxException, DocumentException {
+		String fromRefNameStem = RefNameUtils.stripAuthorityTermDisplayName(fromRefName);
+		String toRefNameStem = RefNameUtils.stripAuthorityTermDisplayName(toRefName);
+		
+		Map<String, Set<String>> fields = record.getFields();
+		
+		PoxPayloadOut recordPayload = findByUri(record.getUri());
+		Document recordDocument = recordPayload.getDOMDocument();
+		Document newDocument = (Document) recordDocument.clone();
+		Element rootElement = newDocument.getRootElement();
+		
+		for (Element partElement : (List<Element>) rootElement.elements()) {
+			String partName = partElement.getName();
+			
+			if (fields.containsKey(partName)) {
+				for (String fieldName : fields.get(partName)) {
+					List<Node> nodes = partElement.selectNodes("descendant::" + fieldName);
+					
+					for (Node node : nodes) {
+						String text = node.getText();
+						String refNameStem = null;
+						
+						try {
+							refNameStem = RefNameUtils.stripAuthorityTermDisplayName(text);
+						}
+						catch(IllegalArgumentException e) {}
+
+						if (refNameStem != null && refNameStem.equals(fromRefNameStem)) {
+							AuthorityTermInfo termInfo = RefNameUtils.parseAuthorityTermInfo(text);
+							String newRefName = toRefNameStem + "'" + termInfo.displayName + "'";
+							
+							node.setText(newRefName);
+						}
+					}
+				}
 			}
 			else {
-				mergedTermGroupElement = targetTermGroupElement.createCopy();
-			}
-			
-			if (mergedTermGroupElement != null) {
-				mergedTermGroups.add(mergedTermGroupElement);
+				rootElement.remove(partElement);
 			}
 		}
 		
-		// Copy any remaining source term groups.
-		
-		for (Element sourceTermGroupElement : sourceTermGroups.values()) {
-			mergedTermGroups.add(sourceTermGroupElement.createCopy());
-		}
-		
-		replaceTermGroups(targetItemPayload, mergedTermGroups);
-		
+		String xml = newDocument.asXML();
+		// TODO: PUT the update!
+	}
+	
+	private void updateAuthorityItem(String docType, String inAuthority, String csid, String payload) throws URISyntaxException {
 		String serviceName = getAuthorityServiceNameForDocType(docType);
 		AuthorityResource<?, ?> resource = (AuthorityResource<?, ?>) getResourceMap().get(serviceName);
 		
-		resource.updateAuthorityItem(getResourceMap(), createUriInfo(), getFieldValue(targetItemPayload, "inAuthority"), getCsid(targetItemPayload), targetItemPayload.getXmlPayload());
-		
-		InvocationResults results = new InvocationResults();
-		
-		return results;
+		resource.updateAuthorityItem(getResourceMap(), createUriInfo(), inAuthority, csid, payload);
 	}
 	
-	private void replaceTermGroups(PoxPayloadOut itemPayload, List<Element> newTermGroupElements) {
-		Element termGroupListElement = getTermGroupListElement(itemPayload);
-		
-		for (Element termGroupElement : (List<Element>) termGroupListElement.elements()) {
-			termGroupListElement.remove(termGroupElement);
-		}
-		
-		for (Element termGroupElement : newTermGroupElements) {
-			termGroupListElement.add(termGroupElement);
-		}
+	private void deleteAuthorityItem(String docType, String inAuthority, String csid, String payload) throws URISyntaxException {
 	}
 	
 	/**
-	 * @param Returns a map of the term groups in an authority item, keyed by display name.
-	 *        If multiple groups have the same display name, they are merged into one
-	 *        by calling mergeTermGroups with the term group appearing first as the target.
+	 * @param Returns a map of the term groups in term group list, keyed by display name.
+	 *        If multiple groups have the same display name, an exception is thrown.
 	 * @return The term groups.
 	 */
-	private Map<String, Element> getTermGroups(PoxPayloadOut itemPayload) {
+	private Map<String, Element> getTermGroups(Element termGroupListElement) {
 		Map<String, Element> termGroups = new LinkedHashMap<String, Element>();
-		Element termGroupListElement = getTermGroupListElement(itemPayload);
 		Iterator<Element> childIterator = termGroupListElement.elementIterator();
 		
 		while (childIterator.hasNext()) {
@@ -228,7 +309,7 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 			if (termGroups.containsKey(displayName)) {
 				// Two term groups in the same item have identical display names.
 				
-				throw new RuntimeException("item with csid " + getCsid(itemPayload) + " has multiple terms with display name " + displayName);
+				throw new RuntimeException("multiple terms have display name \"" + displayName + "\"");
 			}
 			else {
 				termGroups.put(displayName, termGroupElement);
@@ -287,10 +368,38 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 		return termGroupListElement;
 	}
 	
-	private Element mergeTermGroups(Element targetTermGroupElement, Element sourceTermGroupElement) throws Exception {
-		Element mergedTermGroupElement = targetTermGroupElement.createCopy();
+	private void mergeTermGroupLists(Element targetTermGroupListElement, Element sourceTermGroupListElement) {
+		Map<String, Element> sourceTermGroups;
 		
-		// Assuming there are no nested repeating groups.
+		try {
+			sourceTermGroups = getTermGroups(sourceTermGroupListElement);
+		}
+		catch(RuntimeException e) {
+			throw new RuntimeException("a problem was found in the source record: " + e.getMessage(), e);
+		}
+		
+		for (Element targetTermGroupElement : (List<Element>) targetTermGroupListElement.elements()) {
+			String displayName = getDisplayName(targetTermGroupElement);
+			
+			if (sourceTermGroups.containsKey(displayName)) {
+				try {
+					mergeTermGroups(targetTermGroupElement, sourceTermGroups.get(displayName));
+				}
+				catch(RuntimeException e) {
+					throw new RuntimeException("could not merge term groups with display name \"" + displayName + "\": " + e.getMessage(), e);
+				}
+					
+				sourceTermGroups.remove(displayName);
+			}
+		}
+		
+		for (Element sourceTermGroupElement : sourceTermGroups.values()) {
+			targetTermGroupListElement.add(sourceTermGroupElement.createCopy());
+		}
+	}
+	
+	private void mergeTermGroups(Element targetTermGroupElement, Element sourceTermGroupElement) {
+		// This function assumes there are no nested repeating groups.
 	
 		for (Element sourceChildElement : (List<Element>) sourceTermGroupElement.elements()) {
 			String sourceValue = sourceChildElement.getText();
@@ -301,9 +410,12 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 			
 			if (sourceValue.length() > 0) {
 				String name = sourceChildElement.getName();
-				Element targetChildElement = mergedTermGroupElement.element(name);
+				Element targetChildElement = targetTermGroupElement.element(name);
 				
-				if (targetChildElement != null) {
+				if (targetChildElement == null) {
+					targetTermGroupElement.add(sourceChildElement.createCopy());
+				}
+				else {
 					String targetValue = targetChildElement.getText();
 					
 					if (targetValue == null) {
@@ -312,16 +424,48 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 					
 					if (!targetValue.equals(sourceValue)) {
 						if (targetValue.length() > 0) {
-							throw new Exception("merge conflict in " + name + ": could not merge value " + sourceValue + " with existing value " + targetValue);
+							throw new RuntimeException("merge conflict in field " + name + ": source value \"" + sourceValue + "\" differs from target value \"" + targetValue +"\"");
 						}
 						
-						mergedTermGroupElement.remove(targetChildElement);
-						mergedTermGroupElement.add(sourceChildElement.createCopy());
+						targetTermGroupElement.remove(targetChildElement);
+						targetTermGroupElement.add(sourceChildElement.createCopy());
 					}
 				}
 			}
 		}
+	}
+	
+	private String getUpdatePayload(Element termGroupListElement) {
+		String payload =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+			"<document name=\"persons\">" +
+				"<ns2:persons_common xmlns:ns2=\"http://collectionspace.org/services/person\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
+				termGroupListElement.asXML() +
+				"</ns2:persons_common>" +
+			"</document>";
+
+		return payload;
+	}
+	
+	private class ReferencingRecord {
+		private String uri;
+		private Map<String, Set<String>> fields; 
 		
-		return mergedTermGroupElement;
+		public ReferencingRecord(String uri) {
+			this.uri = uri;
+			this.fields = new HashMap<String, Set<String>>();
+		}
+
+		public String getUri() {
+			return uri;
+		}
+
+		public void setUri(String uri) {
+			this.uri = uri;
+		}
+
+		public Map<String, Set<String>> getFields() {
+			return fields;
+		}
 	}
 }
