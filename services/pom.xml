@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.collectionspace.services</groupId>
         <artifactId>org.collectionspace.services</artifactId>
-        <version>4.3-SNAPSHOT</version>
+        <version>4.3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -383,6 +383,11 @@
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-entitymanager</artifactId>
                 <version>3.4.0.GA</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-c3p0</artifactId>
+                <version>3.6.10.Final</version>
             </dependency>
             <dependency>
                 <groupId>org.jvnet.hyperjaxb3</groupId>

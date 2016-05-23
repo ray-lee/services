@@ -4,7 +4,7 @@
     <parent>
         <artifactId>org.collectionspace.services.main</artifactId>
         <groupId>org.collectionspace.services</groupId>
-        <version>4.3-SNAPSHOT</version>
+        <version>4.3</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -17,6 +17,11 @@
     </properties>
 
     <dependencies>
+    	<dependency>
+    		<groupId>commons-collections</groupId>
+  			<artifactId>commons-collections</artifactId>
+  			<version>3.2.2</version>
+    	</dependency>
   		<dependency>
   			<artifactId>lucene-analyzers-common</artifactId>
   			<groupId>org.apache.lucene</groupId>
@@ -140,6 +145,22 @@
 				<exclusion>
 					<artifactId>lucene-analyzers-common</artifactId>
 					<groupId>org.apache.lucene</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>nuxeo-automation-server</artifactId>
+					<groupId>org.nuxeo.ecm.automation</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>nuxeo-automation-io</artifactId>
+					<groupId>org.nuxeo.ecm.automation</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jsp-api-2.1</artifactId>
+					<groupId>org.mortbay.jetty</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jsp-2.1</artifactId>
+					<groupId>org.mortbay.jetty</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>        
@@ -649,6 +670,10 @@
 				<exclusion>
 					<artifactId>jsf-impl</artifactId>
 					<groupId>com.sun.faces</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>el-api</artifactId>
+					<groupId>javax.el</groupId>
 				</exclusion>
 				<!-- Exclude google-collections, because we have a dependency on guava (the newer, renamed google-collections) in the batch service, via org.gbif:name-parser -->
 				<exclusion>
