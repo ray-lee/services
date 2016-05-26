@@ -14,6 +14,7 @@ import java.util.Set;
 import org.collectionspace.services.client.PayloadOutputPart;
 import org.collectionspace.services.client.PoxPayloadOut;
 import org.collectionspace.services.client.workflow.WorkflowClient;
+import org.collectionspace.services.common.ResourceBase;
 import org.collectionspace.services.common.api.RefNameUtils;
 import org.collectionspace.services.common.api.RefNameUtils.AuthorityTermInfo;
 import org.collectionspace.services.common.authorityref.AuthorityRefDocList;
@@ -161,7 +162,10 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 			String sourceCsid = getCsid(sourceItemPayload);
 			String sourceRefName = getRefName(sourceItemPayload);
 			
-			updateReferences(serviceName, inAuthority, sourceCsid, sourceRefName, targetRefName);
+			InvocationResults results = updateReferences(serviceName, inAuthority, sourceCsid, sourceRefName, targetRefName);
+			
+			userNotes.add(results.getUserNote());
+			numAffected += results.getNumAffected();
 		}
 		
 		for (PoxPayloadOut sourceItemPayload : sourceItemPayloads) {
@@ -181,10 +185,12 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 		return results;
 	}
 	
-	private void updateReferences(String serviceName, String inAuthority, String sourceCsid, String sourceRefName, String targetRefName) throws URISyntaxException, DocumentException {
+	private InvocationResults updateReferences(String serviceName, String inAuthority, String sourceCsid, String sourceRefName, String targetRefName) throws URISyntaxException, DocumentException {
 		int pageNum = 0;
 		int pageSize = 100;
 		List<AuthorityRefDocList.AuthorityRefDocItem> items;
+		
+		int numUpdated = 0;
 		
 		do {
 			// The pageNum/pageSize parameters don't work properly for refobj requests!
@@ -228,17 +234,20 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 			List<ReferencingRecord> referencingRecords = new ArrayList<ReferencingRecord>(referencingRecordsByCsid.values());
 			
 			for (ReferencingRecord record : referencingRecords) {
-				updateReferencingRecord(record, sourceRefName, targetRefName);
+				InvocationResults results = updateReferencingRecord(record, sourceRefName, targetRefName);
+				numUpdated += results.getNumAffected();
 			}
-			
-			pageNum++;
 		}
-		//TODO: retrieve more pages
-		//while (items.size() > 0);
-		while (false);
+		while (items.size() > 0);
+		
+		InvocationResults results = new InvocationResults();
+		results.setNumAffected(numUpdated);
+		results.setUserNote("Updated " + numUpdated + " records that referenced " + sourceCsid);
+	
+		return results;
 	}
 	
-	private void updateReferencingRecord(ReferencingRecord record, String fromRefName, String toRefName) throws URISyntaxException, DocumentException {
+	private InvocationResults updateReferencingRecord(ReferencingRecord record, String fromRefName, String toRefName) throws URISyntaxException, DocumentException {
 		String fromRefNameStem = RefNameUtils.stripAuthorityTermDisplayName(fromRefName);
 		String toRefNameStem = RefNameUtils.stripAuthorityTermDisplayName(toRefName);
 		
@@ -279,8 +288,45 @@ public class MergeAuthorityItemsBatchJob extends AbstractBatchJob {
 			}
 		}
 		
-		String xml = newDocument.asXML();
-		// TODO: PUT the update!
+		String payload = newDocument.asXML();
+		
+		return updateUri(record.getUri(), payload);
+	}
+	
+	private InvocationResults updateUri(String uri, String payload) throws URISyntaxException {
+		String[] uriParts = uri.split("/");
+		
+		if (uriParts.length == 3) {
+			String serviceName = uriParts[1];
+			String csid = uriParts[2];
+		
+			ResourceBase resource = (ResourceBase) getResourceMap().get(serviceName);
+			
+			resource.update(getResourceMap(), createUriInfo(), csid, payload);
+		}
+		else if (uriParts.length == 5) {
+			String serviceName = uriParts[1];
+			String vocabularyCsid = uriParts[2];
+			String items = uriParts[3];
+			String csid = uriParts[4];
+			
+			if (items.equals("items")) {
+				AuthorityResource<?, ?> resource = (AuthorityResource<?, ?>) getResourceMap().get(serviceName);
+				
+				resource.updateAuthorityItem(getResourceMap(), createUriInfo(), vocabularyCsid, csid, payload);
+			}
+		}
+		else {
+			throw new IllegalArgumentException("Invalid uri " + uri);
+		}
+		
+		logger.debug("Updated referencing record " + uri);
+		
+		InvocationResults results = new InvocationResults();
+		results.setNumAffected(1);
+		results.setUserNote("Updated referencing record " + uri);
+	
+		return results;
 	}
 	
 	private void updateAuthorityItem(String docType, String inAuthority, String csid, String payload) throws URISyntaxException {

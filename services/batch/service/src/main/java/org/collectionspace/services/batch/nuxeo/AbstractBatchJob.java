@@ -224,7 +224,7 @@ public abstract class AbstractBatchJob extends AbstractBatchInvocable {
 		}
 
 		return payload;
-}
+	}
 
 	protected PoxPayloadOut findByCsid(String serviceName, String csid) throws URISyntaxException, DocumentException {
 		ResourceBase resource = getResourceMap().get(serviceName);
