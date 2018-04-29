@@ -10,6 +10,13 @@
       <settings>
 {
    "analysis" : {
+      "char_filter" : {
+         "display_name" : {
+            "type" : "pattern_replace",
+            "pattern" : "^.*'(.*)'$",
+            "replacement" : "$1"
+         }
+      },
       "filter" : {
          "en_stem_filter" : {
             "name" : "minimal_english",
@@ -81,6 +88,11 @@
          "default" : {
             "type" : "custom",
             "tokenizer" : "keyword"
+         },
+         "display_name_analyzer" : {
+            "type" : "custom",
+            "tokenizer" : "keyword",
+            "char_filter" : ["display_name"]
          }
       }
    }
@@ -166,6 +178,29 @@
       "dc:modified": {
          "format": "dateOptionalTime",
         "type": "date"
+      },
+      "collectionobjects_common:responsibleDepartments": {
+         "type": "string",
+         "fields": {
+            "displayName": {
+               "type": "string",
+               "analyzer": "display_name_analyzer"
+            }
+         }
+      },
+      "collectionobjects_publicart:publicartProductionPersonGroupList": {
+         "type": "object",
+         "properties": {
+            "publicartProductionPerson": {
+               "type": "string",
+               "fields": {
+                  "displayName": {
+                     "type": "string",
+                     "analyzer": "display_name_analyzer"
+                  }
+               }
+            }
+         }
       }
    }
 }
