@@ -179,12 +179,40 @@
          "format": "dateOptionalTime",
         "type": "date"
       },
-      "collectionobjects_common:responsibleDepartments": {
+      "collectionobjects_publicart:publicartCollections": {
          "type": "string",
          "fields": {
             "displayName": {
                "type": "string",
                "analyzer": "display_name_analyzer"
+            }
+         }
+      },
+      "collectionobjects_common:objectNameList": {
+         "type": "object",
+         "properties": {
+            "objectName": {
+               "type": "string",
+               "fields": {
+                  "displayName": {
+                     "type": "string",
+                     "analyzer": "display_name_analyzer"
+                  }
+               }
+            }
+         }
+      },
+      "collectionobjects_common:materialGroupList": {
+         "type": "object",
+         "properties": {
+            "material": {
+               "type": "string",
+               "fields": {
+                  "displayName": {
+                     "type": "string",
+                     "analyzer": "display_name_analyzer"
+                  }
+               }
             }
          }
       },
