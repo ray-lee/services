@@ -6,7 +6,7 @@
         <include>dc:*</include>
         <exclude>ecm:binarytext</exclude>
       </fetchFromSource>
-
+      <!-- TODO: Exclude private fields from _all -->
       <settings>
 {
    "analysis" : {
@@ -229,6 +229,10 @@
                }
             }
          }
+      },
+      "collectionspace_denorm:geoPoint": {
+        "type": "geo_point",
+        "lat_lon": true
       }
    }
 }
