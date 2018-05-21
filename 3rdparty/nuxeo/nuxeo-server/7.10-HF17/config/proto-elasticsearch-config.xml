@@ -13,11 +13,11 @@
       httpEnabled="true" />
   </extension>
   -->
-  
+
   <extension target="org.nuxeo.elasticsearch.ElasticSearchComponent"
     point="elasticSearchRemote">
     <elasticSearchRemote
-      clusterName="elasticsearch"
+      clusterName="elasticsearch_ny"
       addressList="localhost:9300"
       clientTransportSniff="false"
       clientTransportIgnoreClusterName="false"
