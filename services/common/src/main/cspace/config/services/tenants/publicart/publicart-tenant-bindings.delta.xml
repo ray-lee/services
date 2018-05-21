@@ -8,8 +8,8 @@
     <!-- value in cspace/config/services/tenants/publicart-tenant-bindings-proto.xml -->
 
     <tenant:tenantBinding id="5000">
-        <tenant:eventListenerConfigurations id="default">
-            <tenant:eventListenerConfig id="Reindex">
+        <tenant:eventListenerConfigurations id="default" merge:matcher="id">
+            <tenant:eventListenerConfig id="Reindex" merge:matcher="id">
                 <tenant:className>org.collectionspace.services.listener.Reindex</tenant:className>
             </tenant:eventListenerConfig>
         </tenant:eventListenerConfigurations>
