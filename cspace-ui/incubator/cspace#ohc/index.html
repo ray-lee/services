@@ -5,7 +5,8 @@
 	<body>
 		<div id="cspace"></div>
 		<script src="/cspace-ui/cspaceUI@@UI_VERSION@.min.js"></script>
-		<script src="/cspace-ui/cspaceUIPluginProfileDartmouthVietnamProject@@PLUGIN_VERSION@.min.js"></script>
+		<script src="/cspace-ui/cspaceUIPluginProfileAnthro@@PLUGIN_VERSION@.min.js"></script>
+        <script src="/cspace-ui/cspaceUIPluginProfileOHC@@PLUGIN_VERSION@.min.js"></script>		
 		<script>
 			cspaceUI({
 				tenantid: '@TENANT_ID@',
@@ -18,7 +19,8 @@
 				basename: '@PLUGIN_BASENAME@',
 				prettyUrls: true,
 				plugins: [
-					cspaceUIPluginProfileDartmouthVietnamProject(),
+					cspaceUIPluginProfileAnthro(),
+                    cspaceUIPluginProfileOHC(),
 				],
 			});
 		</script>
