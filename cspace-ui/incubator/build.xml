@@ -20,55 +20,69 @@
 	<target name="package" depends="deploy">
 	</target>
 	
+	<!-- Anthropology Profile info -->
+	<property name="anthro.profile.plugin.version" value="latest" />
+	<property name="anthro.profile.plugin.name" value="cspaceUIPluginProfileAnthro" />
+	<property name="anthro.profile.plugin.js" value="${anthro.profile.plugin.name}@${anthro.profile.plugin.version}.min.js" />
+	
 	<!--
-		Dartmouth Vietnam Project - DVP
+		Ohio History Connection - OHC
 	-->
-	<property name="dvp.profile.plugin.tenantid" value="1975" />
-	<property name="dvp.profile.plugin.message.title" value="Dartmouth Vietnam Project" />
-	<property name="dvp.profile.plugin.version" value="latest" />
-	<property name="dvp.profile.plugin.name" value="cspaceUIPluginProfileDartmouthVietnamProject" />
-	<property name="dvp.profile.plugin.dir" value="cspace#dvp" />
-	<property name="dvp.profile.plugin.js" value="${dvp.profile.plugin.name}@${dvp.profile.plugin.version}.min.js" />
-	<property name="dvp.profile.plugin.basename" value="/cspace/dvp" />
+	<property name="ohc.profile.plugin.tenantid" value="1885" />
+	<property name="ohc.profile.plugin.message.title" value="Ohio History Connection" />
+	<property name="ohc.profile.plugin.version" value="latest" />
+	<property name="ohc.profile.plugin.name" value="cspaceUIPluginProfileOHC" />
+	<property name="ohc.profile.plugin.dir" value="cspace#ohc" />
+	<property name="ohc.profile.plugin.js" value="${ohc.profile.plugin.name}@${ohc.profile.plugin.version}.min.js" />
+	<property name="ohc.profile.plugin.basename" value="/cspace/ohc" />
 	<!-- Use a value of "undefined" to use the default logo -->
-	<property name="dvp.profile.plugin.logo" value="undefined" />
+	<property name="ohc.profile.plugin.logo" value="undefined" />
 
-	<target name="download_dvp" unless="${env.CSPACE_DVP_CREATE_DISABLED_OPT}">
-		<!-- Dartmouth Vietnam Project -->
+	<target name="download_ohc" unless="${env.CSPACE_OHC_CREATE_DISABLED_OPT}">
+		<!-- Anthropology Plugin is a required dependency -->
 		<exec executable="curl"	 failonerror="true">
-			<arg line="-o ${dvp.profile.plugin.js} --fail --insecure --remote-name --location https://unpkg.com/cspace-ui-plugin-profile-dvp@${dvp.profile.plugin.version}/dist/${dvp.profile.plugin.name}.min.js"/>
+			<arg line="-o ${anthro.profile.plugin.js} --fail --insecure --remote-name --location https://unpkg.com/cspace-ui-plugin-profile-anthro@${anthro.profile.plugin.version}/dist/${anthro.profile.plugin.name}.min.js"/>
+		</exec>
+		<!-- Ohio History Connection -->
+		<exec executable="curl"	 failonerror="true">
+			<arg line="-o ${ohc.profile.plugin.js} --fail --insecure --remote-name --location https://unpkg.com/cspace-ui-plugin-profile-ohc@${ohc.profile.plugin.version}/dist/${ohc.profile.plugin.name}.min.js"/>
 		</exec>
 	</target>
 		
-	<target name="deploy_dvp" depends="download_dvp" unless="${env.CSPACE_DVP_CREATE_DISABLED_OPT}">
-		<!-- Dartmouth Vietnam Project -->
+	<target name="deploy_ohc" depends="download_ohc" unless="${env.CSPACE_OHC_CREATE_DISABLED_OPT}">
+		<!-- Ohio History Connection -->
 		<filter token="UI_VERSION" value="${cspace.ui.version}" />
-		<filter token="PLUGIN_VERSION" value="${dvp.profile.plugin.version}" />
-		<filter token="PLUGIN_BASENAME" value="${dvp.profile.plugin.basename}" />
-		<filter token="TENANT_ID" value="${dvp.profile.plugin.tenantid}" />
-		<filter token="MESSAGE_TITLE" value="${dvp.profile.plugin.message.title}" />
-		<filter token="LOGO" value="${dvp.profile.plugin.logo}" />
+		<filter token="ANTHRO_PLUGIN_VERSION" value="${anthro.profile.plugin.version}" />
+		<filter token="ANTHRO_PLUGIN_NAME" value="${anthro.profile.plugin.name}" />
+		<filter token="PLUGIN_VERSION" value="${ohc.profile.plugin.version}" />
+		<filter token="PLUGIN_NAME" value="${ohc.profile.plugin.name}" />
+		<filter token="PLUGIN_BASENAME" value="${ohc.profile.plugin.basename}" />
+		<filter token="TENANT_ID" value="${ohc.profile.plugin.tenantid}" />
+		<filter token="MESSAGE_TITLE" value="${ohc.profile.plugin.message.title}" />
+		<filter token="LOGO" value="${ohc.profile.plugin.logo}" />
 		
-		<copy todir="${jee.deploy.cspace}/${dvp.profile.plugin.dir}" filtering="true" overwrite="true">
-			<fileset dir="${dvp.profile.plugin.dir}"/>
+		<copy todir="${jee.deploy.cspace}/${ohc.profile.plugin.dir}" filtering="true" overwrite="true">
+			<fileset dir="${ohc.profile.plugin.dir}"/>
 		</copy>
-		<move file="${dvp.profile.plugin.name}@${dvp.profile.plugin.version}.min.js" todir="${jee.deploy.cspace.ui.shared}"></move>
+		<move file="${anthro.profile.plugin.js}" todir="${jee.deploy.cspace.ui.shared}"></move>
+		<move file="${ohc.profile.plugin.js}" todir="${jee.deploy.cspace.ui.shared}"></move>
 	</target>
 
-	<target name="undeploy_dvp" description="undeploy collectionspace ui components from ${jee.server.cspace}">
-		<!-- Dartmouth Vietnam Project -->
-		<delete dir="${jee.deploy.cspace}/${dvp.profile.plugin.dir}" />
-		<delete file="${jee.deploy.cspace.ui.shared}/${dvp.profile.plugin.js}" />
+	<target name="undeploy_ohc" description="undeploy collectionspace ui components from ${jee.server.cspace}">
+		<!-- Ohio History Connection -->
+		<delete dir="${jee.deploy.cspace}/${ohc.profile.plugin.dir}" />
+		<delete file="${jee.deploy.cspace.ui.shared}/${ohc.profile.plugin.js}" />
+		<delete file="${jee.deploy.cspace.ui.shared}/${anthro.profile.plugin.js}" />
 	</target>
 
 	<!-- General deploy target -->
 			
-	<target name="deploy" depends="deploy_dvp" description="deploy cspace ui to ${jee.server.cspace}">				
+	<target name="deploy" depends="deploy_ohc" description="deploy cspace ui to ${jee.server.cspace}">				
 	</target>
 		
 	<!-- General undeploy target -->
 
-	<target name="undeploy" depends="undeploy_dvp" description="undeploy collectionspace ui components from ${jee.server.cspace}">
+	<target name="undeploy" depends="undeploy_ohc" description="undeploy collectionspace ui components from ${jee.server.cspace}">
 	</target>
 
 </project>
