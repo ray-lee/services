@@ -112,6 +112,279 @@
     "analyzer" : "fulltext"
   },
   "properties" : {
+    "materials_common:materialTermGroupList": {
+      "type": "object",
+      "properties": {
+        "termDisplayName": {
+          "type": "string",
+          "analyzer": "fulltext"
+        }
+      }
+    },
+    "materials_common:materialCompositionGroupList": {
+      "type": "object",
+      "properties": {
+        "materialCompositionFamilyName": {
+          "type": "string",
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
+        },
+        "materialCompositionClassName": {
+          "type": "string",
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
+        },
+        "materialCompositionGenericName": {
+          "type": "string",
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
+        }
+      }
+    },
+    "materials_common:description": {
+      "type": "string"
+    },
+    "materials_common:typicalUses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:materialProductionOrganizationGroupList": {
+      "type": "object",
+      "properties": {
+        "materialProductionOrganization": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:materialProductionPlaceGroupList": {
+      "type": "object",
+      "properties": {
+        "materialProductionPlace": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:featuredApplicationGroupList": {
+      "type": "object",
+      "properties": {
+        "featuredApplication": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:commonForm": {
+      "type": "string",
+      "analyzer": "refname_displayname_analyzer"
+    },
+    "materials_common:formTypeGroupList": {
+      "type": "object",
+      "properties": {
+        "formType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    // Properties
+    "materials_common:acousticalPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "acousticalPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:durabilityPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "durabilityPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:electricalPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "electricalPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:hygrothermalPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "hygrothermalPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:mechanicalPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "mechanicalPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:opticalPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "opticalPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:sensorialPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "sensorialPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:smartMaterialPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "smartMaterialPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:additionalPropertyGroupList": {
+      "type": "object",
+      "properties": {
+        "additionalPropertyType": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    // Material Ecology
+    // TODO: recycledContent - range?
+    "materials_common:lifecycleComponentGroupList": {
+      "type": "object",
+      "properties": {
+        "lifecycleComponent": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    // TODO: embodiedEnergy - range?
+    "materials_common:certificationCreditGroupList": {
+      "type": "object",
+      "properties": {
+        "certificationProgram": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    // Process
+    "materials_common:castingProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:joiningProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:moldingProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:surfacingProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:deformingProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:machiningProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:rapidPrototypingProcesses": {
+      "type": "string",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "materials_common:additionalProcessGroupList": {
+      "type": "object",
+      "properties": {
+        "additionalProcess": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+
+    "collectionobjects_common:objectNumber": {
+      "type": "string"
+    }
   }
 }
       </mapping>
