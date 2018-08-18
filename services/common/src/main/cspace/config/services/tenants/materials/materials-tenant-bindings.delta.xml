@@ -8,6 +8,8 @@
     <!-- value in cspace/config/services/tenants/materials-tenant-bindings-proto.xml -->
 
     <tenant:tenantBinding id="2000">
+        <tenant:serviceBindings id="CollectionObjects" elasticsearchIndexed="true" merge:matcher="id" />
+        <tenant:serviceBindings id="Materials" elasticsearchIndexed="true" merge:matcher="id" />
     </tenant:tenantBinding>
 
 </tenant:TenantBindingConfig>
