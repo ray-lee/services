@@ -15,6 +15,11 @@
         "type" : "pattern_replace",
         "pattern" : "^.*'(.*)'$",
         "replacement" : "$1"
+      },
+      "doctype_tenant_unqualified" : {
+        "type" : "pattern_replace",
+        "pattern" : "^(.*?)(Tenant.*)?$",
+        "replacement" : "$1"
       }
     },
     "filter" : {
@@ -90,6 +95,11 @@
         "tokenizer" : "keyword",
         "char_filter" : ["refname_displayname"]
       },
+      "doctype_analyzer" : {
+        "type" : "custom",
+        "tokenizer" : "keyword",
+        "char_filter" : ["doctype_tenant_unqualified"]
+      },
       "default" : {
         "type" : "custom",
         "tokenizer" : "keyword"
@@ -112,6 +122,16 @@
     "analyzer" : "fulltext"
   },
   "properties" : {
+    "ecm:currentLifeCycleState": {
+      "type": "string",
+      "include_in_all": "false"
+    },
+    "ecm:primaryType": {
+      "type": "string",
+      "analyzer" : "doctype_analyzer",
+      "include_in_all": "false"
+    },
+
     "materials_common:materialTermGroupList": {
       "type": "object",
       "properties": {
@@ -384,6 +404,16 @@
 
     "collectionobjects_common:objectNumber": {
       "type": "string"
+    },
+    "collectionobjects_common:publishToList": {
+      "type": "string",
+      "include_in_all": "false",
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
     }
   }
 }
