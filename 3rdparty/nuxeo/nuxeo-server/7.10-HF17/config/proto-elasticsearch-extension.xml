@@ -102,6 +102,10 @@
       },
       "default" : {
         "type" : "custom",
+        "filter" : [
+          "lowercase",
+          "asciifolding"
+        ],
         "tokenizer" : "keyword"
       }
     }
@@ -132,12 +136,16 @@
       "include_in_all": "false"
     },
 
+    "collectionspace_denorm:title": {
+      "type": "string",
+      "include_in_all": "false"
+    },
+
     "materials_common:materialTermGroupList": {
       "type": "object",
       "properties": {
         "termDisplayName": {
-          "type": "string",
-          "analyzer": "fulltext"
+          "type": "string"
         }
       }
     },
@@ -190,7 +198,12 @@
       "properties": {
         "materialProductionOrganization": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -199,7 +212,12 @@
       "properties": {
         "materialProductionPlace": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -208,20 +226,35 @@
       "properties": {
         "featuredApplication": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
     "materials_common:commonForm": {
       "type": "string",
-      "analyzer": "refname_displayname_analyzer"
+      "fields": {
+        "displayName": {
+          "type": "string",
+          "analyzer": "refname_displayname_analyzer"
+        }
+      }
     },
     "materials_common:formTypeGroupList": {
       "type": "object",
       "properties": {
         "formType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -231,7 +264,12 @@
       "properties": {
         "acousticalPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -240,7 +278,12 @@
       "properties": {
         "durabilityPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -249,7 +292,12 @@
       "properties": {
         "electricalPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -258,7 +306,12 @@
       "properties": {
         "hygrothermalPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -267,7 +320,12 @@
       "properties": {
         "mechanicalPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -276,7 +334,12 @@
       "properties": {
         "opticalPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -285,7 +348,12 @@
       "properties": {
         "sensorialPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -294,7 +362,12 @@
       "properties": {
         "smartMaterialPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -303,18 +376,41 @@
       "properties": {
         "additionalPropertyType": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
     // Material Ecology
-    // TODO: recycledContent - range?
+    "materials_common:recycledContentGroupList": {
+      "type": "object",
+      "properties": {
+        "recycledContentQualifier": {
+          "type": "string",
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
+        }
+      }
+    },
     "materials_common:lifecycleComponentGroupList": {
       "type": "object",
       "properties": {
         "lifecycleComponent": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -324,7 +420,12 @@
       "properties": {
         "certificationProgram": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -397,7 +498,12 @@
       "properties": {
         "additionalProcess": {
           "type": "string",
-          "analyzer": "refname_displayname_analyzer"
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     },
@@ -409,6 +515,7 @@
       "type": "string",
       "include_in_all": "false",
       "fields": {
+          // TODO: Should index shortId
         "displayName": {
           "type": "string",
           "analyzer": "refname_displayname_analyzer"
