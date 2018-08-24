@@ -6,7 +6,7 @@
     <parent>
         <artifactId>org.collectionspace.services.3rdparty.nuxeo.listener</artifactId>
         <groupId>org.collectionspace.services</groupId>
-        <version>5.1-SNAPSHOT</version>
+        <version>5.1</version>
     </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,7 +15,7 @@
     <name>org.collectionspace.services.listener.reindex</name>
     <url>http://maven.apache.org</url>
 
-	 
+
    <dependencies>
         <dependency>
             <groupId>org.collectionspace.services</groupId>
@@ -23,7 +23,7 @@
             <version>${project.version}</version>
         </dependency>
     </dependencies>
-	
+
     <build>
         <resources>
             <resource>
@@ -47,5 +47,5 @@
             </plugin>
         </plugins>
     </build>
-	
+
 </project>

@@ -5,8 +5,14 @@
                   class="org.collectionspace.services.listener.Reindex">
             <event>documentCreated</event>
             <event>documentModified</event>
-            <event>lifecycle_transition_event</event>
+            <event>documentRemoved</event>
+        </listener>
+    </extension>
+    <extension target="org.nuxeo.ecm.core.event.EventServiceComponent" point="listener">
+        <listener name="reindexsupportlistener" async="false" postCommit="false"
+                  class="org.collectionspace.services.listener.ReindexSupport">
             <event>aboutToRemove</event>
+            <event>beforeDocumentModification</event>
         </listener>
     </extension>
 </component>
