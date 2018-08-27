@@ -162,17 +162,19 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         List<Map<String, Object>> termGroups = (List<Map<String, Object>>) doc.getProperty("materials_common", "materialTermGroupList");
 
         String commercialName = findFirstTermDisplayNameWithFlag(termGroups, "commercial");
-        String commonName = findFirstTermDisplayNameWithFlag(termGroups, "common");
 
-        if (commercialName != null && commonName != null) {
-            return commercialName + "\n" + commonName;
-        }
+        return commercialName;
+        // String commonName = findFirstTermDisplayNameWithFlag(termGroups, "common");
 
-        if (commercialName != null) {
-            return commercialName;
-        }
+        // if (commercialName != null && commonName != null) {
+        //     return commercialName + "\n" + commonName;
+        // }
 
-        return commonName;
+        // if (commercialName != null) {
+        //     return commercialName;
+        // }
+
+        // return commonName;
     }
 
     private String findFirstTermDisplayNameWithFlag(List<Map<String, Object>> termGroups, String flagShortId) {
