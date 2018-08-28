@@ -13,7 +13,7 @@
     "char_filter" : {
       "refname_displayname" : {
         "type" : "pattern_replace",
-        "pattern" : "^.*'(.*)'$",
+        "pattern" : "^.*?'(.*)'$",
         "replacement" : "$1"
       },
       "doctype_tenant_unqualified" : {
