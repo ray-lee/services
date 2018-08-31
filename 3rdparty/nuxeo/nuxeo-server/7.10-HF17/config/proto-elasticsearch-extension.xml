@@ -102,10 +102,6 @@
       },
       "default" : {
         "type" : "custom",
-        "filter" : [
-          "lowercase",
-          "asciifolding"
-        ],
         "tokenizer" : "keyword"
       }
     }
@@ -141,6 +137,9 @@
       "include_in_all": "false"
     },
 
+    "materials_common:shortIdentifier": {
+      "type": "string"
+    },
     "materials_common:materialTermGroupList": {
       "type": "object",
       "properties": {
@@ -519,6 +518,20 @@
         "displayName": {
           "type": "string",
           "analyzer": "refname_displayname_analyzer"
+        }
+      }
+    },
+    "collectionobjects_common:materialGroupList": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string",
+          "fields": {
+            "displayName": {
+              "type": "string",
+              "analyzer": "refname_displayname_analyzer"
+            }
+          }
         }
       }
     }
