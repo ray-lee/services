@@ -157,13 +157,22 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
     }
 
     // Compute a title for the public browser. This needs to be indexed in ES so that it can
-    // be used for sorting.
+    // be used for sorting. (Even if it's just extracting the primary value.)
     private String computeTitle(DocumentModel doc) {
         List<Map<String, Object>> termGroups = (List<Map<String, Object>>) doc.getProperty("materials_common", "materialTermGroupList");
+        String primaryDisplayName = null;
 
-        String commercialName = findFirstTermDisplayNameWithFlag(termGroups, "commercial");
+        if (termGroups.size() > 0) {
+            Map<String, Object> primaryTermGroup = termGroups.get(0);
+            primaryDisplayName = (String) primaryTermGroup.get("termDisplayName");
+        }
 
-        return commercialName;
+        return primaryDisplayName;
+
+        // String commercialName = findFirstTermDisplayNameWithFlag(termGroups, "commercial");
+
+        // return commercialName;
+
         // String commonName = findFirstTermDisplayNameWithFlag(termGroups, "common");
 
         // if (commercialName != null && commonName != null) {
