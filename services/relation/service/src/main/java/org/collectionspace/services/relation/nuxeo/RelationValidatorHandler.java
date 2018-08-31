@@ -55,6 +55,7 @@ public class RelationValidatorHandler extends ValidatorHandlerImpl<PoxPayloadIn,
 
             // A relationship type must be provided.
             CS_ASSERT(relationsCommon.getRelationshipType() != null);
+            relationsCommon.setPredicate(relationsCommon.getRelationshipType());
 
     	} catch (AssertionError e) {
     		if (logger.isErrorEnabled() == true) {
