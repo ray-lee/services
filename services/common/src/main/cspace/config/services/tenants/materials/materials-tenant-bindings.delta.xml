@@ -10,6 +10,438 @@
     <tenant:tenantBinding id="2000">
         <tenant:serviceBindings id="CollectionObjects" elasticsearchIndexed="true" merge:matcher="id" />
         <tenant:serviceBindings id="Materials" elasticsearchIndexed="true" merge:matcher="id" />
-    </tenant:tenantBinding>
 
+        <tenant:elasticSearchIndexConfig>
+            <tenant:mapping>
+              {
+                // For now, don't index a field unless there's a mapping explicitly defined. This keeps the
+                // index as small as possible. We may want to turn this on in the future, to support arbitrary
+                // searches through Elasticsearch, e.g. NXQL queries for ad hoc reporting in the CSpace UI.
+                "dynamic": false,
+
+                "_size" : {
+                  "enabled" : true
+                },
+                "_all" : {
+                  "analyzer" : "fulltext"
+                },
+                "properties" : {
+                  "ecm:currentLifeCycleState": {
+                    "type": "string",
+                    "include_in_all": "false"
+                  },
+                  "ecm:primaryType": {
+                    "type": "string",
+                    "analyzer" : "doctype_analyzer",
+                    "include_in_all": "false"
+                  },
+
+                  "collectionspace_denorm:title": {
+                    "type": "string",
+                    "include_in_all": "false"
+                  },
+
+                  "materials_common:shortIdentifier": {
+                    "type": "string"
+                  },
+                  "materials_common:materialTermGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "termDisplayName": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "materials_common:materialCompositionGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "materialCompositionFamilyName": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      },
+                      "materialCompositionClassName": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      },
+                      "materialCompositionGenericName": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:description": {
+                    "type": "string"
+                  },
+                  "materials_common:typicalUses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:materialProductionOrganizationGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "materialProductionOrganization": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:materialProductionPlaceGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "materialProductionPlace": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:featuredApplicationGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "featuredApplication": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:commonForm": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:formTypeGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "formType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  // Properties
+                  "materials_common:acousticalPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "acousticalPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:durabilityPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "durabilityPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:electricalPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "electricalPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:hygrothermalPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "hygrothermalPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:mechanicalPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "mechanicalPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:opticalPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "opticalPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:sensorialPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "sensorialPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:smartMaterialPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "smartMaterialPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:additionalPropertyGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "additionalPropertyType": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  // Material Ecology
+                  "materials_common:recycledContentGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "recycledContentQualifier": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:lifecycleComponentGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "lifecycleComponent": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  // TODO: embodiedEnergy - range?
+                  "materials_common:certificationCreditGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "certificationProgram": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  // Process
+                  "materials_common:castingProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:joiningProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:moldingProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:surfacingProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:deformingProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:machiningProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:rapidPrototypingProcesses": {
+                    "type": "string",
+                    "fields": {
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "materials_common:additionalProcessGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "additionalProcess": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+
+                  "collectionobjects_common:objectNumber": {
+                    "type": "string"
+                  },
+                  "collectionobjects_common:publishToList": {
+                    "type": "string",
+                    "include_in_all": "false",
+                    "fields": {
+                        // TODO: Should index shortId
+                      "displayName": {
+                        "type": "string",
+                        "analyzer": "refname_displayname_analyzer"
+                      }
+                    }
+                  },
+                  "collectionobjects_common:materialGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "material": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            </tenant:mapping>
+        </tenant:elasticSearchIndexConfig>
+    </tenant:tenantBinding>
 </tenant:TenantBindingConfig>
