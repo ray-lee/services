@@ -71,6 +71,18 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
             if (title != null) {
                 denormValues.put("title", title);
             }
+            
+            List<Map<String, Object>> termGroups = (List<Map<String, Object>>) doc.getProperty("materials_common", "materialTermGroupList");
+            List<String> commercialNames = findTermDisplayNamesWithFlag(termGroups, "commercial");
+            List<String> commonNames = findTermDisplayNamesWithFlag(termGroups, "common");
+
+            if (commercialNames.size() > 0) {
+                denormValues.putArray("commercialNames").addAll(jsonNodes(commercialNames));
+            }
+
+            if (commonNames.size() > 0) {
+                denormValues.putArray("commonNames").addAll(jsonNodes(commonNames));
+            }
         }
 
         // if (docType.startsWith("CollectionObject")) {
@@ -203,5 +215,36 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         }
 
         return termDisplayName;
+    }
+
+    private List<String> findTermDisplayNamesWithFlag(List<Map<String, Object>> termGroups, String flagShortId) {
+        List<String> termDisplayNames = new ArrayList<String>();
+
+        for (Map<String, Object> termGroup : termGroups) {
+            String termFlag = (String) termGroup.get("termFlag");
+
+            if (termFlag != null && termFlag.contains("(" + flagShortId + ")")) {
+                String candidateTermDisplayName = (String) termGroup.get("termDisplayName");
+
+                if (StringUtils.isNotEmpty(candidateTermDisplayName)) {
+                    termDisplayNames.add(candidateTermDisplayName);
+                }
+            }
+        }
+
+        return termDisplayNames;
+    }
+
+    private List<JsonNode> jsonNodes(List<String> values) {
+        List<JsonNode> nodes = new ArrayList<JsonNode>();
+        Iterator<String> iterator = values.iterator();
+
+        while (iterator.hasNext()) {
+            String value = iterator.next();
+
+            nodes.add(new TextNode(value));
+        }
+
+        return nodes;
     }
 }

@@ -40,6 +40,16 @@
                     "type": "string",
                     "include_in_all": "false"
                   },
+                  "collectionspace_denorm:commercialNames": {
+                    "type": "string",
+                    "analyzer" : "fulltext",
+                    "include_in_all": "false"
+                  },
+                  "collectionspace_denorm:commonNames": {
+                    "type": "string",
+                    "analyzer" : "fulltext",
+                    "include_in_all": "false"
+                  },
 
                   "materials_common:shortIdentifier": {
                     "type": "string"
@@ -85,7 +95,8 @@
                     }
                   },
                   "materials_common:description": {
-                    "type": "string"
+                    "type": "string",
+                    "analyzer" : "fulltext"
                   },
                   "materials_common:typicalUses": {
                     "type": "string",
@@ -100,6 +111,20 @@
                     "type": "object",
                     "properties": {
                       "materialProductionOrganization": {
+                        "type": "string",
+                        "fields": {
+                          "displayName": {
+                            "type": "string",
+                            "analyzer": "refname_displayname_analyzer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "materials_common:materialProductionPersonGroupList": {
+                    "type": "object",
+                    "properties": {
+                      "materialProductionPerson": {
                         "type": "string",
                         "fields": {
                           "displayName": {
