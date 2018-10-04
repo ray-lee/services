@@ -99,6 +99,14 @@
               "tokenizer" : "keyword",
               "char_filter" : ["doctype_tenant_unqualified"]
             },
+            "sorting_analyzer" : {
+              "filter" : [
+                "lowercase",
+                "asciifolding"
+              ],
+              "type" : "custom",
+              "tokenizer" : "keyword"
+            },
             "default" : {
               "type" : "custom",
               "tokenizer" : "keyword"

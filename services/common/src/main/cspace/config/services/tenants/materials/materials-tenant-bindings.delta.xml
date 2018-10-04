@@ -38,6 +38,7 @@
 
                   "collectionspace_denorm:title": {
                     "type": "string",
+                    "analyzer" : "sorting_analyzer",
                     "include_in_all": "false"
                   },
                   "collectionspace_denorm:commercialNames": {
