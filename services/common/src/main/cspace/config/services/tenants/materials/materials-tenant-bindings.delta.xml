@@ -18,7 +18,6 @@
                 // index as small as possible. We may want to turn this on in the future, to support arbitrary
                 // searches through Elasticsearch, e.g. NXQL queries for ad hoc reporting in the CSpace UI.
                 "dynamic": false,
-
                 "_size" : {
                   "enabled" : true
                 },
@@ -116,7 +115,7 @@
                         "fields": {
                           "displayName": {
                             "type": "string",
-                            "analyzer": "refname_displayname_analyzer"
+                            "analyzer": "refname_displayname_fulltext_analyzer"
                           }
                         }
                       }
@@ -130,7 +129,7 @@
                         "fields": {
                           "displayName": {
                             "type": "string",
-                            "analyzer": "refname_displayname_analyzer"
+                            "analyzer": "refname_displayname_fulltext_analyzer"
                           }
                         }
                       }
@@ -144,7 +143,7 @@
                         "fields": {
                           "displayName": {
                             "type": "string",
-                            "analyzer": "refname_displayname_analyzer"
+                            "analyzer": "refname_displayname_fulltext_analyzer"
                           }
                         }
                       }

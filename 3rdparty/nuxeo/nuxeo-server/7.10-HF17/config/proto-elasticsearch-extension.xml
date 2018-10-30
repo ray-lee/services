@@ -94,6 +94,17 @@
               "tokenizer" : "keyword",
               "char_filter" : ["refname_displayname"]
             },
+            "refname_displayname_fulltext_analyzer" : {
+              "char_filter" : ["refname_displayname"],
+              "filter" : [
+                "lowercase",
+                "en_stop_filter",
+                "en_stem_filter",
+                "asciifolding"
+              ],
+              "type" : "custom",
+              "tokenizer" : "standard"
+            },
             "doctype_analyzer" : {
               "type" : "custom",
               "tokenizer" : "keyword",
