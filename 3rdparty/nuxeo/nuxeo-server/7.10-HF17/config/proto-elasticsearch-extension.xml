@@ -15,6 +15,11 @@
               "pattern" : "^.*?'(.*)'$",
               "replacement" : "$1"
             },
+            "refname_shortid" : {
+              "type" : "pattern_replace",
+              "pattern" : "^.*:item:name\\((.*)\\).*$",
+              "replacement" : "$1"
+            },
             "doctype_tenant_unqualified" : {
               "type" : "pattern_replace",
               "pattern" : "^(.*?)(Tenant.*)?$",
@@ -104,6 +109,11 @@
               ],
               "type" : "custom",
               "tokenizer" : "standard"
+            },
+            "refname_shortid_analyzer" : {
+              "type" : "custom",
+              "tokenizer" : "keyword",
+              "char_filter" : ["refname_shortid"]
             },
             "doctype_analyzer" : {
               "type" : "custom",
