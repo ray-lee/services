@@ -31,6 +31,7 @@
                     "ecm:currentLifeCycleState",
                     "ecm:primaryType",
                     "materials_common:shortIdentifier",
+                    "materials_common:publishToList",
                     "materials_common:externalUrlGroupList",
                     "materials_common:materialTermGroupList",
                     "materials_common:materialCompositionGroupList",
@@ -128,6 +129,16 @@
                     "properties": {
                       "termDisplayName": {
                         "type": "string"
+                      }
+                    }
+                  },
+                  "materials_common:publishToList": {
+                    "type": "string",
+                    "include_in_all": "false",
+                    "fields": {
+                      "shortid": {
+                        "type": "string",
+                        "analyzer": "refname_shortid_analyzer"
                       }
                     }
                   },
@@ -512,10 +523,9 @@
                     "type": "string",
                     "include_in_all": "false",
                     "fields": {
-                        // TODO: Should index shortId
-                      "displayName": {
+                      "shortid": {
                         "type": "string",
-                        "analyzer": "refname_displayname_analyzer"
+                        "analyzer": "refname_shortid_analyzer"
                       }
                     }
                   },
