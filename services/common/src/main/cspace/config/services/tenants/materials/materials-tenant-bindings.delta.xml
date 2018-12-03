@@ -10,6 +10,7 @@
     <tenant:tenantBinding id="2000">
         <tenant:serviceBindings id="CollectionObjects" elasticsearchIndexed="true" merge:matcher="id" />
         <tenant:serviceBindings id="Materials" elasticsearchIndexed="true" merge:matcher="id" />
+        <tenant:serviceBindings id="Media" elasticsearchIndexed="true" merge:matcher="id" />
 
         <tenant:elasticSearchIndexConfig>
             <tenant:mapping>
@@ -83,7 +84,9 @@
                     "collectionobjects_materials:materialFinishGroupList",
                     "collectionobjects_common:numberOfObjects",
                     "collectionobjects_common:briefDescriptions",
-                    "collectionobjects_common:measuredPartGroupList"
+                    "collectionobjects_common:measuredPartGroupList",
+                    "media_common:blobCsid",
+                    "media_materials:publishToList"
                   ]
                 },
                 "properties" : {
@@ -540,6 +543,17 @@
                             "analyzer": "refname_displayname_analyzer"
                           }
                         }
+                      }
+                    }
+                  },
+
+                  "media_materials:publishToList": {
+                    "type": "string",
+                    "include_in_all": "false",
+                    "fields": {
+                      "shortid": {
+                        "type": "string",
+                        "analyzer": "refname_shortid_analyzer"
                       }
                     }
                   }
