@@ -41,7 +41,7 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         if (docType.startsWith("Materialitem")) {
             CoreSession session = doc.getCoreSession();
 
-            // Find media records referencing this item via the coverage field, and pull the blobCsid.
+            // Store the csids of media records referencing this item via the coverage field.
 
             String refName = (String) doc.getProperty("collectionspace_core", "refName");
 
@@ -52,17 +52,17 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
                 DocumentModelList mediaDocs = session.query(mediaQuery);
 
                 if (mediaDocs.size() > 0) {
-                    List<JsonNode> blobCsids = new ArrayList<JsonNode>();
+                    List<JsonNode> mediaCsids = new ArrayList<JsonNode>();
                     Iterator<DocumentModel> iterator = mediaDocs.iterator();
 
                     while (iterator.hasNext()) {
                         DocumentModel mediaDoc = iterator.next();
-                        String blobCsid = (String) mediaDoc.getProperty("media_common", "blobCsid");
+                        String mediaCsid = (String) mediaDoc.getName();
 
-                        blobCsids.add(new TextNode(blobCsid));
+                        mediaCsids.add(new TextNode(mediaCsid));
                     }
 
-                    denormValues.putArray("blobCsid").addAll(blobCsids);
+                    denormValues.putArray("mediaCsid").addAll(mediaCsids);
                 }
             }
 
