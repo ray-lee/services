@@ -94,6 +94,10 @@
                     "type": "string",
                     "include_in_all": "false"
                   },
+                  "ecm:name": {
+                    "type": "string",
+                    "include_in_all": "false"
+                  },
                   "ecm:primaryType": {
                     "type": "string",
                     "analyzer" : "doctype_analyzer",
