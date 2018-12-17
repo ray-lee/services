@@ -1,5 +1,9 @@
 package org.collectionspace.services.listener;
 
+import java.io.Serializable;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.event.CoreEventConstants;
 import org.nuxeo.ecm.core.api.event.DocumentEventTypes;
@@ -8,7 +12,6 @@ import org.nuxeo.ecm.core.event.EventListener;
 import org.nuxeo.ecm.core.event.impl.DocumentEventContext;
 
 public class ReindexSupport implements EventListener {
-    private static final String PREV_COVERAGE_KEY = "Reindex.PREV_COVERAGE";
 
     @Override
     public void handleEvent(Event event) {
@@ -17,17 +20,19 @@ public class ReindexSupport implements EventListener {
         String docType = doc.getType();
         String eventName = event.getName();
 
-        if (docType.equals("Media")) {
+        if (docType.startsWith("Media")) {
             if (eventName.equals(DocumentEventTypes.BEFORE_DOC_UPDATE)) {
                 DocumentModel previousDoc = (DocumentModel) eventContext.getProperty(CoreEventConstants.PREVIOUS_DOCUMENT_MODEL);
-                String refName = (String) previousDoc.getProperty("media_common", "coverage");
+                String coverage = (String) previousDoc.getProperty("media_common", "coverage");
+                List<String> publishTo = (List<String>) previousDoc.getProperty("media_materials", "publishToList");
 
-                eventContext.setProperty(PREV_COVERAGE_KEY, refName);
+                eventContext.setProperty(Reindex.PREV_COVERAGE_KEY, coverage);
+                eventContext.setProperty(Reindex.PREV_PUBLISH_TO_KEY, (Serializable) publishTo);
             }
             else if (eventName.equals(DocumentEventTypes.ABOUT_TO_REMOVE)) {
-                String refName = (String) doc.getProperty("media_common", "coverage");
+                String coverage = (String) doc.getProperty("media_common", "coverage");
 
-                eventContext.setProperty(PREV_COVERAGE_KEY, refName);
+                eventContext.setProperty(Reindex.PREV_COVERAGE_KEY, coverage);
             }
         }
     }

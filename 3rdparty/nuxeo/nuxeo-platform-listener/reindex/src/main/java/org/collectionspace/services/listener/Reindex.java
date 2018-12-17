@@ -1,28 +1,24 @@
 package org.collectionspace.services.listener;
 
 import java.util.Iterator;
+import java.util.List;
 
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.collectionspace.services.nuxeo.listener.AbstractCSEventListenerImpl;
-import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
-import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.LifeCycleConstants;
-import org.nuxeo.ecm.core.api.event.CoreEventConstants;
 import org.nuxeo.ecm.core.api.event.DocumentEventTypes;
 import org.nuxeo.ecm.core.event.Event;
 import org.nuxeo.ecm.core.event.EventBundle;
-import org.nuxeo.ecm.core.event.EventListener;
 import org.nuxeo.ecm.core.event.PostCommitEventListener;
 import org.nuxeo.ecm.core.event.impl.DocumentEventContext;
 import org.nuxeo.elasticsearch.ElasticSearchComponent;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
-import org.nuxeo.elasticsearch.commands.IndexingCommand;
 import org.nuxeo.runtime.api.Framework;
-import org.nuxeo.runtime.transaction.TransactionHelper;
 
 public class Reindex implements PostCommitEventListener {
-    private static final String PREV_COVERAGE_KEY = "Reindex.PREV_COVERAGE";
+    public static final String PREV_COVERAGE_KEY = "Reindex.PREV_COVERAGE";
+    public static final String PREV_PUBLISH_TO_KEY = "Reindex.PREV_PUBLISH_TO";
 
     @Override
     public void handleEvent(EventBundle events) {
@@ -36,26 +32,35 @@ public class Reindex implements PostCommitEventListener {
                 String docType = doc.getType();
                 String eventName = event.getName();
 
-                if (docType.equals("Media")) {
+                if (docType.startsWith("Media")) {
                     if (
                         eventName.equals(DocumentEventTypes.DOCUMENT_CREATED) ||
                         eventName.equals(DocumentEventTypes.DOCUMENT_UPDATED)
                     ) {
-                        String prevRefName = (String) eventContext.getProperty(PREV_COVERAGE_KEY);
-                        String refName = (String) doc.getProperty("media_common", "coverage");
+                        String prevCoverage = (String) eventContext.getProperty(PREV_COVERAGE_KEY);
+                        String coverage = (String) doc.getProperty("media_common", "coverage");
+
+                        List<String> prevPublishTo = (List<String>) eventContext.getProperty(PREV_PUBLISH_TO_KEY);
+                        List<String> publishTo = (List<String>) doc.getProperty("media_materials", "publishToList");
 
                         if (doc.getCurrentLifeCycleState().equals(LifeCycleConstants.DELETED_STATE)) {
-                            reindex(doc.getRepositoryName(), refName);
+                            reindex(doc.getRepositoryName(), coverage);
                         }
-                        else if (!StringUtils.equals(prevRefName, refName)) {
-                            reindex(doc.getRepositoryName(), prevRefName);
-                            reindex(doc.getRepositoryName(), refName);
+                        else if (
+                            !ListUtils.isEqualList(prevPublishTo, publishTo) ||
+                            !StringUtils.equals(prevCoverage, coverage)
+                        ) {
+                            if (!StringUtils.equals(prevCoverage, coverage)) {
+                                reindex(doc.getRepositoryName(), prevCoverage);
+                            }
+
+                            reindex(doc.getRepositoryName(), coverage);
                         }
                     }
                     else if (eventName.equals(DocumentEventTypes.DOCUMENT_REMOVED)) {
-                        String prevRefName = (String) eventContext.getProperty(PREV_COVERAGE_KEY);
+                        String prevCoverage = (String) eventContext.getProperty(PREV_COVERAGE_KEY);
 
-                        reindex(doc.getRepositoryName(), prevRefName);
+                        reindex(doc.getRepositoryName(), prevCoverage);
                     }
                 }
             }
@@ -105,12 +110,12 @@ public class Reindex implements PostCommitEventListener {
     //     }
     // }
 
-    private void reindex(String repositoryName, String refName) {
-        if (StringUtils.isEmpty(refName)) {
+    private void reindex(String repositoryName, String coverage) {
+        if (StringUtils.isEmpty(coverage)) {
             return;
         }
 
-        String escapedRefName = refName.replace("'", "\\'");
+        String escapedRefName = coverage.replace("'", "\\'");
         String query = String.format("SELECT ecm:uuid FROM Materialitem WHERE collectionspace_core:refName = '%s'", escapedRefName);
 
         ElasticSearchComponent es = (ElasticSearchComponent) Framework.getService(ElasticSearchService.class);

@@ -15,16 +15,12 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.node.TextNode;
 
-import org.collectionspace.services.common.ResourceMap;
-
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
+import org.collectionspace.services.common.api.RefNameUtils;
 
 import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonESDocumentWriter;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
-import org.nuxeo.ecm.core.api.model.Property;
-import org.nuxeo.ecm.core.api.model.PropertyNotFoundException;
 
 public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
     private static ObjectMapper objectMapper = new ObjectMapper();
@@ -50,20 +46,23 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
                 String mediaQuery = String.format("SELECT * FROM Media WHERE media_common:coverage = '%s' AND ecm:currentLifeCycleState = 'project' AND collectionspace_core:tenantId = '2000' ORDER BY media_common:identificationNumber", escapedRefName);
 
                 DocumentModelList mediaDocs = session.query(mediaQuery);
+                List<JsonNode> mediaCsids = new ArrayList<JsonNode>();
 
                 if (mediaDocs.size() > 0) {
-                    List<JsonNode> mediaCsids = new ArrayList<JsonNode>();
                     Iterator<DocumentModel> iterator = mediaDocs.iterator();
 
                     while (iterator.hasNext()) {
                         DocumentModel mediaDoc = iterator.next();
-                        String mediaCsid = (String) mediaDoc.getName();
 
-                        mediaCsids.add(new TextNode(mediaCsid));
+                        if (isMediaPublished(mediaDoc)) {
+                            String mediaCsid = (String) mediaDoc.getName();
+                        
+                            mediaCsids.add(new TextNode(mediaCsid));
+                        }
                     }
-
-                    denormValues.putArray("mediaCsid").addAll(mediaCsids);
                 }
+
+                denormValues.putArray("mediaCsid").addAll(mediaCsids);
             }
 
             String title = computeTitle(doc);
@@ -233,6 +232,23 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         }
 
         return termDisplayNames;
+    }
+
+    private boolean isMediaPublished(DocumentModel mediaDoc) {
+        List<String> publishToValues = (List<String>) mediaDoc.getProperty("media_materials", "publishToList");
+        boolean isPublished = false;
+        
+        for (int i=0; i<publishToValues.size(); i++) {
+            String value = publishToValues.get(i);
+            String shortId = RefNameUtils.getItemShortId(value);
+
+            if (shortId.equals("all") || shortId.equals("materialorder")) {
+                isPublished = true;
+                break;
+            }
+        }
+
+        return isPublished;
     }
 
     private List<JsonNode> jsonNodes(List<String> values) {
