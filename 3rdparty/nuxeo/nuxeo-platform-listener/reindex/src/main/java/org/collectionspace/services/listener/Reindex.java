@@ -22,7 +22,7 @@ public class Reindex implements PostCommitEventListener {
 
     @Override
     public void handleEvent(EventBundle events) {
-        if (events.size() > 0) {
+        if (Framework.isBooleanPropertyTrue("elasticsearch.enabled") && events.size() > 0) {
             Iterator<Event> iter = events.iterator();
 
             while (iter.hasNext()) {
