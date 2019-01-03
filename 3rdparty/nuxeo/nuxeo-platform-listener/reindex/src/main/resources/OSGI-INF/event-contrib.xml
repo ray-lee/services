@@ -11,6 +11,7 @@
     <extension target="org.nuxeo.ecm.core.event.EventServiceComponent" point="listener">
         <listener name="reindexsupportlistener" async="false" postCommit="false"
                   class="org.collectionspace.services.listener.ReindexSupport">
+            <event>aboutToCreate</event>
             <event>aboutToRemove</event>
             <event>beforeDocumentModification</event>
         </listener>

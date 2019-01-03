@@ -8,6 +8,12 @@
     <!-- value in cspace/config/services/tenants/materials-tenant-bindings-proto.xml -->
 
     <tenant:tenantBinding id="2000">
+        <tenant:eventListenerConfigurations id="default" merge:matcher="id">
+            <tenant:eventListenerConfig id="ReindexSupport" merge:matcher="id">
+                <tenant:className>org.collectionspace.services.listener.ReindexSupport</tenant:className>
+            </tenant:eventListenerConfig>
+        </tenant:eventListenerConfigurations>
+
         <tenant:serviceBindings id="Media" elasticsearchIndexed="true" merge:matcher="id" />
         <tenant:serviceBindings id="CollectionObjects" elasticsearchIndexed="true" merge:matcher="id" />
         <tenant:serviceBindings id="Materials" elasticsearchIndexed="true" merge:matcher="id" />
