@@ -30,6 +30,10 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
             Map<String, String> contextParameters, HttpHeaders headers)
             throws IOException {
 
+        // Compute and store fields that should be indexed with this document in ElasticSearch.
+        // TODO: Make this configurable. This is currently hardcoded for the materials profile and
+        // the Material Order application.
+
         ObjectNode denormValues = objectMapper.createObjectNode();
 
         String docType = doc.getType();
@@ -37,7 +41,8 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         if (docType.startsWith("Materialitem")) {
             CoreSession session = doc.getCoreSession();
 
-            // Store the csids of media records referencing this item via the coverage field.
+            // Store the csids of media records that reference this material authority item via the
+            // coverage field.
 
             String refName = (String) doc.getProperty("collectionspace_core", "refName");
 
@@ -65,6 +70,9 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
                 denormValues.putArray("mediaCsid").addAll(mediaCsids);
             }
 
+            // Compute the title of the record for the public browser, and store it so that it can
+            // be used for sorting ES query results.
+
             String title = computeTitle(doc);
 
             if (title != null) {
@@ -75,6 +83,9 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
             List<String> commercialNames = findTermDisplayNamesWithFlag(termGroups, "commercial");
             List<String> commonNames = findTermDisplayNamesWithFlag(termGroups, "common");
 
+            // Find and store the commercial names and common names for this item. This simplifies
+            // search and display in the Material Order application.
+
             if (commercialNames.size() > 0) {
                 denormValues.putArray("commercialNames").addAll(jsonNodes(commercialNames));
             }
@@ -84,60 +95,66 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
             }
         }
 
-        // if (docType.startsWith("CollectionObject")) {
-        //     CoreSession session = doc.getCoreSession();
+        // Below is sample code for denormalizing fields from the computed current location (place
+        // item) into collection object documents. This was written for the public browser
+        // prototype for public art.
 
-        //     String refName = (String) doc.getProperty("collectionobjects_common", "computedCurrentLocation");
+        /*
+        if (docType.startsWith("CollectionObject")) {
+            CoreSession session = doc.getCoreSession();
 
-        //     if (StringUtils.isNotEmpty(refName)) {
-        //         String escapedRefName = refName.replace("'", "\\'");
-        //         String placeQuery = String.format("SELECT * FROM PlaceitemTenant5000 WHERE places_common:refName = '%s'", escapedRefName);
+            String refName = (String) doc.getProperty("collectionobjects_common", "computedCurrentLocation");
 
-        //         DocumentModelList placeDocs = session.query(placeQuery, 1);
+            if (StringUtils.isNotEmpty(refName)) {
+                String escapedRefName = refName.replace("'", "\\'");
+                String placeQuery = String.format("SELECT * FROM PlaceitemTenant5000 WHERE places_common:refName = '%s'", escapedRefName);
 
-        //         if (placeDocs.size() > 0) {
-        //             DocumentModel placeDoc = placeDocs.get(0);
+                DocumentModelList placeDocs = session.query(placeQuery, 1);
 
-        //             String placementType = (String) placeDoc.getProperty("places_publicart:placementType").getValue();
+                if (placeDocs.size() > 0) {
+                    DocumentModel placeDoc = placeDocs.get(0);
 
-        //             if (placementType != null) {
-        //                 denormValues.put("placementType", placementType);
-        //             }
+                    String placementType = (String) placeDoc.getProperty("places_publicart:placementType").getValue();
 
-        //             Property geoRefGroup;
+                    if (placementType != null) {
+                        denormValues.put("placementType", placementType);
+                    }
 
-        //             try {
-        //                 geoRefGroup = placeDoc.getProperty("places_common:placeGeoRefGroupList/0");
-        //             } catch (PropertyNotFoundException e) {
-        //                 geoRefGroup = null;
-        //             }
+                    Property geoRefGroup;
 
-        //             if (geoRefGroup != null) {
-        //                 Double decimalLatitude = (Double) geoRefGroup.getValue("decimalLatitude");
-        //                 Double decimalLongitude = (Double) geoRefGroup.getValue("decimalLongitude");
+                    try {
+                        geoRefGroup = placeDoc.getProperty("places_common:placeGeoRefGroupList/0");
+                    } catch (PropertyNotFoundException e) {
+                        geoRefGroup = null;
+                    }
 
-        //                 if (decimalLatitude != null && decimalLongitude != null) {
-        //                     ObjectNode geoPointNode = objectMapper.createObjectNode();
+                    if (geoRefGroup != null) {
+                        Double decimalLatitude = (Double) geoRefGroup.getValue("decimalLatitude");
+                        Double decimalLongitude = (Double) geoRefGroup.getValue("decimalLongitude");
 
-        //                     geoPointNode.put("lat", decimalLatitude);
-        //                     geoPointNode.put("lon", decimalLongitude);
+                        if (decimalLatitude != null && decimalLongitude != null) {
+                            ObjectNode geoPointNode = objectMapper.createObjectNode();
 
-        //                     denormValues.put("geoPoint", geoPointNode);
-        //                 }
-        //             }
-        //         }
-        //     }
+                            geoPointNode.put("lat", decimalLatitude);
+                            geoPointNode.put("lon", decimalLongitude);
 
-        //     String uri = (String) doc.getProperty("collectionobjects_core", "uri");
-        //     String csid = uri.substring(uri.lastIndexOf('/') + 1);
-        //     String mediaQuery = String.format("SELECT media_common:blobCsid, media_common:title FROM Relation WHERE relations_common:subjectCsid = '%s' AND relations_common:objectDocumentType = 'Media'", csid);
+                            denormValues.put("geoPoint", geoPointNode);
+                        }
+                    }
+                }
+            }
 
-        //     DocumentModelList mediaDocs = session.query(mediaQuery, 1);
+            String uri = (String) doc.getProperty("collectionobjects_core", "uri");
+            String csid = uri.substring(uri.lastIndexOf('/') + 1);
+            String mediaQuery = String.format("SELECT media_common:blobCsid, media_common:title FROM Relation WHERE relations_common:subjectCsid = '%s' AND relations_common:objectDocumentType = 'Media'", csid);
 
-        //     if (mediaDocs.size() > 0) {
+            DocumentModelList mediaDocs = session.query(mediaQuery, 1);
 
-        //     }
-        // }
+            if (mediaDocs.size() > 0) {
+
+            }
+        }
+        */
 
         jg.writeStartObject();
 
@@ -167,8 +184,10 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         }
     }
 
-    // Compute a title for the public browser. This needs to be indexed in ES so that it can
-    // be used for sorting. (Even if it's just extracting the primary value.)
+    /**
+     * Compute a title for the public browser. This needs to be indexed in ES so that it can
+     * be used for sorting. (Even if it's just extracting the primary value.)
+     */
     private String computeTitle(DocumentModel doc) {
         List<Map<String, Object>> termGroups = (List<Map<String, Object>>) doc.getProperty("materials_common", "materialTermGroupList");
         String primaryDisplayName = null;
@@ -179,22 +198,6 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
         }
 
         return primaryDisplayName;
-
-        // String commercialName = findFirstTermDisplayNameWithFlag(termGroups, "commercial");
-
-        // return commercialName;
-
-        // String commonName = findFirstTermDisplayNameWithFlag(termGroups, "common");
-
-        // if (commercialName != null && commonName != null) {
-        //     return commercialName + "\n" + commonName;
-        // }
-
-        // if (commercialName != null) {
-        //     return commercialName;
-        // }
-
-        // return commonName;
     }
 
     private String findFirstTermDisplayNameWithFlag(List<Map<String, Object>> termGroups, String flagShortId) {
