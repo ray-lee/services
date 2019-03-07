@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.ecm.platform.picture.api.ImageInfo;
@@ -56,6 +57,7 @@ import org.nuxeo.ecm.platform.filemanager.utils.FileManagerUtils;
 import org.nuxeo.ecm.platform.types.TypeManager;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.IdRef;
+import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
 import org.nuxeo.ecm.core.api.blobholder.DocumentBlobHolder;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
@@ -672,7 +674,8 @@ public class NuxeoBlobUtils {
             boolean useNuxeoAdaptors) throws Exception {
 		DocumentModel result = null;
 		
-		if (useNuxeoAdaptors == true) {
+		boolean createdFromAdaptor = false;		
+		if (useNuxeoAdaptors == true) try {
 			//
 			// Use Nuxeo's high-level create method which looks for plugin adapters that match the MIME type.  For example,
 			// for image blobs, Nuxeo's file manager will pick a special image plugin that will automatically generate
@@ -680,7 +683,13 @@ public class NuxeoBlobUtils {
 			//
 			result = getFileManager().createDocumentFromBlob(
 					repoSession.getCoreSession(), inputStreamBlob, blobLocation, overwrite, blobName);
-		} else {
+			createdFromAdaptor = true;
+		} catch (NuxeoException ne) {
+			logger.warn(String.format("Tried but failed to use Nuxeo import adaptor to download '%s'.  Falling back to generic file importer",
+					blobName));
+		}
+		
+		if (createdFromAdaptor == false) {
 			//
 			// User Nuxeo's default file importer/adapter explicitly.  This avoids specialized functionality from happening like
 			// image derivative creation.
@@ -766,7 +775,6 @@ public class NuxeoBlobUtils {
 			// We'll store the blob inside the workspace directory of the calling service
 			String nuxeoWspaceId = ctx.getRepositoryWorkspaceId();
 			DocumentRef nuxeoWspace = new IdRef(nuxeoWspaceId);
-			DocumentModel wspaceDoc = repoSession.getDocument(nuxeoWspace);
 			//
 			// If the original file's name contains "illegal" characters, then we create a copy of the file to give Nuxeo.
 			//
@@ -779,9 +787,12 @@ public class NuxeoBlobUtils {
 				}
 			}			
 			
+			DocumentModel wspaceDoc = repoSession.getDocument(nuxeoWspace);
+			DocumentModel newBlobFolder = NuxeoUtils.createFolder(wspaceDoc, UUID.randomUUID().toString());
+			
 			result = createBlobInRepository(ctx,
 					repoSession,
-					wspaceDoc,
+					newBlobFolder,
 					purgeOriginal,
 					targetFile,
 					blobInput.isTemporaryFile(),
@@ -996,7 +1007,7 @@ public class NuxeoBlobUtils {
 		if (blob != null) {
 			try {
 				InputStream blobStream = blob.getStream(); // By default, the result will be whatever stream Nuxeo returns to us.
-				int blobSize = blobsCommon.getLength() != null ? Integer.parseInt(blobsCommon.getLength()) : 0;
+				long blobSize = blobsCommon.getLength() != null ? Long.parseLong(blobsCommon.getLength()) : 0;
 				if (blobSize > 0 && blobSize < MAX_IMAGE_BUFFER) {
 					byte[] bytes = IOUtils.toByteArray(blobStream);
 					blobStream.close(); // Close the InputStream that we got from Nuxeo since it's usually a FileInputStream -we definitely want FileInputStreams closed.
@@ -1278,3 +1289,4 @@ public class NuxeoBlobUtils {
  * Blob blob = document.getProperty("file:content"); htmlDoc = blob.getString();
  * // the content is decoded from UTF-8 into a java string
  */
+
