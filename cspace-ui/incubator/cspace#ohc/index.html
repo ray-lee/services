@@ -6,14 +6,14 @@
 		<div id="cspace"></div>
 		<script src="/cspace-ui/cspaceUI@@UI_VERSION@.min.js"></script>
 		<script src="/cspace-ui/cspaceUIPluginProfileAnthro@latest.min.js"></script>
-        <script src="/cspace-ui/cspaceUIPluginProfileOHC@latest.min.js"></script>
+		<script src="/cspace-ui/cspaceUIPluginProfileOHC@latest.min.js"></script>
 		<script>
 			cspaceUI({
-				tenantid: '1885',
-				// No quotes for logo value.  Use "undefined" (no quotes) for default logo
+				tenantId: '1885',
+				// Logo value should include quotes, or use "undefined" (no quotes) for default logo
 				logo: 'https://s3-us-west-2.amazonaws.com/cs-public-shared-files/ohc.png',
 				messages: {
-				// Override the login page title
+					// Override the login page title
 					'about.title': 'CollectionSpace: Ohio History Connection',
 					'about.contentHTML': '<div><p>CollectionSpace is a free, open-source collections management application for museums, historical societies, natural science collections, and more.</p></div>',
 				},
@@ -21,7 +21,7 @@
 				prettyUrls: true,
 				plugins: [
 					cspaceUIPluginProfileAnthro(),
-                    cspaceUIPluginProfileOHC(),
+					cspaceUIPluginProfileOHC(),
 				],
 			});
 		</script>
