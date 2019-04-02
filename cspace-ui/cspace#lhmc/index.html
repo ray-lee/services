@@ -6,7 +6,7 @@
 		<!-- The template -->
 		<div id="cspace"></div>
 		<script src="/cspace-ui/cspaceUI@@UI_VERSION@.min.js"></script>
-		<script src="/cspace-ui/@PLUGIN_NAME@@@PLUGIN_VERSION@.min.js"></script>
+		<script src="/cspace-ui/cspaceUIPluginProfileLHMC@@PLUGIN_VERSION@.min.js"></script>
 		<script>
 			cspaceUI({
 				tenantid: '@TENANT_ID@',
@@ -15,12 +15,11 @@
 				messages: {
 					// Override the login page title
 					'about.title': '@MESSAGE_TITLE@',
-					'about.contentHTML': @ABOUT@,
 				},
 				basename: '@PLUGIN_BASENAME@',
 				prettyUrls: true,
 				plugins: [
-					@PLUGIN_NAME@(),
+					cspaceUIPluginProfileLHMC(),
 				],
 			});
 		</script>
