@@ -159,7 +159,6 @@
 			</snapshots>
 		</repository>
 
-<!--
 		<repository>
 			<id>vendor-releases</id>
 			<url>https://maven-eu.nuxeo.org/nexus/content/repositories/vendor-releases</url>
