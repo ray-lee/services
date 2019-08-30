@@ -30,8 +30,6 @@ import org.collectionspace.services.client.PoxPayloadIn;
 import org.collectionspace.services.client.PoxPayloadOut;
 import org.collectionspace.services.client.RelationClient;
 import org.collectionspace.services.client.workflow.WorkflowClient;
-import org.collectionspace.services.common.ServiceMain;
-import org.collectionspace.services.common.UriTemplateRegistry;
 import org.collectionspace.services.common.api.RefName;
 import org.collectionspace.services.common.api.Tools;
 import org.collectionspace.services.common.authorityref.AuthorityRefDocList;
@@ -640,7 +638,8 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
      * state.  This might involve making multiple transitions.
      * 
      * WIKI:
-     *     See table at https://wiki.collectionspace.org/pages/viewpage.action?pageId=162496564
+     *     See table at https://collectionspace.atlassian.net/wiki/spaces/SDR/pages/665886940/Workflow+transitions+to+map+SAS+item+states+to+Local+item+states
+     *     (was https://wiki.collectionspace.org/pages/viewpage.action?pageId=162496564)
      * 
      */
     private List<String> getTransitionList(String sasWorkflowState, String localItemWorkflowState) throws DocumentException {
@@ -657,6 +656,11 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
             // Do nothing.  We're good with this state
         } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_PROJECT) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED)) {
             result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_PROJECT) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_PROJECT) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
         //
         // The second set of conditions maps a replication-server "deleted" state to a local client state of "deleted"
         //
@@ -669,6 +673,11 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
             result.add(WorkflowClient.WORKFLOWTRANSITION_DELETE);
         } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED)) {
             // Do nothing.  We're good with this state
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_DELETE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
         //
         // The third set of conditions maps a replication-server "replicated" state to a local state of "replicated"
         //
@@ -681,6 +690,30 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
             // Do nothing.  We're good with this state
         } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED)) {
             result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
+        //
+        // The fourth set of conditions maps a replicatation-server "deprecated" state to a local state of "replicated_deprecated"
+        //
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DEPRECATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_PROJECT)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_REPLICATE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_DEPRECATE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DEPRECATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_REPLICATE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_DEPRECATE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DEPRECATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_DEPRECATE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DEPRECATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_DEPRECATE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DEPRECATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED)) {
+            // Do nothing.
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DEPRECATED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDELETE);
         //
         // The last set of conditions maps a replication-server "replicated_deleted" state to a local client state of "deleted"
         //
@@ -692,7 +725,12 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
         } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED)) {
             result.add(WorkflowClient.WORKFLOWTRANSITION_DELETE);
         } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED)) {
-            // Do nothing.  We're good with this state            
+            // Do nothing.  We're good with this state
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
+            result.add(WorkflowClient.WORKFLOWTRANSITION_DELETE);
+        } else if (sasWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DELETED) && localItemWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_REPLICATED_DEPRECATED_DELETED)) {
+            result.add(WorkflowClient.WORKFLOWTRANSITION_UNDEPRECATE);
         } else {
             //
             // If we get here, we've encountered a SAS workflow state that we don't recognize.
@@ -1211,7 +1249,7 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
 
         return unQObjectProperties;
     }
-
+    
     /**
      * Filters out selected values supplied in an update request.
      * 
@@ -1229,7 +1267,9 @@ public abstract class AuthorityItemDocumentModelHandler<AICommon>
         if (partMeta.getLabel().equalsIgnoreCase(commonPartLabel)) {
             objectProps.remove(AuthorityItemJAXBSchema.IN_AUTHORITY);
             objectProps.remove(AuthorityItemJAXBSchema.CSID);
-            objectProps.remove(AuthorityJAXBSchema.SHORT_IDENTIFIER);
+            if (getServiceContext().shouldForceUpdateRefnameReferences() == false) {
+            	objectProps.remove(AuthorityJAXBSchema.SHORT_IDENTIFIER);
+            }
             objectProps.remove(AuthorityItemJAXBSchema.REF_NAME);
         }
     }

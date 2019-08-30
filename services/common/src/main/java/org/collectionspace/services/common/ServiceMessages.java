@@ -55,6 +55,7 @@ public class ServiceMessages {
     public static final String LIST_FAILED = "List request" + FAILED;
     public static final String SEARCH_FAILED = "Search request" + FAILED;
     public static final String AUTH_REFS_FAILED = "Authority references request" + FAILED;
+    public static final String LIST_MIMETYPES_FAILED = "Could not get list of support MIME types for report outputs.";
     
     public static final String PASSWORD_RESET_REQUEST_FAILED = "Password reset request" + FAILED;
     public static final String UNKNOWN_ERROR_MSG = "Unknown error ";
@@ -66,6 +67,11 @@ public class ServiceMessages {
     public static String resourceNotFoundMsg(String csid) {
         return String.format("The resource identified by CSID '%s' was not found.", csid);
     }
+    
+    public static String indexResourceNotFoundMsg(String indexId) {
+        return String.format("The index resource '%s' was not found.", indexId);
+    }
+
 
     public static String resourceNotReindexedMsg(String csid) {
         return String.format("The resource identified by CSID '%s' could not be reindexed. See the service logs for details.", csid);

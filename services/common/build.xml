@@ -118,6 +118,13 @@
         </exec>
     </target>
 
+    <target name="deploy_nuxeo"
+            description="deploy nuxeo binaries in ${jee.server.cspace}">
+        <copy todir="${jee.server.cspace}/lib">
+            <fileset dir="${basedir}/lib/nuxeo"/>
+        </copy>
+    </target>
+
     <target name="deploy_spring"
             description="deploy spring binaries in ${jee.server.cspace}">
         <copy todir="${jee.server.cspace}/lib">
@@ -182,7 +189,8 @@
 		-->
         <copy file="${basedir}/target/${common.jar}" todir="${jee.server.cspace}/lib"/>
 
-		<antcall target="deploy_aspectj" />
+        <antcall target="deploy_nuxeo" />
+        <antcall target="deploy_aspectj" />
         <antcall target="deploy_spring" />
         <antcall target="deploy_slf4j" />
         <antcall target="deploy_xmlmerge" />
@@ -191,6 +199,7 @@
 
     <target name="undeploy"
             description="undeploy common elements from ${jee.server.cspace}">
+        <antcall target="undeploy_nuxeo" />
         <antcall target="undeploy_aspectj" />
 		<antcall target="undeploy_spring" />
 		<antcall target="undeploy_slf4j" />
@@ -205,6 +214,13 @@
 		-->
         <delete failonerror="false" file="${jee.server.cspace}/lib/${common.jar}"/>
         <delete failonerror="false" dir="${jee.server.cspace}/cspace/config/services"/>
+    </target>
+
+    <target name="undeploy_nuxeo"
+            description="undeploy nuxeo binaries from ${jee.server.cspace}">
+        <delete>
+            <fileset dir="${jee.server.cspace}/lib" includes="nuxeo-*.jar"/>
+        </delete>
     </target>
 
     <target name="undeploy_spring"
@@ -231,7 +247,9 @@
     <target name="undeploy_slf4j"
             description="undeploy SLF4J binaries from ${jee.server.cspace}">
         <delete>
-            <fileset dir="${jee.server.cspace}/lib" includes="slf4j*.jar"/>
+            <fileset dir="${jee.server.cspace}/lib" includes="slf4j-*.jar"/>
+            <fileset dir="${jee.server.cspace}/lib" includes="log4j-*.jar"/>
+            <fileset dir="${jee.server.cspace}/lib" includes="jcl-over-slf4j-*.jar"/>
         </delete>
     </target>
 

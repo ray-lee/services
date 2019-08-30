@@ -1,5 +1,7 @@
 package org.collectionspace.services.jaxrs;
 
+import static org.nuxeo.elasticsearch.ElasticSearchConstants.ES_ENABLED_PROPERTY;
+
 import javax.servlet.ServletContextEvent;
 import javax.ws.rs.core.Response;
 
@@ -86,6 +88,12 @@ public class CSpaceResteasyBootstrap extends ResteasyBootstrap {
 	}
 
 	public void resetElasticSearchIndex() throws Exception {
+		boolean isEnabled = Boolean.parseBoolean(Framework.getProperty(ES_ENABLED_PROPERTY, "true"));
+
+		if (!isEnabled) {
+			return;
+		}
+
 		ElasticSearchComponent es = (ElasticSearchComponent) Framework.getService(ElasticSearchService.class);
 
 		for (String repositoryName : es.getRepositoryNames()) {
@@ -108,12 +116,11 @@ public class CSpaceResteasyBootstrap extends ResteasyBootstrap {
 
 				if (isElasticsearchIndexed && servicesRepoDomainName != null && servicesRepoDomainName.trim().isEmpty() == false) {
 					String repositoryName = ConfigUtils.getRepositoryName(tenantBinding, servicesRepoDomainName);
-					String docType = serviceBinding.getObject().getName();
-					String tenantQualifiedDocType = NuxeoUtils.getTenantQualifiedDocType(tenantBinding.getId(), docType);
+					String docType = NuxeoUtils.getTenantQualifiedDocType(tenantBinding.getId(), serviceBinding.getObject().getName());
 
-					logger.log(Level.INFO, String.format("%tc [INFO] Starting Elasticsearch reindexing for docType %s in repository %s", new Date(), tenantQualifiedDocType, repositoryName));
+					logger.log(Level.INFO, String.format("%tc [INFO] Starting Elasticsearch reindexing for docType %s in repository %s", new Date(), docType, repositoryName));
 
-					es.runReindexingWorker(repositoryName, String.format("SELECT ecm:uuid FROM %s", tenantQualifiedDocType));
+					es.runReindexingWorker(repositoryName, String.format("SELECT ecm:uuid FROM %s", docType));
 				}
 			}
 		}
@@ -208,7 +215,7 @@ public class CSpaceResteasyBootstrap extends ResteasyBootstrap {
 		//
 		AuthorityResource authorityResource = (AuthorityResource) resourceMap.get(serviceName.toLowerCase());
 		try {
-			response = authorityResource.get(null, null, authoritySpecifier);
+			response = authorityResource.get(null, null, null, authoritySpecifier);
 		} catch (CSWebApplicationException e) {
 			response = e.getResponse();  // If the authority doesn't exist, we expect a 404 error
 		}
