@@ -457,7 +457,7 @@
 			</service:object>
 		</tenant:serviceBindings>
 		<!-- end reports-invoke service meta-data -->
-		
+
 		<!-- begin report service meta-data -->
 		<tenant:serviceBindings id="Reports" merge:matcher="id" name="Reports" type="utility" version="1.0">
 			<!-- other URI paths through which this service could be accessed -->
@@ -947,6 +947,6 @@
 			</service:object>
 		</tenant:serviceBindings>
 
+    <tenant:elasticSearchDocumentWriter>org.collectionspace.services.nuxeo.elasticsearch.CSJsonESDocumentWriter</tenant:elasticSearchDocumentWriter>
 	</tenant:tenantBinding>
-
 </tenant:TenantBindingConfig>

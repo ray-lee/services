@@ -18,6 +18,8 @@
         <tenant:serviceBindings id="CollectionObjects" elasticsearchIndexed="true" merge:matcher="id" />
         <tenant:serviceBindings id="Materials" elasticsearchIndexed="true" merge:matcher="id" />
 
+        <tenant:elasticSearchDocumentWriter>org.collectionspace.services.nuxeo.elasticsearch.materials.MaterialsESDocumentWriter</tenant:elasticSearchDocumentWriter>
+
         <tenant:elasticSearchIndexConfig>
             <tenant:mapping>
               {
