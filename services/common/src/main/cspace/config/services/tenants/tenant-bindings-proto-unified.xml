@@ -947,6 +947,8 @@
 			</service:object>
 		</tenant:serviceBindings>
 
-    <tenant:elasticSearchDocumentWriter>org.collectionspace.services.nuxeo.elasticsearch.CSJsonESDocumentWriter</tenant:elasticSearchDocumentWriter>
+		<tenant:elasticSearchDocumentWriter>
+			org.collectionspace.services.nuxeo.elasticsearch.DefaultESDocumentWriter
+		</tenant:elasticSearchDocumentWriter>
 	</tenant:tenantBinding>
 </tenant:TenantBindingConfig>

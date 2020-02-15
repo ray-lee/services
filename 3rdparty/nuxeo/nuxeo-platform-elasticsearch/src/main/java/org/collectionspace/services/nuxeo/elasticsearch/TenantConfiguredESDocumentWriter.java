@@ -1,37 +1,27 @@
 package org.collectionspace.services.nuxeo.elasticsearch;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.commons.lang3.StringUtils;
 
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.node.TextNode;
 import org.collectionspace.services.client.CollectionSpaceClient;
 import org.collectionspace.services.common.ServiceMain;
-import org.collectionspace.services.common.api.RefNameUtils;
 import org.collectionspace.services.config.tenant.TenantBindingType;
 import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonESDocumentWriter;
-import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
-import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
-    final Logger logger = LoggerFactory.getLogger(CSJsonESDocumentWriter.class);
+/**
+ * A JsonESDocumentWriter that delegates to the class that is specified in the CSpace tenant
+ * binding file for the current tenant.
+ */
+public class TenantConfiguredESDocumentWriter extends JsonESDocumentWriter {
+    final Logger logger = LoggerFactory.getLogger(TenantConfiguredESDocumentWriter.class);
 
 	@Override
 	public void writeDoc(JsonGenerator jg, DocumentModel doc, String[] schemas,
@@ -56,26 +46,19 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
 		} catch (ClassNotFoundException e) {
 			String msg = String.format("Unable to load ES document writer for tenant %s with class %s", tenantId, documentWriterClassName);
 
-			logger.error(msg);
-			logger.trace(msg, e);
-
-			return;
+			throw new IOException(msg, e);
 		}
 
-		if (CSJsonESDocumentWriter.class.equals(documentWriterClass)) {
-			String msg = String.format("ES document writer class for tenant %s must not be CSJsonESDocumentWriter", tenantId);
+		if (TenantConfiguredESDocumentWriter.class.equals(documentWriterClass)) {
+			String msg = String.format("ES document writer class for tenant %s must not be TenantConfiguredESDocumentWriter", tenantId);
 
-			logger.error(msg);
-
-			return;
+			throw new IOException(msg);
 		}
 
 		if (!JsonESDocumentWriter.class.isAssignableFrom(documentWriterClass)) {
 			String msg = String.format("ES document writer for tenant %s of class %s is not a subclass of JsonESDocumentWriter", tenantId, documentWriterClassName);
 
-			logger.error(msg);
-
-			return;
+			throw new IOException(msg);
 		}
 
 		JsonESDocumentWriter documentWriter = null;
@@ -85,14 +68,9 @@ public class CSJsonESDocumentWriter extends JsonESDocumentWriter {
 		} catch(Exception e) {
 			String msg = String.format("Unable to instantiate ES document writer class: %s", documentWriterClassName);
 
-			logger.error(msg);
-			logger.trace(msg, e);
-
-			return;
+			throw new IOException(msg, e);
 		}
 
-		if (documentWriter != null) {
-			documentWriter.writeDoc(jg, doc, schemas, contextParameters, headers);
-		}
+		documentWriter.writeDoc(jg, doc, schemas, contextParameters, headers);
 	}
 }
