@@ -23,7 +23,7 @@
         </tenant:elasticSearchDocumentWriter>
 
         <tenant:elasticSearchIndexConfig>
-            <tenant:mapping>
+            <tenant:mapping merge:action="replace">
               {
                 // For now, don't index a field unless there's a mapping explicitly defined. This keeps the
                 // index as small as possible. We may want to turn this on in the future, to support arbitrary
@@ -119,9 +119,8 @@
                   },
 
                   "collectionspace_denorm:title": {
-                    "type": "text",
-                    "fielddata": true,
-                    "analyzer": "sorting_analyzer"
+                    "type": "keyword",
+                    "normalizer": "sorting_normalizer"
                   },
                   "collectionspace_denorm:commercialNames": {
                     "type": "text",
@@ -136,9 +135,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -180,9 +178,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       },
@@ -191,9 +188,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       },
@@ -202,9 +198,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -220,9 +215,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -234,8 +228,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "analyzer": "refname_displayname_fulltext_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -249,8 +243,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "analyzer": "refname_displayname_fulltext_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -264,8 +258,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "analyzer": "refname_displayname_fulltext_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -279,9 +273,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -292,9 +285,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -306,9 +298,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -323,9 +314,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -339,9 +329,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -355,9 +344,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -371,9 +359,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -387,9 +374,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -403,9 +389,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -419,9 +404,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -435,9 +419,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -451,9 +434,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -468,9 +450,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -484,9 +465,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -501,9 +481,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -515,9 +494,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -526,9 +504,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -537,9 +514,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -548,9 +524,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -559,9 +534,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -570,9 +544,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -581,9 +554,8 @@
                     "copy_to": "all_field",
                     "fields": {
                       "displayName": {
-                        "type": "text",
-                        "fielddata": true,
-                        "analyzer": "refname_displayname_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_displayname_normalizer"
                       }
                     }
                   },
@@ -595,9 +567,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           }
                         }
                       }
@@ -625,9 +596,8 @@
                         "copy_to": "all_field",
                         "fields": {
                           "displayName": {
-                            "type": "text",
-                            "fielddata": true,
-                            "analyzer": "refname_displayname_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_displayname_normalizer"
                           },
                           "shortid": {
                             "type": "text",
