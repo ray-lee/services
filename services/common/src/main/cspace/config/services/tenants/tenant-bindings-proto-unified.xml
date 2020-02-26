@@ -1022,6 +1022,15 @@
 							"type": "keyword",
 							"copy_to": "all_field"
 						},
+						"collectionobjects_common:titleGroupList": {
+							"type": "object",
+							"properties": {
+								"title": {
+									"type": "text",
+									"copy_to": "all_field"
+								}
+							}
+						},
 						"collectionobjects_common:objectNameList": {
 							"type": "object",
 							"properties": {
@@ -1070,6 +1079,10 @@
 								}
 							}
 						},
+						// "collectionobjects_common:objectProductionDateGroupList": {
+						// 	"type": "date_range",
+						// 	"format": "date_time"
+						// },
 						"collectionobjects_common:objectProductionPlaceGroupList": {
 							"type": "object",
 							"properties": {
