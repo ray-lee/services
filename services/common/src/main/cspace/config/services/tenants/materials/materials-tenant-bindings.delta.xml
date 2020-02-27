@@ -14,10 +14,6 @@
             </tenant:eventListenerConfig>
         </tenant:eventListenerConfigurations>
 
-        <tenant:serviceBindings id="Media" elasticsearchIndexed="true" merge:matcher="id" />
-        <tenant:serviceBindings id="CollectionObjects" elasticsearchIndexed="true" merge:matcher="id" />
-        <tenant:serviceBindings id="Materials" elasticsearchIndexed="true" merge:matcher="id" />
-
         <tenant:elasticSearchDocumentWriter merge:action="replace">
           org.collectionspace.services.nuxeo.elasticsearch.materials.MaterialsESDocumentWriter
         </tenant:elasticSearchDocumentWriter>
@@ -165,8 +161,8 @@
                     "type": "keyword",
                     "fields": {
                       "shortid": {
-                        "type": "text",
-                        "analyzer": "refname_shortid_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_shortid_normalizer"
                       }
                     }
                   },
@@ -583,8 +579,8 @@
                     "type": "keyword",
                     "fields": {
                       "shortid": {
-                        "type": "text",
-                        "analyzer": "refname_shortid_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_shortid_normalizer"
                       }
                     }
                   },
@@ -600,8 +596,8 @@
                             "normalizer": "refname_displayname_normalizer"
                           },
                           "shortid": {
-                            "type": "text",
-                            "analyzer": "refname_shortid_analyzer"
+                            "type": "keyword",
+                            "normalizer": "refname_shortid_normalizer"
                           }
                         }
                       }
@@ -612,8 +608,8 @@
                     "type": "keyword",
                     "fields": {
                       "shortid": {
-                        "type": "text",
-                        "analyzer": "refname_shortid_analyzer"
+                        "type": "keyword",
+                        "normalizer": "refname_shortid_normalizer"
                       }
                     }
                   }

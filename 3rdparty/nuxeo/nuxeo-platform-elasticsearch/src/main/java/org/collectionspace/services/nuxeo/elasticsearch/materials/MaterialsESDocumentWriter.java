@@ -290,13 +290,15 @@ public class MaterialsESDocumentWriter extends JsonESDocumentWriter {
         List<String> publishToValues = (List<String>) mediaDoc.getProperty("media_materials", "publishToList");
         boolean isPublished = false;
 
-        for (int i=0; i<publishToValues.size(); i++) {
-            String value = publishToValues.get(i);
-            String shortId = RefNameUtils.getItemShortId(value);
+        if (publishToValues != null) {
+            for (int i=0; i<publishToValues.size(); i++) {
+                String value = publishToValues.get(i);
+                String shortId = RefNameUtils.getItemShortId(value);
 
-            if (shortId.equals("all") || shortId.equals("materialorder")) {
-                isPublished = true;
-                break;
+                if (shortId.equals("all") || shortId.equals("materialorder")) {
+                    isPublished = true;
+                    break;
+                }
             }
         }
 

@@ -1007,8 +1007,8 @@
 							"type": "keyword",
 							"fields": {
 								"shortid": {
-									"type": "text",
-									"analyzer": "refname_shortid_analyzer"
+									"type": "keyword",
+									"normalizer": "refname_shortid_normalizer"
 								}
 							}
 						},
@@ -1118,8 +1118,18 @@
 								}
 							}
 						},
+
 						"media_common:blobCsid": {
 							"type": "keyword"
+						},
+						"media_common:publishToList": {
+							"type": "keyword",
+							"fields": {
+								"shortid": {
+									"type": "keyword",
+									"normalizer": "refname_shortid_normalizer"
+								}
+							}
 						}
 					}
 				}

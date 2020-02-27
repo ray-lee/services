@@ -10,29 +10,38 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonGenerator;
 import org.collectionspace.services.client.CollectionSpaceClient;
 import org.collectionspace.services.common.ServiceMain;
+import org.collectionspace.services.common.config.TenantBindingConfigReaderImpl;
+import org.collectionspace.services.common.context.ServiceBindingUtils;
+import org.collectionspace.services.config.service.ServiceBindingType;
 import org.collectionspace.services.config.tenant.TenantBindingType;
 import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonESDocumentWriter;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import javax.ws.rs.core.MediaType;
+
 /**
- * A JsonESDocumentWriter that delegates to the class that is specified in the CSpace tenant
- * binding file for the current tenant.
+ * A JsonESDocumentWriter that delegates to the class that is specified in the
+ * CSpace tenant binding file for the current tenant.
  */
 public class TenantConfiguredESDocumentWriter extends JsonESDocumentWriter {
-    final Logger logger = LoggerFactory.getLogger(TenantConfiguredESDocumentWriter.class);
+	final Logger logger = LoggerFactory.getLogger(TenantConfiguredESDocumentWriter.class);
 
 	@Override
-	public void writeDoc(JsonGenerator jg, DocumentModel doc, String[] schemas,
-			Map<String, String> contextParameters, HttpHeaders headers)
-			throws IOException {
+	public void writeDoc(JsonGenerator jg, DocumentModel doc, String[] schemas, Map<String, String> contextParameters,
+			HttpHeaders headers) throws IOException {
 
 		String tenantId = (String) doc.getProperty(CollectionSpaceClient.COLLECTIONSPACE_CORE_SCHEMA, CollectionSpaceClient.COLLECTIONSPACE_CORE_TENANTID);
-		TenantBindingType tenantBindingType = ServiceMain.getInstance().getTenantBindingConfigReader().getTenantBinding(tenantId);
+		TenantBindingConfigReaderImpl tenantBindingConfigReader = ServiceMain.getInstance().getTenantBindingConfigReader();
+		TenantBindingType tenantBindingType = tenantBindingConfigReader.getTenantBinding(tenantId);
+		ServiceBindingType serviceBinding = tenantBindingConfigReader.getServiceBindingForDocType(tenantId, doc.getType());
 		String documentWriterClassName = tenantBindingType.getElasticSearchDocumentWriter();
 
-		if (StringUtils.isBlank(documentWriterClassName)) {
+		if (!serviceBinding.isElasticsearchIndexed() || StringUtils.isBlank(documentWriterClassName)) {
+			writeEmptyDoc(jg);
 			return;
 		}
 
@@ -72,5 +81,11 @@ public class TenantConfiguredESDocumentWriter extends JsonESDocumentWriter {
 		}
 
 		documentWriter.writeDoc(jg, doc, schemas, contextParameters, headers);
+	}
+
+	private void writeEmptyDoc(JsonGenerator jg) throws IOException {
+		jg.writeStartObject();
+		jg.writeEndObject();
+		jg.flush();
 	}
 }
