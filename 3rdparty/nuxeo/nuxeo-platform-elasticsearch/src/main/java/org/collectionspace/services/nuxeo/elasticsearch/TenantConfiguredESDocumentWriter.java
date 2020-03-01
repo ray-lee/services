@@ -6,22 +6,16 @@ import java.util.Map;
 import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.codehaus.jackson.JsonGenerator;
 import org.collectionspace.services.client.CollectionSpaceClient;
 import org.collectionspace.services.common.ServiceMain;
 import org.collectionspace.services.common.config.TenantBindingConfigReaderImpl;
-import org.collectionspace.services.common.context.ServiceBindingUtils;
 import org.collectionspace.services.config.service.ServiceBindingType;
 import org.collectionspace.services.config.tenant.TenantBindingType;
 import org.nuxeo.ecm.automation.jaxrs.io.documents.JsonESDocumentWriter;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import javax.ws.rs.core.MediaType;
 
 /**
  * A JsonESDocumentWriter that delegates to the class that is specified in the

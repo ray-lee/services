@@ -1,17 +1,27 @@
 package org.collectionspace.services.nuxeo.elasticsearch;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.IntNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.node.TextNode;
 
@@ -58,6 +68,7 @@ public class DefaultESDocumentWriter extends JsonESDocumentWriter {
 			}
 
 			denormValues.putArray("mediaCsid").addAll(mediaCsids);
+			denormValues.put("hasMedia", mediaCsids.size() > 0);
 
 			// Compute the title of the record for the public browser, and store it so that it can
 			// be used for sorting ES query results.
@@ -67,6 +78,41 @@ public class DefaultESDocumentWriter extends JsonESDocumentWriter {
 			if (title != null) {
 				denormValues.put("title", title);
 			}
+
+			// Create a list of production years from the production date structured dates.
+
+			Set<Integer> years = new HashSet<Integer>();
+			List<Map<String, Object>> prodDateGroupList = (List<Map<String, Object>>) doc.getProperty("collectionobjects_common", "objectProductionDateGroupList");
+
+			for (Map<String, Object> prodDateGroup : prodDateGroupList) {
+				GregorianCalendar earliestCalendar = (GregorianCalendar) prodDateGroup.get("dateEarliestScalarValue");
+				GregorianCalendar latestCalendar = (GregorianCalendar) prodDateGroup.get("dateLatestScalarValue");
+
+				if (earliestCalendar != null && latestCalendar != null) {
+					// Grr @ latest scalar value historically being exclusive.
+					// Subtract one day to make it inclusive.
+					latestCalendar.add(Calendar.DATE, -1);
+
+					Integer earliestYear = earliestCalendar.get(Calendar.YEAR);
+					Integer latestYear = latestCalendar.get(Calendar.YEAR);;
+
+					for (int year = earliestYear; year <= latestYear; year++) {
+						years.add(year);
+					}
+				}
+			}
+
+			List<Integer> yearList = new ArrayList<Integer>(years);
+			Collections.sort(yearList);
+
+			List<JsonNode> yearNodes = new ArrayList<JsonNode>();
+
+			for (Integer year : yearList) {
+				yearNodes.add(new IntNode(year));
+			}
+
+			denormValues.putArray("prodYears").addAll(yearNodes);
+
 		}
 
 		jg.writeStartObject();

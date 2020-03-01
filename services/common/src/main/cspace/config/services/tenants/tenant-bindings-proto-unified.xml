@@ -979,7 +979,9 @@
 							"collectionobjects_common:numberOfObjects",
 							"collectionobjects_common:briefDescriptions",
 							"collectionobjects_common:measuredPartGroupList",
-							"media_common:blobCsid"
+							"collectionobjects_common:contentConcepts",
+							"media_common:blobCsid",
+							"collectionspace_denorm:prodYears"
 						]
 					},
 					"properties" : {
@@ -1017,6 +1019,12 @@
 							"type": "keyword",
 							"normalizer": "sorting_normalizer"
 						},
+						"collectionspace_denorm:hasMedia": {
+							"type": "boolean"
+						},
+						"collectionspace_denorm:prodYears": {
+							"type": "integer"
+						},
 
 						"collectionobjects_common:objectNumber": {
 							"type": "keyword",
@@ -1035,7 +1043,7 @@
 							"type": "object",
 							"properties": {
 								"objectName": {
-									"type": "text",
+									"type": "keyword",
 									"copy_to": "all_field"
 								}
 							}
@@ -1079,10 +1087,15 @@
 								}
 							}
 						},
-						// "collectionobjects_common:objectProductionDateGroupList": {
-						// 	"type": "date_range",
-						// 	"format": "date_time"
-						// },
+						"collectionobjects_common:objectProductionDateGroupList": {
+							"type": "object",
+							"properties": {
+								"dateDisplayDate": {
+									"type": "text",
+									"copy_to": "all_field"
+								}
+							}
+						},
 						"collectionobjects_common:objectProductionPlaceGroupList": {
 							"type": "object",
 							"properties": {
@@ -1108,6 +1121,16 @@
 						"collectionobjects_common:responsibleDepartments": {
 							"type": "keyword",
 							"copy_to": "all_field"
+						},
+						"collectionobjects_common:contentConcepts": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
 						},
 						"collectionobjects_common:techniqueGroupList": {
 							"type": "object",
