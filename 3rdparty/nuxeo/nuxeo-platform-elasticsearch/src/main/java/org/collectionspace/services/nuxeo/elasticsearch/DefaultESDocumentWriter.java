@@ -2,6 +2,7 @@ package org.collectionspace.services.nuxeo.elasticsearch;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.GregorianCalendar;
@@ -70,37 +71,9 @@ public class DefaultESDocumentWriter extends JsonESDocumentWriter {
 
 			// Create a list of production years from the production date structured dates.
 
-			Set<Integer> years = new HashSet<Integer>();
 			List<Map<String, Object>> prodDateGroupList = (List<Map<String, Object>>) doc.getProperty("collectionobjects_common", "objectProductionDateGroupList");
 
-			for (Map<String, Object> prodDateGroup : prodDateGroupList) {
-				GregorianCalendar earliestCalendar = (GregorianCalendar) prodDateGroup.get("dateEarliestScalarValue");
-				GregorianCalendar latestCalendar = (GregorianCalendar) prodDateGroup.get("dateLatestScalarValue");
-
-				if (earliestCalendar != null && latestCalendar != null) {
-					// Grr @ latest scalar value historically being exclusive.
-					// Subtract one day to make it inclusive.
-					latestCalendar.add(Calendar.DATE, -1);
-
-					Integer earliestYear = earliestCalendar.get(Calendar.YEAR);
-					Integer latestYear = latestCalendar.get(Calendar.YEAR);;
-
-					for (int year = earliestYear; year <= latestYear; year++) {
-						years.add(year);
-					}
-				}
-			}
-
-			List<Integer> yearList = new ArrayList<Integer>(years);
-			Collections.sort(yearList);
-
-			List<JsonNode> yearNodes = new ArrayList<JsonNode>();
-
-			for (Integer year : yearList) {
-				yearNodes.add(new IntNode(year));
-			}
-
-			denormValues.putArray("prodYears").addAll(yearNodes);
+			denormValues.putArray("prodYears").addAll(structDatesToYearNodes(prodDateGroupList));
 		}
 
 		return denormValues;
@@ -243,5 +216,44 @@ public class DefaultESDocumentWriter extends JsonESDocumentWriter {
 		}
 
 		return null;
+	}
+
+	protected List<JsonNode> structDateToYearNodes(Map<String, Object> structDate) {
+		return structDatesToYearNodes(Arrays.asList(structDate));
+	}
+
+	protected List<JsonNode> structDatesToYearNodes(List<Map<String, Object>> structDates) {
+		Set<Integer> years = new HashSet<Integer>();
+
+		for (Map<String, Object> structDate : structDates) {
+			if (structDate != null) {
+				GregorianCalendar earliestCalendar = (GregorianCalendar) structDate.get("dateEarliestScalarValue");
+				GregorianCalendar latestCalendar = (GregorianCalendar) structDate.get("dateLatestScalarValue");
+
+				if (earliestCalendar != null && latestCalendar != null) {
+					// Grr @ latest scalar value historically being exclusive.
+					// Subtract one day to make it inclusive.
+					latestCalendar.add(Calendar.DATE, -1);
+
+					Integer earliestYear = earliestCalendar.get(Calendar.YEAR);
+					Integer latestYear = latestCalendar.get(Calendar.YEAR);;
+
+					for (int year = earliestYear; year <= latestYear; year++) {
+						years.add(year);
+					}
+				}
+			}
+		}
+
+		List<Integer> yearList = new ArrayList<Integer>(years);
+		Collections.sort(yearList);
+
+		List<JsonNode> yearNodes = new ArrayList<JsonNode>();
+
+		for (Integer year : yearList) {
+			yearNodes.add(new IntNode(year));
+		}
+
+		return yearNodes;
 	}
 }
