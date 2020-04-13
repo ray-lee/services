@@ -97,27 +97,27 @@ public class DefaultESDocumentWriter extends JsonESDocumentWriter {
 	}
 
 	private void denormMediaRecords(CoreSession session, String csid, String tenantId, ObjectNode denormValues) {
-			// Store the csids of media records that are related to this object.
+		// Store the csids of media records that are related to this object.
 
-			String relatedRecordQuery = String.format("SELECT * FROM Relation WHERE relations_common:subjectCsid = '%s' AND relations_common:objectDocumentType = 'Media' AND ecm:currentLifeCycleState = 'project' AND collectionspace_core:tenantId = '%s'", csid, tenantId);
-			DocumentModelList relationDocs = session.query(relatedRecordQuery);
-			List<JsonNode> mediaCsids = new ArrayList<JsonNode>();
+		String relatedRecordQuery = String.format("SELECT * FROM Relation WHERE relations_common:subjectCsid = '%s' AND relations_common:objectDocumentType = 'Media' AND ecm:currentLifeCycleState = 'project' AND collectionspace_core:tenantId = '%s'", csid, tenantId);
+		DocumentModelList relationDocs = session.query(relatedRecordQuery);
+		List<JsonNode> mediaCsids = new ArrayList<JsonNode>();
 
-			if (relationDocs.size() > 0) {
-				Iterator<DocumentModel> iterator = relationDocs.iterator();
+		if (relationDocs.size() > 0) {
+			Iterator<DocumentModel> iterator = relationDocs.iterator();
 
-				while (iterator.hasNext()) {
-					DocumentModel relationDoc = iterator.next();
-					String mediaCsid = (String) relationDoc.getProperty("relations_common", "objectCsid");
+			while (iterator.hasNext()) {
+				DocumentModel relationDoc = iterator.next();
+				String mediaCsid = (String) relationDoc.getProperty("relations_common", "objectCsid");
 
-					if (isMediaPublished(session, tenantId, mediaCsid)) {
-						mediaCsids.add(new TextNode(mediaCsid));
-					}
+				if (isMediaPublished(session, tenantId, mediaCsid)) {
+					mediaCsids.add(new TextNode(mediaCsid));
 				}
 			}
+		}
 
-			denormValues.putArray("mediaCsid").addAll(mediaCsids);
-			denormValues.put("hasMedia", mediaCsids.size() > 0);
+		denormValues.putArray("mediaCsid").addAll(mediaCsids);
+		denormValues.put("hasMedia", mediaCsids.size() > 0);
 	}
 
 	private void denormAcquisitionRecords(CoreSession session, String csid, String tenantId, ObjectNode denormValues) {

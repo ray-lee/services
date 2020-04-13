@@ -29,6 +29,12 @@ public class TenantConfiguredESDocumentWriter extends JsonESDocumentWriter {
 			HttpHeaders headers) throws IOException {
 
 		String tenantId = (String) doc.getProperty(CollectionSpaceClient.COLLECTIONSPACE_CORE_SCHEMA, CollectionSpaceClient.COLLECTIONSPACE_CORE_TENANTID);
+
+		if (tenantId == null) {
+			writeEmptyDoc(jg);
+			return;
+		}
+
 		TenantBindingConfigReaderImpl tenantBindingConfigReader = ServiceMain.getInstance().getTenantBindingConfigReader();
 		TenantBindingType tenantBindingType = tenantBindingConfigReader.getTenantBinding(tenantId);
 		ServiceBindingType serviceBinding = tenantBindingConfigReader.getServiceBindingForDocType(tenantId, doc.getType());
