@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>org.collectionspace.services.account</artifactId>
 		<groupId>org.collectionspace.services</groupId>
-		<version>5.2</version>
+		<version>${revision}</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -27,12 +27,9 @@
 		</dependency>
 		<!-- External dependencies -->
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
+			<version>${postgres.driver.version}</version>			
 		</dependency>
 		<!-- CollectionSpace dependencies -->
 		<dependency>
@@ -75,20 +72,11 @@
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>properties-maven-plugin</artifactId>
-						<version>1.0-alpha-2</version>
-						<executions>
-							<execution>
-								<phase>initialize</phase>
-								<goals>
-									<goal>read-project-properties</goal>
-								</goals>
-								<configuration>
-									<files>
-										<file>${basedir}/../../../build.properties</file>
-									</files>
-								</configuration>
-							</execution>
-						</executions>
+						<configuration>
+							<files>
+								<file>../../../build.properties</file>
+							</files>
+						</configuration>
 					</plugin>
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
@@ -121,12 +109,9 @@
 						</configuration>
 						<dependencies>
 							<dependency>
-								<groupId>mysql</groupId>
-								<artifactId>mysql-connector-java</artifactId>
-							</dependency>
-							<dependency>
 								<groupId>org.postgresql</groupId>
 								<artifactId>postgresql</artifactId>
+								<version>${postgres.driver.version}</version>
 							</dependency>
 						</dependencies>
 					</plugin>

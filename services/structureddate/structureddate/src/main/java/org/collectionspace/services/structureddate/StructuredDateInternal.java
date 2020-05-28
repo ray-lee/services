@@ -5,28 +5,23 @@ import org.collectionspace.services.structureddate.antlr.ANTLRStructuredDateEval
 
 
 /**
- * A CollectionSpace structured date. 
+ * A CollectionSpace structured date.
  */
 public class StructuredDateInternal {
-	// The UI layer is interpreting scalarValuesComputed as follows:
-	//  - If true, the UI should compute scalar values
-	//  - If false (or null), the UI should not compute scalar values
-	// Given that interpretation, scalarValuesComputed should default
-	// to true.
-	public static final boolean DEFAULT_SCALAR_VALUES_COMPUTED = true;
-	
+	public static final boolean DEFAULT_SCALAR_VALUES_COMPUTED = false;
+
 	private String displayDate;
 	private String note;
 	private String association;
 	private String period;
-	
+
 	private Date earliestSingleDate;
 	private Date latestDate;
-	
-	private String earliestScalarDate;
-	private String latestScalarDate;
+
+	private String earliestScalarValue;
+	private String latestScalarValue;
 	private Boolean scalarValuesComputed;
-		
+
 	public StructuredDateInternal() {
 		scalarValuesComputed = DEFAULT_SCALAR_VALUES_COMPUTED;
 	}
@@ -38,41 +33,47 @@ public class StructuredDateInternal {
 			"\tnote:        " + getNote() + "\n" +
 			"\tassociation: " + getAssociation() + "\n" +
 			"\tperiod:      " + getPeriod() + "\n";
-		
+
 		if (getEarliestSingleDate() != null) {
-			string += 
+			string +=
 				"\n" +
 				"\tearliestSingleDate: \n" +
 				getEarliestSingleDate().toString() + "\n";
 		}
-		
+
 		if (getLatestDate() != null) {
-			string += 
+			string +=
 				"\n" +
 				"\tlatestDate: \n" +
 				getLatestDate().toString() + "\n";
 		}
-		
+
+		string +=
+			"\n" +
+			"\tearliestScalarValue: " + getEarliestScalarValue() + "\n" +
+			"\tlatestScalarValue: " + getLatestScalarValue() + "\n" +
+			"\tscalarValuesComputed: " + areScalarValuesComputed() + "\n";
+
 		return string;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) { 
+		if (obj == null) {
 			return false;
 		}
-		
+
 		if (obj == this) {
 			return true;
 		}
-		
+
 		if (obj.getClass() != getClass()) {
 			return false;
 		}
-		
+
 		StructuredDateInternal that = (StructuredDateInternal) obj;
 
-		return 
+		return
 			new EqualsBuilder()
 				.append(this.getDisplayDate(), that.getDisplayDate())
 				.append(this.getAssociation(), that.getAssociation())
@@ -80,86 +81,133 @@ public class StructuredDateInternal {
 				.append(this.getPeriod(), that.getPeriod())
 				.append(this.getEarliestSingleDate(), that.getEarliestSingleDate())
 				.append(this.getLatestDate(), that.getLatestDate())
+				// .append(this.getEarliestScalarValue(), that.getEarliestScalarValue())
+				// .append(this.getLatestScalarValue(), that.getLatestScalarValue())
 				.append(this.areScalarValuesComputed(), that.areScalarValuesComputed())
 				.isEquals();
 	}
-	
-	public void computeScalarValues() {
+
+	private String computeEarliestScalarValue() {
 		Date earliestDate = getEarliestSingleDate();
-		Date latestDate = getLatestDate();
-		
-		if (earliestDate == null && latestDate == null) {
-			setEarliestScalarDate(null);
-			setLatestScalarDate(null);
-			
-			return;
+
+		Integer year = null;
+		Integer month = null;
+		Integer day = null;
+		Era era = null;
+
+		if (earliestDate != null) {
+			year = earliestDate.getYear();
+			month = earliestDate.getMonth();
+			day = earliestDate.getDay();
+			era = earliestDate.getEra();
 		}
-		
-		if (earliestDate == null) {
-			earliestDate = latestDate.copy();
+
+		if (year == null && month == null && day == null) {
+			return null;
 		}
-		else {
-			earliestDate = earliestDate.copy();
-		}
-		
-		if (latestDate == null) {
-			latestDate = earliestDate.copy();
-		}
-		else {
-			latestDate = latestDate.copy();
-		}
-		
-		if (earliestDate.getYear() == null || latestDate.getYear() == null) {
-			// The dates must at least specify a year.
+
+		if (year == null) {
+			// The date must at least specify a year.
 			throw new InvalidDateException("year must not be null");
 		}
-		
-		if (earliestDate.getDay() != null && earliestDate.getMonth() == null) {
+
+		if (day != null && month == null) {
 			// If a day is specified, the month must be specified.
 			throw new InvalidDateException("month may not be null when day is not null");
 		}
 
-		if (latestDate.getDay() != null && latestDate.getMonth() == null) {
+		if (era == null) {
+			era = Date.DEFAULT_ERA;
+		}
+
+		if (month == null) {
+			month = 1;
+			day = 1;
+		}
+
+		if (day == null) {
+			day = 1;
+		}
+
+		Date date = new Date(year, month, day, era);
+
+		return DateUtils.formatEarliestScalarValue(date);
+	}
+
+	private String computeLatestScalarValue() {
+		Date latestDate = getLatestDate();
+
+		Integer year = null;
+		Integer month = null;
+		Integer day = null;
+		Era era = null;
+
+		if (latestDate != null) {
+			year = latestDate.getYear();
+			month = latestDate.getMonth();
+			day = latestDate.getDay();
+			era = latestDate.getEra();
+		}
+
+		if (year == null && month == null && day == null) {
+			// No latest date parts are specified. Inherit year, month, and day from earliest/single.
+
+			Date earliestDate = getEarliestSingleDate();
+
+			// TODO: What if no date parts are specified, but the era/certainty/qualifier is different than
+			// the earliest/single?
+
+			if (earliestDate != null) {
+				year = earliestDate.getYear();
+				month = earliestDate.getMonth();
+				day = earliestDate.getDay();
+			}
+		}
+
+		if (year == null && month == null && day == null) {
+			return null;
+		}
+
+		if (year == null) {
+			// The date must at least specify a year.
+			throw new InvalidDateException("year must not be null");
+		}
+
+		if (day != null && month == null) {
 			// If a day is specified, the month must be specified.
 			throw new InvalidDateException("month may not be null when day is not null");
 		}
-		
-		if (earliestDate.getEra() == null) {
-			earliestDate.setEra(Date.DEFAULT_ERA);
+
+		if (era == null) {
+			era = Date.DEFAULT_ERA;
 		}
-		
-		if (latestDate.getEra() == null) {
-			latestDate.setEra(Date.DEFAULT_ERA);
+
+		if (month == null) {
+			month = 12;
+			month = 31;
 		}
-		
-		if (earliestDate.getMonth() == null) {
-			earliestDate.setMonth(1);
-			earliestDate.setDay(1);
+
+		if (day == null) {
+			day = DateUtils.getDaysInMonth(month, year, era);
 		}
-		
-		if (latestDate.getMonth() == null) {
-			latestDate.setMonth(12);
-			latestDate.setDay(31);
-		}
-		
-		if (earliestDate.getDay() == null) {
-			earliestDate.setDay(1);
-		}
-		
-		if (latestDate.getDay() == null) {
-			latestDate.setDay(DateUtils.getDaysInMonth(latestDate.getMonth(), latestDate.getYear(), latestDate.getEra()));
-		}
-		
-		// Add one day to the latest day, since that's what the UI does.
-		// DateUtils.addDays(latestDate, 1);
-		
-		setEarliestScalarDate(DateUtils.getEarliestTimestamp(earliestDate));
-		setLatestScalarDate(DateUtils.getLatestTimestamp(latestDate));
+
+		Date date = new Date(year, month, day, era);
+
+		// Add one day to the latest day, since that's what the UI has historically (*sigh*) done.
+		DateUtils.addDays(date, 1);
+
+		return DateUtils.formatLatestScalarValue(date);
 	}
-	
+
+	public void computeScalarValues() {
+		setEarliestScalarValue(computeEarliestScalarValue());
+		setLatestScalarValue(computeLatestScalarValue());
+		setScalarValuesComputed(true);
+	}
+
 	public static StructuredDateInternal parse(String displayDate) throws StructuredDateFormatException {
 		StructuredDateEvaluator evaluator = new ANTLRStructuredDateEvaluator();
-		
+
 		return evaluator.evaluate(displayDate);
 	}
 
@@ -210,29 +258,29 @@ public class StructuredDateInternal {
 	public void setLatestDate(Date latestDate) {
 		this.latestDate = latestDate;
 	}
-		
+
 	public boolean isRange() {
 		return (getLatestDate() != null);
 	}
 
-	public String getEarliestScalarDate() {
-		return earliestScalarDate;
+	public String getEarliestScalarValue() {
+		return earliestScalarValue;
 	}
 
-	public void setEarliestScalarDate(String earliestScalarDate) {
-		this.earliestScalarDate = earliestScalarDate;
+	public void setEarliestScalarValue(String earliestScalarValue) {
+		this.earliestScalarValue = earliestScalarValue;
 	}
 
 	public Boolean areScalarValuesComputed() {
 		return scalarValuesComputed;
 	}
 
-	public String getLatestScalarDate() {
-		return latestScalarDate;
+	public String getLatestScalarValue() {
+		return latestScalarValue;
 	}
 
-	public void setLatestScalarDate(String latestScalarDate) {
-		this.latestScalarDate = latestScalarDate;
+	public void setLatestScalarValue(String latestScalarValue) {
+		this.latestScalarValue = latestScalarValue;
 	}
 
 	public void setScalarValuesComputed(Boolean scalarValuesComputed) {

@@ -6,11 +6,16 @@ package org.collectionspace.services.common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.InputStream;
+import java.math.BigInteger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import javax.naming.NamingException;
 import javax.servlet.ServletContext;
@@ -55,7 +60,9 @@ import org.collectionspace.services.nuxeo.listener.CSEventListener;
 import org.collectionspace.services.nuxeo.listener.AbstractCSEventListenerImpl;
 
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
+import org.dom4j.Attribute;
 import org.dom4j.Document;
+import org.dom4j.tree.DefaultElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +72,14 @@ import org.slf4j.LoggerFactory;
  * @author
  */
 public class ServiceMain {
+	final static Logger logger = LoggerFactory.getLogger(ServiceMain.class);
 
-    final static Logger logger = LoggerFactory.getLogger(ServiceMain.class);
+	public static final String VER_DISPLAY_NAME = "CollectionSpace Services v6.0";
+	public static final String VER_MAJOR = "6";
+	public static final String VER_MINOR = "0";
+	public static final String VER_PATCH = "0";
+	public static final String VER_BUILD = "1";
+
 	private static final int PRIMARY_REPOSITORY_DOMAIN = 0;
 
     /**
@@ -438,6 +451,226 @@ public class ServiceMain {
         }
     }
 
+	private String applyRepositoryUpgradeScripts(Connection conn, String dataSourceName, String repositoryName, String fromVersion, String stage) throws Exception {
+		Map<String, List<File>> upgradeScriptFiles = getRepositoryUpgradeScripts(dataSourceName, repositoryName, fromVersion, stage);
+		Set<String> versions = upgradeScriptFiles.keySet();
+
+		String upgradedToVersion = null;
+
+		if (versions.size() > 0) {
+			for (String version : versions) {
+				logger.info(String.format("upgrading %s repository to version %s", repositoryName, version));
+
+				List<File> scriptFiles =  upgradeScriptFiles.get(version);
+
+				for (File file : scriptFiles) {
+					if (file.getName().endsWith(".sql")) {
+						logger.info(String.format("Running %s", file.getName()));
+
+						JDBCTools.runScript(conn, file);
+					}
+				}
+
+				upgradedToVersion = version;
+			}
+		}
+
+		return upgradedToVersion;
+	}
+
+	private void upgradeRepository(String dataSourceName, String repositoryName, String cspaceInstanceId) throws Exception {
+		// Install the uuid-ossp extension so that the uuid_generate_v4 function will be available to
+		// upgrade scripts.
+
+		try {
+			JDBCTools.executeUpdate(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId, "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"");
+		}
+		catch(Exception e) {
+			logger.warn("Could not install uuid-ossp postgresql extension. Database upgrades may fail without this extension. On some platforms you may need to manually install this extension as a superuser.");
+		}
+
+		String stage = "post-init";
+		Connection conn = null;
+
+		try {
+			conn = JDBCTools.getConnection(dataSourceName, repositoryName, cspaceInstanceId);
+
+			conn.setAutoCommit(false);
+
+			String version = JDBCTools.getRepositoryDatabaseVersion(conn);
+
+			logger.info(String.format("%s repository current version is %s", repositoryName, version));
+
+			String upgradedToVersion = applyRepositoryUpgradeScripts(conn, dataSourceName, repositoryName, version, stage);
+
+			if (upgradedToVersion != null) {
+				logger.info(String.format("%s repository upgraded to version %s", repositoryName, upgradedToVersion));
+
+				JDBCTools.setRepositoryDatabaseVersion(conn, upgradedToVersion);
+			}
+
+			conn.commit();
+		}
+		catch (Exception e) {
+			logger.error(String.format("Could not upgrade %s repository", repositoryName));
+			logger.error(e.toString());
+
+			if (conn != null) {
+				conn.rollback();
+			}
+		}
+		finally {
+			if (conn != null) {
+				conn.close();
+			}
+		}
+	}
+
+	void upgradeDatabase() throws Exception {
+		Hashtable<String, TenantBindingType> tenantBindingTypeMap = tenantBindingConfigReader.getTenantBindings();
+
+		// Loop through all tenants in tenant-bindings.xml
+
+		String cspaceInstanceId = getCspaceInstanceId();
+
+		for (TenantBindingType tbt : tenantBindingTypeMap.values()) {
+			List<String> repositoryNameList = ConfigUtils.getRepositoryNameList(tbt);
+
+			if (repositoryNameList != null && repositoryNameList.isEmpty() == false) {
+				// Loop through each repo/DB defined in a tenant bindings file
+
+				for (String repositoryName : repositoryNameList) {
+					upgradeRepository(JDBCTools.NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId);
+				}
+			} else {
+				String errMsg = "repositoryNameList was empty or null.";
+
+				logger.error(errMsg);
+
+				throw new Exception(errMsg);
+			}
+		}
+	}
+
+	public static Map<String, List<File>> getRepositoryUpgradeScripts(String dataSourceName, String repositoryName, String fromVersion, String stage) throws Exception {
+		Map<String, List<File>> upgradeScriptFiles = new LinkedHashMap<>();
+
+		Path upgradesPath = Paths.get(
+			ServiceMain.getInstance().getServerRootDir(),
+			JEEServerDeployment.DATABASE_SCRIPTS_DIR_PATH,
+			JDBCTools.getDatabaseProductType(dataSourceName, repositoryName).toString(),
+			"upgrade"
+		);
+
+		File upgradesDirectory = upgradesPath.toFile();
+
+		if (!upgradesDirectory.isDirectory() || !upgradesDirectory.canRead()) {
+			return upgradeScriptFiles;
+		}
+
+		File[] upgradesDirectoryFiles = upgradesDirectory.listFiles();
+		List<File> versionDirectories = new ArrayList<>();
+		VersionComparator versionComparator = new VersionComparator();
+
+		for (File file : upgradesDirectoryFiles) {
+			if (
+				file.isDirectory()
+				&& file.canRead()
+				&& file.getName().matches("^\\d+\\.\\d+(\\.\\d+)?$")
+				&& versionComparator.compare(fromVersion, file.getName()) < 0
+			) {
+				versionDirectories.add(file);
+			}
+		}
+
+		versionDirectories.sort(new VersionFileNameComparator());
+
+		for (File versionDir : versionDirectories) {
+			Path versionStagePath = versionDir.toPath().resolve(stage);
+			File versionStageDirectory = versionStagePath.toFile();
+
+			if (versionStageDirectory.isDirectory()) {
+				File[] versionStageFiles = versionStageDirectory.listFiles();
+
+				Arrays.sort(versionStageFiles);
+
+				List<File> scriptFiles = new ArrayList<>();
+
+				for (File file : versionStageFiles) {
+					if (
+						file.isFile()
+						&& file.canRead()
+					) {
+						scriptFiles.add(file);
+					}
+				}
+
+				if (scriptFiles.size() > 0) {
+					upgradeScriptFiles.put(versionDir.getName(), scriptFiles);
+				}
+			}
+		}
+
+		return upgradeScriptFiles;
+	}
+
+	/**
+	 * From https://dzone.com/articles/semantically-ordering-versioned-file-names-in-java
+	 */
+	public static class VersionComparator implements Comparator<String> {
+		private static final Pattern NUMBERS = Pattern.compile("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+
+		@Override
+		public final int compare(String o1, String o2) {
+			// Optional "NULLS LAST" semantics:
+			if (o1 == null || o2 == null) {
+				return o1 == null ? o2 == null ? 0 : -1 : 1;
+			}
+
+			// Splitting both input strings by the above patterns
+			String[] split1 = NUMBERS.split(o1);
+			String[] split2 = NUMBERS.split(o2);
+			int length = Math.min(split1.length, split2.length);
+
+			// Looping over the individual segments
+			for (int i = 0; i < length; i++) {
+				char c1 = split1[i].charAt(0);
+				char c2 = split2[i].charAt(0);
+				int cmp = 0;
+
+				// If both segments start with a digit, sort them
+				// numerically using BigInteger to stay safe
+				if (c1 >= '0' && c1 <= '9' && c2 >= 0 && c2 <= '9')
+					cmp = new BigInteger(split1[i]).compareTo(
+							new BigInteger(split2[i]));
+
+				// If we haven't sorted numerically before, or if
+				// numeric sorting yielded equality (e.g 007 and 7)
+				// then sort lexicographically
+				if (cmp == 0)
+					cmp = split1[i].compareTo(split2[i]);
+
+				// Abort once some prefix has unequal ordering
+				if (cmp != 0)
+					return cmp;
+			}
+
+			// If we reach this, then both strings have equally
+			// ordered prefixes, but maybe one string is longer than
+			// the other (i.e. has more segments)
+			return split1.length - split2.length;
+		}
+	}
+
+	public static class VersionFileNameComparator implements Comparator<File> {
+		private final VersionComparator versionComparator = new VersionComparator();
+
+		@Override
+		public final int compare(File o1, File o2) {
+			return versionComparator.compare(o1.getName(), o2.getName());
+		}
+	}
+
 	/**
 	 * Create required indexes (aka indices) in database tables not associated
 	 * with any specific tenant.
@@ -667,90 +900,92 @@ public class ServiceMain {
     	}
 
     	return result;
-    }
-    /*
-     * Look through the tenant bindings and create the required Nuxeo databases -each tenant can declare
-     * their own Nuxeo repository/database.
-	 * Get the NuxeoDS info and create the necessary databases.
-	 * Consider the tenant bindings to find and get the data sources for each tenant.
-	 * There may be only one, one per tenant, or something in between.
-     *
-     */
-    private HashSet<String> createNuxeoDatabases() throws Exception {
-        String nuxeoUser = getBasicDataSourceUsername(JDBCTools.NUXEO_DATASOURCE_NAME);
-    	String nuxeoPW = getBasicDataSourcePassword(JDBCTools.NUXEO_DATASOURCE_NAME);
+	}
 
-        String readerUser = getBasicDataSourceUsername(JDBCTools.NUXEO_READER_DATASOURCE_NAME);
-    	String readerPW = getBasicDataSourcePassword(JDBCTools.NUXEO_READER_DATASOURCE_NAME);
+	/*
+		* Look through the tenant bindings and create the required Nuxeo databases -each tenant can declare
+		* their own Nuxeo repository/database.
+		* Get the NuxeoDS info and create the necessary databases.
+		* Consider the tenant bindings to find and get the data sources for each tenant.
+		* There may be only one, one per tenant, or something in between.
+		*
+		*/
+	private HashSet<String> createNuxeoDatabases() throws Exception {
+		String nuxeoUser = getBasicDataSourceUsername(JDBCTools.NUXEO_DATASOURCE_NAME);
+		String nuxeoPW = getBasicDataSourcePassword(JDBCTools.NUXEO_DATASOURCE_NAME);
 
-    	DatabaseProductType dbType = JDBCTools.getDatabaseProductType(JDBCTools.CSADMIN_DATASOURCE_NAME,
-    			getServiceConfig().getDbCsadminName());
+		String readerUser = getBasicDataSourceUsername(JDBCTools.NUXEO_READER_DATASOURCE_NAME);
+		String readerPW = getBasicDataSourcePassword(JDBCTools.NUXEO_READER_DATASOURCE_NAME);
 
-    	Hashtable<String, TenantBindingType> tenantBindings =
-    			tenantBindingConfigReader.getTenantBindings();
-    	HashSet<String> nuxeoDBsChecked = new HashSet<String>();
+		DatabaseProductType dbType = JDBCTools.getDatabaseProductType(JDBCTools.CSADMIN_DATASOURCE_NAME,
+				getServiceConfig().getDbCsadminName());
 
-        // First check and create the roles as needed. (nuxeo and reader)
-        for (TenantBindingType tenantBinding : tenantBindings.values()) {
-            String tId = tenantBinding.getId();
-            String tName = tenantBinding.getName();
+		Hashtable<String, TenantBindingType> tenantBindings =
+				tenantBindingConfigReader.getTenantBindings();
+		HashSet<String> nuxeoDBsChecked = new HashSet<String>();
 
-            List<RepositoryDomainType> repoDomainList = tenantBinding.getRepositoryDomain();
-            for (RepositoryDomainType repoDomain : repoDomainList) {
-                String repoDomainName = repoDomain.getName();
-                String repositoryName = repoDomain.getRepositoryName();
-                String cspaceInstanceId = getCspaceInstanceId();
-                String dbName = JDBCTools.getDatabaseName(repositoryName, cspaceInstanceId);
-                if (nuxeoDBsChecked.contains(dbName)) {
-                    if (logger.isDebugEnabled()) {
-                            logger.debug("Another user of db: " + dbName + ": Repo: " + repoDomainName
-                                            + " and tenant: " + tName + " (id:" + tId + ")");
-                    }
-                } else {
-                    if (logger.isDebugEnabled()) {
-                            logger.debug("Need to prepare db: " + dbName + " for Repo: " + repoDomainName
-                                            + " and tenant: " + tName + " (id:" + tId + ")");
-                    }
-                    boolean dbExists = JDBCTools.hasDatabase(dbType, dbName);
-                    if (dbExists) {
-                        if (logger.isDebugEnabled()) {
-                                logger.debug("Database: " + dbName + " already exists.");
-                        }
-                    } else {
-                        // Create the user as needed
-                        JDBCTools.createNewDatabaseUser(JDBCTools.CSADMIN_DATASOURCE_NAME, repositoryName, cspaceInstanceId, dbType, nuxeoUser, nuxeoPW);
-                        if (readerUser != null) {
-                            JDBCTools.createNewDatabaseUser(JDBCTools.CSADMIN_DATASOURCE_NAME, repositoryName, cspaceInstanceId, dbType, readerUser, readerPW);
-                        }
-                        // Create the database
-                        createDatabaseWithRights(dbType, dbName, nuxeoUser, nuxeoPW, readerUser, readerPW);
-                    }
-                    nuxeoDBsChecked.add(dbName);
-                }
-            } // Loop on repos for tenant
-        } // Loop on tenants
+		// First check and create the roles as needed. (nuxeo and reader)
+		for (TenantBindingType tenantBinding : tenantBindings.values()) {
+			String tId = tenantBinding.getId();
+			String tName = tenantBinding.getName();
 
-        return nuxeoDBsChecked;
+			List<RepositoryDomainType> repoDomainList = tenantBinding.getRepositoryDomain();
+			for (RepositoryDomainType repoDomain : repoDomainList) {
+				String repoDomainName = repoDomain.getName();
+				String repositoryName = repoDomain.getRepositoryName();
+				String cspaceInstanceId = getCspaceInstanceId();
+				String dbName = JDBCTools.getDatabaseName(repositoryName, cspaceInstanceId);
+				if (nuxeoDBsChecked.contains(dbName)) {
+					if (logger.isDebugEnabled()) {
+							logger.debug("Another user of db: " + dbName + ": Repo: " + repoDomainName
+											+ " and tenant: " + tName + " (id:" + tId + ")");
+					}
+				} else {
+					if (logger.isDebugEnabled()) {
+							logger.debug("Need to prepare db: " + dbName + " for Repo: " + repoDomainName
+											+ " and tenant: " + tName + " (id:" + tId + ")");
+					}
+					boolean dbExists = JDBCTools.hasDatabase(dbType, dbName);
+					if (dbExists) {
+						if (logger.isDebugEnabled()) {
+								logger.debug("Database: " + dbName + " already exists.");
+						}
+					} else {
+						// Create the user as needed
+						JDBCTools.createNewDatabaseUser(JDBCTools.CSADMIN_DATASOURCE_NAME, repositoryName, cspaceInstanceId, dbType, nuxeoUser, nuxeoPW);
+						if (readerUser != null) {
+							JDBCTools.createNewDatabaseUser(JDBCTools.CSADMIN_DATASOURCE_NAME, repositoryName, cspaceInstanceId, dbType, readerUser, readerPW);
+						}
+						// Create the database
+						createDatabaseWithRights(dbType, dbName, nuxeoUser, nuxeoPW, readerUser, readerPW);
+						initRepositoryDatabaseVersion(JDBCTools.NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId);
+					}
+					nuxeoDBsChecked.add(dbName);
+				}
+			} // Loop on repos for tenant
+		} // Loop on tenants
 
-    }
+		return nuxeoDBsChecked;
 
-        /**
-         * Creates a Nuxeo-managed database, sets up an owner for that
-         * database, and adds (at least) connection privileges to a reader
-         * of that database.
-         *
-         * @param conn
-         * @param dbType
-         * @param dbName
-         * @param ownerName
-         * @param ownerPW
-         * @param readerName
-         * @param readerPW
-         * @throws Exception
-         */
+	}
+
+	/**
+	 * Creates a Nuxeo-managed database, sets up an owner for that
+	 * database, and adds (at least) connection privileges to a reader
+	 * of that database.
+	 *
+	 * @param conn
+	 * @param dbType
+	 * @param dbName
+	 * @param ownerName
+	 * @param ownerPW
+	 * @param readerName
+	 * @param readerPW
+	 * @throws Exception
+	 */
 	private void createDatabaseWithRights(DatabaseProductType dbType, String dbName, String ownerName,
 			String ownerPW, String readerName, String readerPW) throws Exception {
-                Connection conn = null;
+		Connection conn = null;
 		Statement stmt = null;
 		try {
 			DataSource csadminDataSource = JDBCTools.getDataSource(JDBCTools.CSADMIN_DATASOURCE_NAME);
@@ -800,14 +1035,29 @@ public class ServiceMain {
 				if (stmt != null) {
 					stmt.close();
 				}
-                                if (conn != null) {
-                                        conn.close();
-                                }
+				if (conn != null) {
+					conn.close();
+				}
 			} catch (SQLException se) {
 				se.printStackTrace();
 			}
 		}
+	}
 
+	private void initRepositoryDatabaseVersion(String dataSourceName, String repositoryName, String cspaceInstanceId) throws Exception {
+		String version = ServiceMain.VER_MAJOR + "." + ServiceMain.VER_MINOR + "." + ServiceMain.VER_PATCH;
+		Connection conn = null;
+
+		try {
+			conn = JDBCTools.getConnection(dataSourceName, repositoryName, cspaceInstanceId);
+
+			JDBCTools.setRepositoryDatabaseVersion(conn, version);
+		}
+		finally {
+			if (conn != null) {
+				conn.close();
+			}
+		}
 	}
 
         private BasicDataSource getBasicDataSource(String dataSourceName) {
@@ -1001,6 +1251,11 @@ public class ServiceMain {
 			logger.info(String.format("Using prototype Nuxeo server configuration file at path %s",
 					prototypeNuxeoDatasourceFile.getAbsolutePath()));
 		}
+		
+		//
+		// If multiple active tenants, set the "default" repository for Nuxeo services to use.
+		//
+		setDefaultNuxeoRepository();
 
 		//
 		// For each tenant config we find, create the xml datasource config file and fill in the correct values.
@@ -1030,7 +1285,7 @@ public class ServiceMain {
 					datasourceConfigDoc = (Document) prototypeConfigDoc.clone();
 					// Update this config file by inserting values pertinent to the
 					// current repository.
-					datasourceConfigDoc = updateRepositoryDatasourceDoc(datasourceConfigDoc, repositoryName, this.getCspaceInstanceId());
+					datasourceConfigDoc = updateRepositoryDatasourceDoc(datasourceConfigDoc, repositoryName, tbt.getRepositoryDomain(), this.getCspaceInstanceId());
 					logger.debug("Updated Nuxeo datasource config file contents=\n" + datasourceConfigDoc.asXML());
 
 					// Write this config file to the Nuxeo server config directory.
@@ -1040,6 +1295,137 @@ public class ServiceMain {
 					XmlTools.xmlDocumentToFile(datasourceConfigDoc, repofile);
 				}
 			}
+		}
+	}
+
+	private boolean isImpliedDefaultRepository(RepositoryDomainType repositoryDomain) {
+		boolean result = false;
+
+		String repoName = repositoryDomain.getRepositoryName();
+		if (repoName == null || repoName.equals(ConfigUtils.DEFAULT_NUXEO_REPOSITORY_NAME)) {
+			result = true;
+		}
+
+		return result;
+	}
+
+	private void setDefaultNuxeoRepository() throws Exception {
+		boolean moreThanOne = false;
+		boolean defaultIsSet = false;
+		String defaultRepositoryName = null;
+		
+		Hashtable<String, TenantBindingType> tenantBindingTypeMap = tenantBindingConfigReader.getTenantBindings();
+		
+		//
+		// Ensure we have at least one tenant binding and at least one corresponding repository domain 
+		//
+		if (tenantBindingTypeMap.values().size() == 0) {
+			String msg = "At least one tenant binding must be configured.";
+			throw new Exception(msg);
+		}
+		
+		//
+		// If we have just one tenant, make its (or one of its) repository domain(s) the default one.
+		//
+		if (tenantBindingTypeMap.values().size() == 1) {
+			TenantBindingType tbt = (TenantBindingType) tenantBindingTypeMap.values().toArray()[0];
+			List<RepositoryDomainType> repositoryDomainList = tbt.getRepositoryDomain();
+			for (RepositoryDomainType repositoryDomain : repositoryDomainList) {
+    			if (repositoryDomain.isDefaultRepository() && defaultIsSet == false) {
+    				defaultIsSet = true;
+    				defaultRepositoryName = repositoryDomain.getRepositoryName();
+    			} else if (repositoryDomain.isDefaultRepository() && defaultIsSet == true) {
+    				moreThanOne = true;
+    				String msg = String.format("The tenant '%s' configuration is declaring '%s' the default repository.  However, '%s' is already the default repository.  Please ensure only one tenant is configured to be the default repository.",
+    						tbt.getName(), repositoryDomain.getRepositoryName(), defaultRepositoryName);
+    				logger.error(msg);
+    			}
+			}
+			
+			if (moreThanOne == true) {
+				String msg = String.format("The tenant '%s' has more than one repository domain configured to be the default.  Please configure only one default repository.", 
+						tbt.getName());
+				throw new Exception(msg);
+			}
+			
+			//
+			// If the only active tenant is not explicitly configuring a repository domain as default, do so now.
+			//
+			if (defaultIsSet == false) {
+				RepositoryDomainType repositoryDomain = repositoryDomainList.get(0);
+				repositoryDomain.setDefaultRepository(Boolean.TRUE);
+				defaultIsSet = true;
+				defaultRepositoryName = repositoryDomain.getRepositoryName();
+			}
+			
+			if (logger.isDebugEnabled()) {
+				String msg = String.format("The tenant '%s' has configured the default repository to be '%s'.", 
+						tbt.getName(), defaultRepositoryName);
+				logger.debug(msg);
+			}
+			
+			return;
+		}
+		
+		//
+		// If we have multiple tenants, figure out which one is declaring the default repository.
+		//
+		for (TenantBindingType tbt : tenantBindingTypeMap.values()) {
+			List<RepositoryDomainType> repositoryDomainList = tbt.getRepositoryDomain();
+			for (RepositoryDomainType repositoryDomain : repositoryDomainList) {
+    			if (repositoryDomain.isDefaultRepository() && defaultIsSet == false) {
+    				repositoryDomain.setDefaultRepository(Boolean.TRUE);
+    				defaultIsSet = true;
+    				defaultRepositoryName = repositoryDomain.getRepositoryName();
+    			} else if (repositoryDomain.isDefaultRepository() && defaultIsSet == true) {
+    				moreThanOne = true;
+    				String msg = String.format("The tenant '%s' configuration is declaring itself as the default repository domain.  However, another tenant has already declared '%s' to be the default repository.  Please ensure only one tenant is configured to have the default repository.",
+    						tbt.getName(), defaultRepositoryName);
+    				logger.error(msg);
+    			}
+			}
+		}
+		
+		//
+		// If more than one tenant has declared itself the default repository domain then
+		// throw an exception
+		//
+		if (moreThanOne == true) {
+			String msg = "More than one tenant is configured to be the repository domain.  Please configure only one default repository.";
+			throw new Exception(msg);
+		}
+		
+		//
+		// If no tenant has declared itself the default repository, look for an "implied" default.  Tenants configured with
+		// no repository name are inferred to be the default repository.  If more than one tenant is configured without a repository name,
+		// we'll use the first one found.
+		//
+		if (defaultIsSet == false) {
+    		for (TenantBindingType tbt : tenantBindingTypeMap.values()) {
+    			List<RepositoryDomainType> repositoryDomainList = tbt.getRepositoryDomain();
+    			for (RepositoryDomainType repositoryDomain : repositoryDomainList) {
+        			if (isImpliedDefaultRepository(repositoryDomain) && defaultIsSet == false) {
+        				repositoryDomain.setDefaultRepository(Boolean.TRUE);
+        				defaultIsSet = true;
+        				defaultRepositoryName = repositoryDomain.getRepositoryName();
+        			} else if (isImpliedDefaultRepository(repositoryDomain) && defaultIsSet == true) {
+        				moreThanOne = true;
+        				String msg = String.format("The tenant '%s' configuration implies (no repository name was defined) it is the default repository domain.  However, another tenant's domain has implied '%s' is the default repository.  Please ensure only one tenant defines the default repository.",
+        						tbt.getName(), defaultRepositoryName);
+        				logger.error(msg);
+        			}
+    			}
+    		}
+		}
+
+		//
+		// As of v6.0, this is just a warning.  However, future versions may require a default repository.
+		//
+		if (defaultIsSet == false) {
+			logger.warn("No tenant's configuration explicitly declared nor implied its repository to be the default.  Future versions of CollectionSpace may require a default repository.");
+		} else if (logger.isDebugEnabled()) {
+			String msg = String.format("The default repository has been set to '%s'.", defaultRepositoryName);
+			logger.debug(msg);
 		}
 	}
 
@@ -1257,8 +1643,10 @@ public class ServiceMain {
     /*
      * This method is filling out the proto-datasource-config.xml file with tenant specific repository information.
      */
-    private Document updateRepositoryDatasourceDoc(Document repoConfigDoc, String repositoryName,
+    private Document updateRepositoryDatasourceDoc(Document repoConfigDoc, String repositoryName, List<RepositoryDomainType> repoDomainList,
     		String cspaceInstanceId) {
+
+    	boolean isDefaultRepository = ConfigUtils.containsDefaultRepository(repoDomainList);
         String databaseName = JDBCTools.getDatabaseName(repositoryName, cspaceInstanceId);
 
         repoConfigDoc = XmlTools.setAttributeValue(repoConfigDoc, "/component", "name",
@@ -1302,26 +1690,31 @@ public class ServiceMain {
         repoConfigDoc = XmlTools.setAttributeValue(repoConfigDoc,
         		ConfigUtils.DATASOURCE_EXTENSION_POINT_XPATH + "/datasource", "password", password);
 
-        // Set the <link> element's name attribute
-        repoConfigDoc = XmlTools.setAttributeValue(repoConfigDoc,
-        		ConfigUtils.DATASOURCE_EXTENSION_POINT_XPATH + "/link", "name", "jdbc/repository_" + repositoryName);
-        // Set the <link> element's global attribute
-        repoConfigDoc = XmlTools.setAttributeValue(repoConfigDoc,
-        		ConfigUtils.DATASOURCE_EXTENSION_POINT_XPATH + "/link", "global", datasoureName);
+        //
+        // Adjust various Nuxeo components' datasource links to use the tenant repository.
+        // In a multi-tenant deployment, it is unclear if there will be name clashes -i.e., two or more tenants declaring
+        // themselves to be the datasource for a Nuxeo component.
+        //
+        List<DefaultElement> linkNodes = XmlTools.getElementNodes(repoConfigDoc, ConfigUtils.DATASOURCE_EXTENSION_POINT_XPATH + "/link");
+        for (DefaultElement node : linkNodes) {
+        	Attribute nameAttribute = node.attribute("name");
+        	if (nameAttribute.getValue().equals(ConfigUtils.CS_TENANT_DATASOURCE_VALUE)) {
+        		nameAttribute.setValue("jdbc/repository_" + repositoryName);
+        	}
+        	Attribute globalAttribute = node.attribute("global");
+       		globalAttribute.setValue(datasoureName);
+        }
 
         return repoConfigDoc;
     }
 
-    private String getElasticsearchIndexName(Document repoConfigDoc, String repositoryName,
-    		String cspaceInstanceId) {
-    	String result = ConfigUtils.DEFAULT_ELASTICSEARCH_INDEX_NAME;
+	private String getElasticsearchIndexName(Document repoConfigDoc, String repositoryName, String cspaceInstanceId) {
+		String repo = repositoryName.equalsIgnoreCase(ConfigUtils.DEFAULT_NUXEO_REPOSITORY_NAME)
+			? ConfigUtils.DEFAULT_ELASTICSEARCH_INDEX_NAME
+			: repositoryName;
 
-    	if (repositoryName.equalsIgnoreCase(ConfigUtils.DEFAULT_NUXEO_REPOSITORY_NAME) == false) {
-    		return repositoryName;
-    	}
-
-    	return result;
-    }
+		return repo + cspaceInstanceId;
+	}
 
     /*
      * This method is filling out the elasticsearch-config.xml file with tenant specific repository information.

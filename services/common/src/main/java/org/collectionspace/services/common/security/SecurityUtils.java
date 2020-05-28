@@ -44,10 +44,40 @@ import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.security.authentication.encoding.BasePasswordEncoder;
 import org.jboss.crypto.digest.DigestCallback;
 import org.jboss.resteasy.spi.HttpRequest;
 import org.jboss.security.Base64Encoder;
 import org.jboss.security.Base64Utils;
+
+/**
+ * Extends Spring Security's base class for encoding passwords.  We use only the
+ * mergePasswordAndSalt() method.
+ * @author remillet
+ *
+ */
+class CSpacePasswordEncoder extends BasePasswordEncoder {
+	public CSpacePasswordEncoder() {
+		//Do nothing
+	}
+
+	String mergePasswordAndSalt(String password, String salt) {
+		return this.mergePasswordAndSalt(password, salt, false);
+	}
+
+	@Override
+	public String encodePassword(String rawPass, Object salt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isPasswordValid(String encPass, String rawPass, Object salt) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+}
 
 /**
  *
@@ -56,6 +86,7 @@ import org.jboss.security.Base64Utils;
 public class SecurityUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityUtils.class);
+
     public static final String URI_PATH_SEPARATOR = "/";
     public static final int MIN_PASSWORD_LENGTH = 8;
     public static final int MAX_PASSWORD_LENGTH = 24;
@@ -65,7 +96,6 @@ public class SecurityUtils {
     public static final String RFC2617_ENCODING = "RFC2617";
     private static char MD5_HEX[] = "0123456789abcdef".toCharArray();
     
-
     /**
      * createPasswordHash creates password has using configured digest algorithm
      * and encoding
@@ -73,13 +103,14 @@ public class SecurityUtils {
      * @param password in cleartext
      * @return hashed password
      */
-    public static String createPasswordHash(String username, String password) {
+    public static String createPasswordHash(String username, String password, String salt) {
         //TODO: externalize digest algo and encoding
         return createPasswordHash("SHA-256", //digest algo
                 "base64", //encoding
                 null, //charset
                 username,
-                password);
+                password,
+                salt);
     }
 
     /**
@@ -201,6 +232,7 @@ public class SecurityUtils {
 		
 		uriPath = uriPath.replace("//", "/"); // replace duplicate '/' characters
 		uriPath = uriPath.startsWith("/") ? uriPath.substring(1) : uriPath; // if present, strip the leading '/' character
+				
 		return uriPath;
 	}
     
@@ -279,10 +311,18 @@ public class SecurityUtils {
      *
      * @return true, if is entity proxy is acting as a proxy for all sub-resources
      */
-    public static final boolean isEntityProxy() {
-    	//
-    	// should be getting this information from  the cspace config settings (tenent bindings file).
-    	return true;
+    public static final boolean isResourceProxied(String resName) {
+    	boolean result = true;
+    	
+    	switch (resName) {
+    		case AuthZ.REPORTS_INVOKE:
+    		case AuthZ.BATCH_INVOKE:
+    		case AuthZ.ACCOUNT_PERMISSIONS:
+    			result = false;
+    			break;
+    	}
+    	
+    	return result;
     }
 
     
@@ -311,26 +351,31 @@ public class SecurityUtils {
         return result;
     }
     
-    public static String createPasswordHash(String hashAlgorithm, String hashEncoding, String hashCharset, String username, String password)
+    public static String createPasswordHash(String hashAlgorithm, String hashEncoding, String hashCharset,
+    		String username, String password, String salt)
     {
-        return createPasswordHash(hashAlgorithm, hashEncoding, hashCharset, username, password, null);
+        return createPasswordHash(hashAlgorithm, hashEncoding, hashCharset, username, password, salt, null);
     }
 
-    public static String createPasswordHash(String hashAlgorithm, String hashEncoding, String hashCharset, String username, String password, DigestCallback callback)
+    public static String createPasswordHash(String hashAlgorithm, String hashEncoding, String hashCharset,
+    		String username, String password, String salt, DigestCallback callback)
     {
+    	CSpacePasswordEncoder passwordEncoder = new CSpacePasswordEncoder();
+    	String saltedPassword = passwordEncoder.mergePasswordAndSalt(password, salt); //
+    	  
         String passwordHash = null;
         byte passBytes[];
         try
         {
             if(hashCharset == null)
-                passBytes = password.getBytes();
+                passBytes = saltedPassword.getBytes();
             else
-                passBytes = password.getBytes(hashCharset);
+                passBytes = saltedPassword.getBytes(hashCharset);
         }
         catch(UnsupportedEncodingException uee)
         {
             logger.error((new StringBuilder()).append("charset ").append(hashCharset).append(" not found. Using platform default.").toString(), uee);
-            passBytes = password.getBytes();
+            passBytes = saltedPassword.getBytes();
         }
         try
         {

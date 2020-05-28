@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.collectionspace.services</groupId>
         <artifactId>org.collectionspace.services.authentication</artifactId>
-        <version>5.2</version>
+        <version>${revision}</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -74,6 +74,11 @@
             <version>${spring.security.oauth2.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+            <scope>provided</scope>
+		</dependency>
     </dependencies>
 
     <build>

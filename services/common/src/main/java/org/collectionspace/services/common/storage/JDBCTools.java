@@ -28,6 +28,10 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import java.sql.DatabaseMetaData;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -43,6 +47,7 @@ import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
 
+import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 
 /**
@@ -59,16 +64,19 @@ public class JDBCTools {
     public static String DEFAULT_NUXEO_REPOSITORY_NAME = ConfigUtils.DEFAULT_NUXEO_REPOSITORY_NAME;
     public static String DEFAULT_NUXEO_DATABASE_NAME = ConfigUtils.DEFAULT_NUXEO_DATABASE_NAME;
     public static String CSADMIN_DATASOURCE_NAME = "CsadminDS";
+    public static String CSADMIN_NUXEO_DATASOURCE_NAME = "Csadmin_NuxeoDS";
     public static String NUXEO_READER_DATASOURCE_NAME = "NuxeoReaderDS";
     public static String NUXEO_USER_NAME = "nuxeo";
     public static String SQL_WILDCARD = "%";
     public static String DATABASE_SELECT_PRIVILEGE_NAME = "SELECT";
     public static String POSTGRES_UNIQUE_VIOLATION = "23505";
+    private final static String DATABASE_RESOURCE_DIRECTORY_NAME = "db";
 
     //
     // Private constants
     //
     private static String DBProductName = null;
+    private static String serverResourcesPath;
 
     //todo: make sure this will get instantiated in the right order
     final static Logger logger = LoggerFactory.getLogger(JDBCTools.class);
@@ -755,4 +763,70 @@ public class JDBCTools {
         }
     }
 
+    public static boolean cspaceMetaTableExists(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT true FROM pg_tables WHERE schemaname = 'cspace' AND tablename = 'meta'");
+
+        boolean exists = false;
+
+        if (rs.next()) {
+            exists = rs.getBoolean(1);
+        };
+
+        rs.close();
+        stmt.close();
+
+        return exists;
+    }
+
+    public static void createCspaceMetaTable(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+
+        stmt.executeUpdate("CREATE SCHEMA cspace");
+        stmt.executeUpdate("CREATE TABLE cspace.meta (version varchar(32))");
+        stmt.executeUpdate("INSERT INTO cspace.meta (version) values (null)");
+
+        stmt.close();
+    }
+
+    public static String getRepositoryDatabaseVersion(Connection conn) throws SQLException {
+        String version = "0";
+
+        if (cspaceMetaTableExists(conn)) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT version FROM cspace.meta");
+
+            if (rs.next()) {
+                version = rs.getString(1);
+            }
+
+            rs.close();
+            stmt.close();
+        }
+
+        return version;
+    }
+
+    public static void setRepositoryDatabaseVersion(Connection conn, String version) throws SQLException {
+        if (!cspaceMetaTableExists(conn)) {
+            createCspaceMetaTable(conn);
+        }
+
+        PreparedStatement stmt = conn.prepareStatement("UPDATE cspace.meta SET version = ?");
+
+        stmt.setString(1, version);
+        stmt.executeUpdate();
+
+        stmt.close();
+    }
+
+    public static void runScript(Connection conn, File scriptFile) throws FileNotFoundException {
+        ScriptRunner scriptRunner = new ScriptRunner(conn);
+
+        scriptRunner.setAutoCommit(false);
+        scriptRunner.setStopOnError(true);
+        scriptRunner.setSendFullScript(true);
+
+        scriptRunner.runScript(new BufferedReader(new FileReader(scriptFile)));
+    }
 }

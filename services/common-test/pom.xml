@@ -6,7 +6,7 @@
     <parent>
         <artifactId>org.collectionspace.services.main</artifactId>
         <groupId>org.collectionspace.services</groupId>
-        <version>5.2</version>
+        <version>${revision}</version>
     </parent>
     <artifactId>org.collectionspace.services.common-test</artifactId>
     <name>services.common-test</name>
@@ -25,11 +25,6 @@
             <version>${project.version}</version>
         </dependency>
         <!-- External dependencies -->
-        <dependency>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>3.0.0-M1</version>
-        </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>

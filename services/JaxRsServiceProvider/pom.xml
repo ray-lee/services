@@ -4,7 +4,7 @@
     <parent>
         <artifactId>org.collectionspace.services.main</artifactId>
         <groupId>org.collectionspace.services</groupId>
-        <version>5.2</version>
+        <version>${revision}</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -574,6 +574,12 @@
         <dependency>
             <groupId>org.nuxeo.ecm.core</groupId>
             <artifactId>nuxeo-core</artifactId>
+            <exclusions>
+            	<exclusion>
+            		<groupId>log4j</groupId>
+            		<artifactId>log4j</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.nuxeo.ecm.core</groupId>
@@ -582,6 +588,12 @@
         <dependency>
             <groupId>org.nuxeo.ecm.core</groupId>
             <artifactId>nuxeo-core-convert</artifactId>
+            <exclusions>
+            	<exclusion>
+            		<groupId>log4j</groupId>
+            		<artifactId>log4j</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.nuxeo.ecm.core</groupId>
@@ -592,24 +604,9 @@
             <groupId>org.nuxeo.ecm.core</groupId>
             <artifactId>nuxeo-core-schema</artifactId>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.nuxeo.ecm.core</groupId>
-            <artifactId>nuxeo-core-io</artifactId>
-        </dependency>
-         -->
         <dependency>
 			<groupId>org.nuxeo.runtime</groupId>
 			<artifactId>nuxeo-runtime-jtajca</artifactId>
-			<!-- Until issue http://issues.collectionspace.org/browse/CSPACE-4639 is resolved, we
-				<version>5.5-NXP-8140</version>
-				need to use this patched Nuxeo artifact that is only available on our public Maven
-				repository -see http://nightly.collectionspace.org:8081/artifactory
-
-				Once the issue is resolved and a public version of the artifact becomes available, we
-				should revert this dependency's version to be the following:
-			<version>${nuxeo.core.version}</version>
-			-->
 			<exclusions>
 				<exclusion>
 					<artifactId>geronimo-transaction</artifactId>
@@ -635,6 +632,12 @@
           	<artifactId>nuxeo-platform-commandline-executor</artifactId>
             <version>${nuxeo.core.version}</version>
             <scope>provided</scope>
+            <exclusions>
+            	<exclusion>
+            		<groupId>log4j</groupId>
+            		<artifactId>log4j</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
 			<groupId>org.nuxeo.ecm.platform</groupId>
@@ -763,14 +766,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>read-project-properties</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <files>
                         <file>../../build.properties</file>
@@ -822,7 +817,6 @@
                 </configuration>
 
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -846,44 +840,6 @@
                     </archive>
                 </configuration>
             </plugin>
-
         </plugins>
-        <pluginManagement>
-        	<plugins>
-        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        		<plugin>
-        			<groupId>org.eclipse.m2e</groupId>
-        			<artifactId>lifecycle-mapping</artifactId>
-        			<version>1.0.0</version>
-        			<configuration>
-        				<lifecycleMappingMetadata>
-        					<pluginExecutions>
-        						<pluginExecution>
-        							<pluginExecutionFilter>
-        								<groupId>
-        									org.codehaus.mojo
-        								</groupId>
-        								<artifactId>
-        									properties-maven-plugin
-        								</artifactId>
-        								<versionRange>
-        									[1.0-alpha-2,)
-        								</versionRange>
-        								<goals>
-        									<goal>
-        										read-project-properties
-        									</goal>
-        								</goals>
-        							</pluginExecutionFilter>
-        							<action>
-        								<ignore></ignore>
-        							</action>
-        						</pluginExecution>
-        					</pluginExecutions>
-        				</lifecycleMappingMetadata>
-        			</configuration>
-        		</plugin>
-        	</plugins>
-        </pluginManagement>
     </build>
 </project>
