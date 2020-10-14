@@ -162,7 +162,7 @@ public class NuxeoConnectorEmbedded {
 			//
 			// CC-1268 - Not for production
 			//
-			runCCdash1268(coreSession); // FIXME: CC-1268 - Not for production
+			//runCCdash1268(coreSession); // FIXME: CC-1268 - Not for production
 			//
 			// CC-1268 - Not for production
 			//
