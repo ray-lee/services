@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.6.0.final using JasperReports Library version 6.6.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="pahmaNAGPRAexcel" pageWidth="864" pageHeight="595" orientation="Landscape" columnWidth="864" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isIgnorePagination="true" uuid="60ca0389-cd91-42ac-8458-8392059ebe30">
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.1" value="pageHeader"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.3" value="lastPageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.auto.fit.column" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.column.width.ratio" value="1.10f"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.font.size.fix.enabled" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.row" value="1"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.cell.background" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.graphics" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.page.margins" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.sheet.names.all" value="NAGPRA Data"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.wrap.text" value="false"/>
+	<property name="net.sf.jasperreports.page.break.no.pagination" value="apply"/>
+	<property name="net.sf.jasperreports.print.keep.full.text" value="true"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="groupcsid" class="java.lang.String"/>
+	<parameter name="csidlist" class="java.lang.String"/>
+	<parameter name="objcsids" class="java.util.ArrayList">
+		<defaultValueExpression><![CDATA[$P{csidlist} != null ? Arrays.asList($P{csidlist}.split(",")) : Arrays.asList()]]></defaultValueExpression>
+	</parameter>
+<!--
+	<parameter name="where_and" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[(($P{groupcsid}!=null && $P{groupcsid}.length()>0) 
+			?("h1.name IN (SELECT rc.objectcsid FROM relations_common rc
+				WHERE rc.objectdocumenttype = 'CollectionObject'
+				AND rc.subjectdocumenttype = 'Group'
+				AND rc.subjectcsid = '" + $P{groupcsid} + "')")
+			:(($P{csidlist}!=null && $P{csidlist}.length()>0 )?("$X{IN, h1.name, objcsids}"):("1=2")))]]></defaultValueExpression>
+	</parameter>
+-->
+	<queryString>
+		<![CDATA[SELECT cc.objectnumber AS "Museum_number",
+COALESCE(STRING_AGG(DISTINCT ang.pahmaaltnum,'␥'),'') AS "Alternate_numbers",
+COALESCE(STRING_AGG(DISTINCT oe.exitnumber,'␥'),'') AS "Exit_numbers",
+COALESCE(STRING_AGG(DISTINCT oe.exitdate,'␥'),'') AS "Exit_dates",
+COALESCE(STRING_AGG(DISTINCT getdispl(oe.newowner),'␥'),'') AS "Current_or_new_owners",
+COALESCE(STRING_AGG(DISTINCT getdispl(oe.exitreason),'␥'),'') AS "Exit_reasons",
+COALESCE(REGEXP_REPLACE(ong.objectname, E'[\\n\\r]+', '¶', 'g' ),'') AS "Object_name",
+COALESCE(REGEXP_REPLACE(bd.item, E'[\\n\\r]+', '¶', 'g' ),'') AS "Description",
+cc.numberofobjects AS "Count",
+COALESCE(getdispl(fcp.item),'') AS "Field_collection_place",
+COALESCE(utils.placename_hierarchy.place_hierarchy,'') AS "Field_collection_place_hierarchy",
+COALESCE(REGEXP_REPLACE(cp.pahmafieldlocverbatim, E'[\\n\\r]+', '¶', 'g' ),'') AS "Verbatim_field_collection_place",
+COALESCE(STRING_AGG(DISTINCT getdispl(fcmeth.item),'␥'),'') AS "Field_collection_methods",
+COALESCE(STRING_AGG(DISTINCT getdispl(fcsrc.item),'␥'),'') AS "Field_collection_sources",
+COALESCE(STRING_AGG(DISTINCT getdispl(fcoll.item),'␥'),'') AS "Field_collectors",
+COALESCE(scd.datedisplaydate,'') AS "Field_collection_date",
+COALESCE(REGEXP_REPLACE(cc.fieldcollectionnote, E'[\\n\\r]+', '¶', 'g' ),'') AS "Field_collection_note",
+COALESCE(cp.pahmatmslegacydepartment,'') AS "Legacy_department",
+COALESCE(STRING_AGG(DISTINCT nal.item,'␥'),'') AS "Museums_NAGPRA_category_determinations",
+COALESCE(STRING_AGG(DISTINCT getdispl(inv.item),'␥'),'') AS "NAGPRA_inventory",
+COALESCE(STRING_AGG(DISTINCT acc.accnumber,'␥'),'') AS "Accession_numbers",
+COALESCE(STRING_AGG(DISTINCT acc.accdate, '␥'),'') AS "Accession_dates",
+COALESCE(STRING_AGG(DISTINCT acc.acqdate, '␥'),'') AS "Acquisition_dates",
+COALESCE(STRING_AGG(DISTINCT acc.donor,'␥'),'') AS "Donors",
+COALESCE(STRING_AGG(DISTINCT acc.sources,'␥'),'') AS "Acquisition_sources",
+COALESCE(STRING_AGG(DISTINCT acc.methods,'␥'),'') AS "Acquisition_methods",
+COALESCE(STRING_AGG(DISTINCT getdispl(oslAFIL.item),'␥'),'') AS "Affiliation_status_from_object_status",
+COALESCE(STRING_AGG(DISTINCT getdispl(oslDISP.item),'␥'),'') AS "Accession_status_from_object_status",
+COALESCE(STRING_AGG(DISTINCT getdispl(oslMODE.item),'␥'),'') AS "Deaccession_mode_from_object_status",
+COALESCE(STRING_AGG(DISTINCT getdispl(mat.material),'␥'),'') AS "Materials",
+COALESCE(ug.usage,'') AS "Context_of_use",
+COALESCE(STRING_AGG(DISTINCT getdispl(apg.assocpeople),'␥'),'') AS "Cultural_groups",
+COALESCE(spd.datedisplaydate,'') AS "Production_date",
+COALESCE(STRING_AGG(DISTINCT getdispl(prodpl.prodplaces),'␥'),'') AS "Production_places",
+COALESCE(STRING_AGG(DISTINCT prodpl.prodplacehier,'␥'),'') AS "Production_place_hierarchy",
+COALESCE(STRING_AGG(DISTINCT getdispl(oppr.objectproductionpeople),'␥'),'') AS "Production_cultural_groups",
+COALESCE(STRING_AGG(DISTINCT getdispl(oprs.objectproductionperson),'␥'),'') AS "Production_persons",
+COALESCE(STRING_AGG(DISTINCT getdispl(oporg.objectproductionorganization),'␥'),'') AS "Production_organizations",
+COALESCE(STRING_AGG(DISTINCT coll.item,'␥'),'') AS "Collections",
+(SELECT         SUM(va.valueamount) AS "Amount"
+                FROM relations_common rcv
+                JOIN hierarchy hv ON (hv.name=rcv.objectcsid)
+                JOIN valuationcontrols_common vc ON (hv.id=vc.id)
+                JOIN misc mv ON (vc.id=mv.id AND mv.lifecyclestate<>'deleted')
+                LEFT OUTER JOIN hierarchy h4 ON (h4.parentid=vc.id AND h4.name='valuationcontrols_common:valueAmountsList')
+                LEFT OUTER JOIN valueamounts va ON h4.id=va.id
+                WHERE rcv.objectdocumenttype='Valuationcontrol' AND rcv.subjectcsid=h1.name
+                GROUP BY rcv.subjectcsid, vc.valuationcontrolrefnumber
+                ORDER BY vc.valuationcontrolrefnumber DESC
+                LIMIT 1
+                ) AS "Valuation",
+COALESCE(STRING_AGG(DISTINCT getdispl(efc.item),'␥'),'') AS "File_codes",
+COALESCE(getdispl(cc.computedcurrentlocation),'') AS "Current_location",
+COALESCE(cp.iscomponent,'') AS "Is_component"
+
+FROM collectionobjects_common cc
+JOIN collectionobjects_pahma cp ON (cc.id=cp.id)
+JOIN misc m ON (cc.id=m.id AND m.lifecyclestate<>'deleted')
+JOIN hierarchy h1 ON (cc.id=h1.id)
+LEFT OUTER JOIN hierarchy hn ON (cc.id=hn.parentid AND hn.name='collectionobjects_common:objectNameList' AND (hn.pos=0))
+LEFT OUTER JOIN objectnamegroup ong ON (ong.id=hn.id)
+LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id=cc.id AND (bd.pos=0))
+LEFT OUTER JOIN collectionobjects_anthropology_nagpraapplicabilitylist nal ON (nal.id=cc.id)
+LEFT OUTER JOIN collectionobjects_anthropology_nagprainventorynamelist inv ON (inv.id=cc.id)
+LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (fcp.id=cc.id AND (fcp.pos=0 OR fcp.pos IS NULL))
+LEFT OUTER JOIN places_common pcfcp ON (pcfcp.shortidentifier=REGEXP_REPLACE(fcp.item, '^.*item:name\((.*?)\)''.*', '\1'))
+LEFT OUTER JOIN hierarchy pcsidfcp ON (pcfcp.id=pcsidfcp.id)
+LEFT OUTER JOIN utils.placename_hierarchy ON (pcsidfcp.name=utils.placename_hierarchy.placecsid)
+LEFT OUTER JOIN collectionobjects_pahma_pahmacollectionlist coll ON (coll.id=cc.id)
+LEFT OUTER JOIN collectionobjects_common_fieldcollectionmethods fcmeth ON (fcmeth.id=cc.id)
+LEFT OUTER JOIN collectionobjects_common_fieldcollectionsources fcsrc ON (fcsrc.id=cc.id)
+LEFT OUTER JOIN collectionobjects_common_fieldcollectors fcoll ON (fcoll.id=cc.id)
+LEFT OUTER JOIN hierarchy hcd ON (hcd.parentid=cc.id AND hcd.primarytype='structuredDateGroup' AND hcd.name='collectionobjects_pahma:pahmaFieldCollectionDateGroupList' AND (hcd.pos=0 or hcd.pos IS NULL))
+LEFT OUTER JOIN structureddategroup scd ON (scd.id=hcd.id)
+LEFT OUTER JOIN hierarchy hppr ON (hppr.parentid=cc.id AND hppr.primarytype='objectProductionPeopleGroup')
+LEFT OUTER JOIN objectproductionpeoplegroup oppr ON (oppr.id=hppr.id)
+LEFT OUTER JOIN hierarchy hprs ON (hprs.parentid=cc.id AND hprs.primarytype='objectProductionPersonGroup')
+LEFT OUTER JOIN objectproductionpersongroup oprs ON (oprs.id=hprs.id)
+LEFT OUTER JOIN hierarchy hporg ON (hporg.parentid=cc.id AND hporg.primarytype='objectProductionOrganizationGroup')
+LEFT OUTER JOIN objectproductionorganizationgroup oporg ON (oporg.id=hporg.id)
+LEFT OUTER JOIN collectionobjects_pahma_pahmaethnographicfilecodelist efc ON (efc.id=cc.id)
+LEFT OUTER JOIN hierarchy hm ON (hm.parentid=cc.id AND hm.primarytype='materialGroup')
+LEFT OUTER JOIN materialgroup mat ON (mat.id=hm.id)
+LEFT OUTER JOIN hierarchy hu ON (hu.parentid=cc.id AND hu.primarytype='usageGroup' AND (hu.pos=0 OR hu.pos IS NULL))
+LEFT OUTER JOIN usagegroup ug ON (ug.id=hu.id)
+LEFT OUTER JOIN hierarchy hc ON (hc.parentid=cc.id AND hc.primarytype='assocPeopleGroup')
+LEFT OUTER JOIN assocpeoplegroup apg ON (apg.id=hc.id)
+LEFT OUTER JOIN hierarchy han ON (han.parentid=cc.id AND han.primarytype='pahmaAltNumGroup')
+LEFT OUTER JOIN pahmaaltnumgroup ang ON (ang.id=han.id)
+LEFT OUTER JOIN hierarchy hpd ON (hpd.parentid=cc.id AND hpd.primarytype='structuredDateGroup' AND hpd.name='collectionobjects_common:objectProductionDateGroupList' AND (hpd.pos=0 or hpd.pos IS NULL))
+LEFT OUTER JOIN structureddategroup spd ON (spd.id=hpd.id)
+LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslAFIL ON (oslAFIL.id=cc.id AND oslAFIL.item IN (
+'culturally affiliated',
+'culturally unaffiliated'))
+LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslDISP ON (oslDISP.id=cc.id AND oslDISP.item IN (
+'deaccessioned',
+'accessioned',
+'(unknown)',
+'partially deaccessioned',
+'recataloged',
+'partially recataloged'))
+LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslMODE ON (oslMODE.id=cc.id AND oslMODE.item IN (
+'intended for repatriation',
+'pending repatriation',
+'intended for transfer',
+'repatriated',
+'destroyed',
+'missing',
+'sold',
+'stolen',
+'missing in inventory',
+'discarded',
+'exchanged',
+'partially exchanged',
+'transferred'))
+LEFT OUTER JOIN (SELECT
+                STRING_AGG(DISTINCT xc.exitnumber,'␥') AS "exitnumber",
+                STRING_AGG(DISTINCT sdg.datedisplaydate,'␥') AS "exitdate",
+                STRING_AGG(DISTINCT getdispl(xan.item),'␥') AS "newowner",
+                STRING_AGG(DISTINCT getdispl(xc.exitreason),'␥') AS "exitreason",
+                rcx.subjectcsid
+                FROM relations_common rcx
+                JOIN hierarchy hx ON (hx.name=rcx.objectcsid)
+                JOIN objectexit_common xc ON (hx.id=xc.id)
+                JOIN misc mx ON (xc.id=mx.id AND mx.lifecyclestate<>'deleted')
+                LEFT OUTER JOIN hierarchy h3 ON (h3.parentid=xc.id AND h3.name='objectexit_common:exitDateGroup')
+                LEFT OUTER JOIN structureddategroup sdg ON (h3.id=sdg.id)
+                LEFT OUTER JOIN objectexit_anthropology_newownerlist xan ON (xan.id=xc.id)
+                WHERE rcx.objectdocumenttype='ObjectExit'
+                GROUP BY rcx.subjectcsid) oe ON oe.subjectcsid=h1.name
+LEFT OUTER JOIN (SELECT
+                STRING_AGG(DISTINCT ac.acquisitionreferencenumber,'␥') AS "accnumber",
+                STRING_AGG(DISTINCT sad1.datedisplaydate, '␥') AS "accdate",
+                STRING_AGG(DISTINCT sad2.datedisplaydate, '␥') AS "acqdate",
+                STRING_AGG(DISTINCT getdispl(adg.donor),'␥') AS "donor",
+                STRING_AGG(DISTINCT getdispl(acs.item),'␥') AS "sources",
+                STRING_AGG(DISTINCT getdispl(ac.acquisitionmethod),'␥') AS "methods",
+                rcac.subjectcsid
+                FROM relations_common rcac
+                JOIN hierarchy hac ON (rcac.objectcsid=hac.name)
+                JOIN acquisitions_common ac ON (hac.id=ac.id)
+                JOIN misc mac ON (ac.id=mac.id AND mac.lifecyclestate<>'deleted')
+                LEFT OUTER JOIN hierarchy had1 ON (ac.id=had1.parentid AND had1.primarytype='structuredDateGroup' AND had1.name='acquisitions_common:accessionDateGroup' AND (had1.pos=0 OR had1.pos IS NULL))
+                LEFT OUTER JOIN structureddategroup sad1 ON (sad1.id=had1.id)
+                LEFT OUTER JOIN hierarchy had2 ON (ac.id=had2.parentid AND had2.primarytype='structuredDateGroup' AND had2.name='acquisitions_common:acquisitionDateGroupList' AND (had2.pos=0 OR had2.pos IS NULL))
+                LEFT OUTER JOIN structureddategroup sad2 ON (sad2.id=had2.id)
+                LEFT OUTER JOIN hierarchy h2 ON (ac.id = h2.parentid AND h2.name = 'acquisitions_pahma:acquisitionDonorGroupList')
+                LEFT OUTER JOIN acquisitiondonorgroup adg ON (adg.id = h2.id)
+                LEFT OUTER JOIN acquisitions_common_acquisitionsources acs ON (acs.id=ac.id)
+                WHERE rcac.objectdocumenttype='Acquisition'
+                GROUP BY rcac.subjectcsid) acc ON acc.subjectcsid=h1.name
+LEFT OUTER JOIN (SELECT
+                STRING_AGG(DISTINCT getdispl(oppl.objectproductionplace),'␥') AS "prodplaces",
+                STRING_AGG(DISTINCT utils.placename_hierarchy.place_hierarchy,'␥') AS "prodplacehier",
+                ccppl.id AS "ccid"
+                FROM collectionobjects_common ccppl
+                LEFT OUTER JOIN hierarchy hppl ON (hppl.parentid=ccppl.id AND hppl.primarytype='objectProductionPlaceGroup')
+                LEFT OUTER JOIN objectproductionplacegroup oppl ON (oppl.id=hppl.id)
+                LEFT OUTER JOIN places_common pcopp ON (pcopp.shortidentifier=REGEXP_REPLACE(oppl.objectproductionplace, '^.*item:name\((.*?)\)''.*', '\1'))
+                LEFT OUTER JOIN hierarchy pcsidopp ON (pcopp.id=pcsidopp.id)
+                LEFT OUTER JOIN utils.placename_hierarchy ON (pcsidopp.name=utils.placename_hierarchy.placecsid)
+                GROUP BY ccppl.id) prodpl ON prodpl.ccid=cc.id
+WHERE (oe.exitReason NOT LIKE '%recataloged%' OR oe.exitReason IS NULL)
+and h1.name IN (SELECT rc.objectcsid FROM relations_common rc
+				WHERE rc.objectdocumenttype = 'CollectionObject'
+				AND rc.subjectdocumenttype = 'Group'
+				AND rc.subjectcsid = $P{groupcsid})
+GROUP BY cc.id, h1.name, fcp.item, ong.objectname, bd.item, cp.pahmatmslegacydepartment, cp.sortableobjectnumber,
+ug.usage, cp.iscomponent, cp.pahmafieldlocverbatim, scd.datedisplaydate, spd.datedisplaydate, placename_hierarchy.place_hierarchy
+ORDER BY cp.sortableobjectnumber]]>
+	</queryString>
+	<field name="Museum_number" class="java.lang.String"/>
+	<field name="Alternate_numbers" class="java.lang.String"/>
+	<field name="Exit_numbers" class="java.lang.String"/>
+	<field name="Exit_dates" class="java.lang.String"/>
+	<field name="Current_or_new_owners" class="java.lang.String"/>
+	<field name="Exit_reasons" class="java.lang.String"/>
+	<field name="Object_name" class="java.lang.String"/>
+	<field name="Description" class="java.lang.String"/>
+	<field name="Count" class="java.lang.Long"/>
+	<field name="Field_collection_place" class="java.lang.String"/>
+	<field name="Field_collection_place_hierarchy" class="java.lang.String"/>
+	<field name="Verbatim_field_collection_place" class="java.lang.String"/>
+	<field name="Field_collection_methods" class="java.lang.String"/>
+	<field name="Field_collection_sources" class="java.lang.String"/>
+	<field name="Field_collectors" class="java.lang.String"/>
+	<field name="Field_collection_date" class="java.lang.String"/>
+	<field name="Field_collection_note" class="java.lang.String"/>
+	<field name="Legacy_department" class="java.lang.String"/>
+	<field name="Museums_NAGPRA_category_determinations" class="java.lang.String"/>
+	<field name="NAGPRA_inventory" class="java.lang.String"/>
+	<field name="Accession_numbers" class="java.lang.String"/>
+	<field name="Accession_dates" class="java.lang.String"/>
+	<field name="Acquisition_dates" class="java.lang.String"/>
+	<field name="Donors" class="java.lang.String"/>
+	<field name="Acquisition_sources" class="java.lang.String"/>
+	<field name="Acquisition_methods" class="java.lang.String"/>
+	<field name="Affiliation_status_from_object_status" class="java.lang.String"/>
+	<field name="Accession_status_from_object_status" class="java.lang.String"/>
+	<field name="Deaccession_mode_from_object_status" class="java.lang.String"/>
+	<field name="Materials" class="java.lang.String"/>
+	<field name="Context_of_use" class="java.lang.String"/>
+	<field name="Cultural_groups" class="java.lang.String"/>
+	<field name="Production_date" class="java.lang.String"/>
+	<field name="Production_places" class="java.lang.String"/>
+	<field name="Production_place_hierarchy" class="java.lang.String"/>
+	<field name="Production_cultural_groups" class="java.lang.String"/>
+	<field name="Production_persons" class="java.lang.String"/>
+	<field name="Production_organizations" class="java.lang.String"/>
+	<field name="Collections" class="java.lang.String"/>
+	<field name="Valuation" class="java.lang.Double"/>
+	<field name="File_codes" class="java.lang.String"/>
+	<field name="Current_location" class="java.lang.String"/>
+	<field name="Is_component" class="java.lang.String"/>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.spreadsheet.SpreadsheetLayout"/>
+			<staticText>
+				<reportElement x="0" y="0" width="20" height="20" uuid="1956ee57-7507-41dc-bb76-d776faf997f1"/>
+				<text><![CDATA[Museum number]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="0" width="20" height="20" uuid="8a9a2eb0-dae9-470c-a49c-cec3e29e7e06"/>
+				<text><![CDATA[Alternate number(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="0" width="20" height="20" uuid="d07e6d35-083b-488f-aeba-f48e5a65218a"/>
+				<text><![CDATA[Exit number(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="60" y="0" width="20" height="20" uuid="5d55cdc0-a433-4652-a9f3-76b0fc117795"/>
+				<text><![CDATA[Exit date(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="80" y="0" width="20" height="20" uuid="530a8836-2a20-4764-9039-c59300aae122"/>
+				<text><![CDATA[Current or new owner(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="100" y="0" width="20" height="20" uuid="89b57143-6911-478b-bdbe-117f4c898400"/>
+				<text><![CDATA[Exit reason(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="120" y="0" width="20" height="20" uuid="f70c8cc4-a532-4d88-a996-8f70172d5e44"/>
+				<text><![CDATA[Object name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="140" y="0" width="20" height="20" uuid="be516d31-a8de-4855-81ab-a01b7025e226"/>
+				<text><![CDATA[Description]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="160" y="0" width="20" height="20" uuid="b4ea82c4-3104-402c-aff3-c5416e27c9da"/>
+				<text><![CDATA[Count]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="180" y="0" width="20" height="20" uuid="9e1405f1-c0e9-4a31-8728-92deff258056"/>
+				<text><![CDATA[Field collection place]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="200" y="0" width="20" height="20" uuid="f895e0c0-c451-4716-a509-367eebb60cfe"/>
+				<text><![CDATA[Field collection place hierarchy]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="220" y="0" width="20" height="20" uuid="c112a152-0c71-4a98-befe-67e07e0cb31f"/>
+				<text><![CDATA[Verbatim field collection place]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="240" y="0" width="20" height="20" uuid="ff37b7d2-b663-481a-8963-a0a5c9896ba8"/>
+				<text><![CDATA[Field collection method(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="260" y="0" width="20" height="20" uuid="e23eaf29-ee2c-4b84-a6b8-48b6f02b7c72"/>
+				<text><![CDATA[Field collection source(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="280" y="0" width="20" height="20" uuid="0878551d-8b91-4714-88f5-c13f41f3927a"/>
+				<text><![CDATA[Field collector(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="300" y="0" width="20" height="20" uuid="01705554-006f-46d6-bfd9-a6d4ea78ae93"/>
+				<text><![CDATA[Field collection date]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="320" y="0" width="20" height="20" uuid="ab8c46f6-56f1-4339-9384-0031b02a3bdd"/>
+				<text><![CDATA[Field collection note]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="340" y="0" width="20" height="20" uuid="dc9e2dc3-1d8f-4960-bad3-58adfd3673d8"/>
+				<text><![CDATA[Legacy department]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="360" y="0" width="20" height="20" uuid="87c4fb4e-47bc-471d-8744-5050a3496617"/>
+				<text><![CDATA[Museum's NAGPRA category determination(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="380" y="0" width="20" height="20" uuid="7d480f16-821d-4d7a-97e5-6b8ea3842bbf"/>
+				<text><![CDATA[NAGPRA inventory]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="400" y="0" width="20" height="20" uuid="0420d1c2-44cf-4493-93e3-2f8e60665fbc"/>
+				<text><![CDATA[Accession number(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="420" y="0" width="20" height="20" uuid="5c7b9704-7e11-4187-875c-68496dc7e482"/>
+				<text><![CDATA[Accession date(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="440" y="0" width="20" height="20" uuid="61c5a7a5-f216-43ea-bc3c-9505814989a9"/>
+				<text><![CDATA[Acquisition date(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="460" y="0" width="20" height="20" uuid="ecd0ff95-c78d-444d-b35a-193b1c6846a4"/>
+				<text><![CDATA[Donor(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="480" y="0" width="20" height="20" uuid="632d0018-0bfb-48a9-9a5c-a4f0ce8d40ab"/>
+				<text><![CDATA[Acquisition source(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="500" y="0" width="20" height="20" uuid="4a8ad2c5-f673-43a3-a11f-c96bc81f662d"/>
+				<text><![CDATA[Acquisition method(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="520" y="0" width="20" height="20" uuid="6795f8af-6d52-41bb-b246-bc75fe0881f8"/>
+				<text><![CDATA[Affiliation status from object status]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="540" y="0" width="20" height="20" uuid="906b7941-fc9e-4f2c-95d6-947ff9440037"/>
+				<text><![CDATA[Accession status from object status]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="560" y="0" width="20" height="20" uuid="efb94cc6-e365-4b5a-a85f-1f9384576ae8"/>
+				<text><![CDATA[[De]accession mode from object status]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="580" y="0" width="20" height="20" uuid="0c4eee25-4c77-493c-ba82-39e0395aebe8"/>
+				<text><![CDATA[Material(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="600" y="0" width="20" height="20" uuid="49d844a0-c0d5-43fd-9cb0-9ccdbf83dab1"/>
+				<text><![CDATA[Context of use]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="620" y="0" width="20" height="20" uuid="5a372e65-08ed-4321-951d-da593cdcf2d3"/>
+				<text><![CDATA[Cultural group(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="640" y="0" width="20" height="20" uuid="6ecdbb23-a797-468b-b400-a3ec0878f3a2"/>
+				<text><![CDATA[Production date]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="660" y="0" width="20" height="20" uuid="de2ad866-6474-460d-87f4-1d1bc3f72a3c"/>
+				<text><![CDATA[Production place(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="680" y="0" width="20" height="20" uuid="0bfeff6b-066e-4ea7-9260-bc5ff0836d7e"/>
+				<text><![CDATA[Production place hierarchy]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="700" y="0" width="20" height="20" uuid="3f50d5aa-7dc8-4908-858e-5eb0d7b062ba"/>
+				<text><![CDATA[Production cultural group(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="720" y="0" width="20" height="20" uuid="c49e5485-041c-4514-a1ea-ae48a463001a"/>
+				<text><![CDATA[Production person(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="740" y="0" width="20" height="20" uuid="61741d4b-4f31-49c8-a9e3-13445ad57cd2"/>
+				<text><![CDATA[Production organization(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="760" y="0" width="20" height="20" uuid="51e56d3f-0c04-491a-8a7c-f8581743efbb"/>
+				<text><![CDATA[Collection(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="780" y="0" width="20" height="20" uuid="6eaf0b23-dfa3-4805-b068-71ea4ef07b46"/>
+				<text><![CDATA[Valuation]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="800" y="0" width="20" height="20" uuid="3081bcc8-e0e4-4e5a-9810-359a7e2b8331"/>
+				<text><![CDATA[File code(s)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="820" y="0" width="20" height="20" uuid="b8b6a477-389a-443c-b918-fabbf33f6bff"/>
+				<text><![CDATA[Current location]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="840" y="0" width="20" height="20" uuid="c6223c3e-010d-49c4-a7a5-635872b086a0"/>
+				<text><![CDATA[Is component]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.spreadsheet.SpreadsheetLayout"/>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="20" height="20" uuid="174b4bb7-ec1a-4dc0-a6d5-21e4f4d08e95"/>
+				<textFieldExpression><![CDATA[$F{Museum_number}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="20" y="0" width="20" height="20" uuid="220e341f-d1a0-4647-907a-276900cfcc93"/>
+				<textFieldExpression><![CDATA[$F{Alternate_numbers}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="40" y="0" width="20" height="20" uuid="8e3de39f-8ad1-43df-bcbe-95fd90617d82"/>
+				<textFieldExpression><![CDATA[$F{Exit_numbers}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="60" y="0" width="20" height="20" uuid="b0ef0b2f-3f98-4a26-8962-0e2c01666fd2"/>
+				<textFieldExpression><![CDATA[$F{Exit_dates}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="80" y="0" width="20" height="20" uuid="1352a176-4a78-47d7-84f3-6ee357931fab"/>
+				<textFieldExpression><![CDATA[$F{Current_or_new_owners}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="100" y="0" width="20" height="20" uuid="904e113c-a8e1-417a-8457-bf51ff0b313d"/>
+				<textFieldExpression><![CDATA[$F{Exit_reasons}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="120" y="0" width="20" height="20" uuid="63dac17a-dc70-45c8-ada2-5260207a7677"/>
+				<textFieldExpression><![CDATA[$F{Object_name}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="140" y="0" width="20" height="20" uuid="410645f4-0667-4d9b-84f2-ae0cf24a9276"/>
+				<textFieldExpression><![CDATA[$F{Description}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="160" y="0" width="20" height="20" uuid="14acc3af-6def-4f29-adca-0c3677701885"/>
+				<textFieldExpression><![CDATA[$F{Count}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="180" y="0" width="20" height="20" uuid="f77de187-ca6d-4b30-9958-8c9932e52075"/>
+				<textFieldExpression><![CDATA[$F{Field_collection_place}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="200" y="0" width="20" height="20" uuid="e08b4b40-70a2-425b-a3ef-da97feaa4459"/>
+				<textFieldExpression><![CDATA[$F{Field_collection_place_hierarchy}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="220" y="0" width="20" height="20" uuid="88fc0216-9e45-4f0a-a0e2-24cd14b17b6c"/>
+				<textFieldExpression><![CDATA[$F{Verbatim_field_collection_place}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="240" y="0" width="20" height="20" uuid="78d98b14-b841-4008-b361-f3a1980bb02b"/>
+				<textFieldExpression><![CDATA[$F{Field_collection_methods}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="260" y="0" width="20" height="20" uuid="de8a1f81-b131-4405-9ed0-5acbaff1a3f7"/>
+				<textFieldExpression><![CDATA[$F{Field_collection_sources}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="280" y="0" width="20" height="20" uuid="538f5ed8-7b6b-4056-aeb5-8eeb536a2383"/>
+				<textFieldExpression><![CDATA[$F{Field_collectors}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="300" y="0" width="20" height="20" uuid="bd78dd28-cde0-4664-b028-96c64c62718a"/>
+				<textFieldExpression><![CDATA[$F{Field_collection_date}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="320" y="0" width="20" height="20" uuid="450ab8c4-1ef0-443f-9ed3-45b4d50930a8"/>
+				<textFieldExpression><![CDATA[$F{Field_collection_note}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="340" y="0" width="20" height="20" uuid="df3a3e1c-6680-45e1-93f3-74fac6f64c82"/>
+				<textFieldExpression><![CDATA[$F{Legacy_department}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="360" y="0" width="20" height="20" uuid="5c200f4e-72b9-49b6-9357-879011a640c9"/>
+				<textFieldExpression><![CDATA[$F{Museums_NAGPRA_category_determinations}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="380" y="0" width="20" height="20" uuid="4639096e-b9c4-43ac-93e9-faa8e81394c7"/>
+				<textFieldExpression><![CDATA[$F{NAGPRA_inventory}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="400" y="0" width="20" height="20" uuid="74d330d1-e4dd-41c1-8a80-194515d04eed"/>
+				<textFieldExpression><![CDATA[$F{Accession_numbers}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="420" y="0" width="20" height="20" uuid="e35fd0a9-809f-429f-8b4f-6f5b83b96dd9"/>
+				<textFieldExpression><![CDATA[$F{Accession_dates}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="440" y="0" width="20" height="20" uuid="6dbb972f-29d9-4506-b75a-829993f8a346"/>
+				<textFieldExpression><![CDATA[$F{Acquisition_dates}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="460" y="0" width="20" height="20" uuid="ff7178c7-d3f7-4b67-9970-63b061999435"/>
+				<textFieldExpression><![CDATA[$F{Donors}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="480" y="0" width="20" height="20" uuid="2fd5f7c6-0c4f-494d-aee1-cfb6275d307f"/>
+				<textFieldExpression><![CDATA[$F{Acquisition_sources}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="500" y="0" width="20" height="20" uuid="f3c2e77d-a41d-4ff3-8c23-b52d3da7bbea"/>
+				<textFieldExpression><![CDATA[$F{Acquisition_methods}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="520" y="0" width="20" height="20" uuid="5301e6bc-f0e9-48a3-89ec-4a1af1b43a2d"/>
+				<textFieldExpression><![CDATA[$F{Affiliation_status_from_object_status}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="540" y="0" width="20" height="20" uuid="bfd8de69-6132-4cde-a6aa-b66fbc58f49c"/>
+				<textFieldExpression><![CDATA[$F{Accession_status_from_object_status}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="560" y="0" width="20" height="20" uuid="9cc921df-4869-4b3e-829b-bcaf77f47542"/>
+				<textFieldExpression><![CDATA[$F{Deaccession_mode_from_object_status}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="580" y="0" width="20" height="20" uuid="5db2a7c4-080d-4ee3-b1d8-8968836e25d9"/>
+				<textFieldExpression><![CDATA[$F{Materials}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="600" y="0" width="20" height="20" uuid="974045fa-fdb2-4930-bb58-ac7d5a59f8c7"/>
+				<textFieldExpression><![CDATA[$F{Context_of_use}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="620" y="0" width="20" height="20" uuid="58c06cf2-8afa-4c2a-90bd-e411ed8f7d79"/>
+				<textFieldExpression><![CDATA[$F{Cultural_groups}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="640" y="0" width="20" height="20" uuid="9fafb5f9-a66d-4b4e-8d87-c5c0ffe3a1c7"/>
+				<textFieldExpression><![CDATA[$F{Production_date}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="660" y="0" width="20" height="20" uuid="bb4fe2c7-ffe5-467e-ad99-e87ce2ed6f88"/>
+				<textFieldExpression><![CDATA[$F{Production_places}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="680" y="0" width="20" height="20" uuid="3831a395-8bfa-4eb8-9724-5e8e7c9853ca"/>
+				<textFieldExpression><![CDATA[$F{Production_place_hierarchy}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="700" y="0" width="20" height="20" uuid="16b790db-8b2c-4fdb-868a-2e5c113e3380"/>
+				<textFieldExpression><![CDATA[$F{Production_cultural_groups}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="720" y="0" width="20" height="20" uuid="15614d67-7d87-4fe1-b1d9-36c2e318c707"/>
+				<textFieldExpression><![CDATA[$F{Production_persons}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="740" y="0" width="20" height="20" uuid="fb7ced8e-19e5-48a3-a5e9-3ce47447143a"/>
+				<textFieldExpression><![CDATA[$F{Production_organizations}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="760" y="0" width="20" height="20" uuid="ff753453-108b-4fb6-9520-c9a3ca927365"/>
+				<textFieldExpression><![CDATA[$F{Collections}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="780" y="0" width="20" height="20" uuid="6e14448a-32cf-4da0-a3a7-b4bb94b7a68e"/>
+				<textFieldExpression><![CDATA[$F{Valuation}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="800" y="0" width="20" height="20" uuid="3ba03110-929c-41c9-9660-2a785e8baf79"/>
+				<textFieldExpression><![CDATA[$F{File_codes}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="820" y="0" width="20" height="20" uuid="58ef772a-0eb1-4925-aae5-7c8b5fe2dece"/>
+				<textFieldExpression><![CDATA[$F{Current_location}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="840" y="0" width="20" height="20" uuid="5f76fb22-99b9-4299-af59-111040b4a462"/>
+				<textFieldExpression><![CDATA[$F{Is_component}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<noData>
+		<band height="20" splitType="Stretch">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.spreadsheet.SpreadsheetLayout"/>
+		</band>
+	</noData>
+</jasperReport>
