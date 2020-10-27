@@ -3,7 +3,7 @@
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<parameter name="csid" class="java.lang.String">
+	<parameter name="groupcsid" class="java.lang.String">
 		<defaultValueExpression><![CDATA["d0b6211b-8f83-4639-b441"]]></defaultValueExpression>
 	</parameter>
 	<queryString>
@@ -51,7 +51,7 @@ from
         AND hcvg.name = 'collectionobjects_bampfa:currentValueGroupList'
         AND hcvg.pos = 0)
    LEFT OUTER JOIN currentvaluegroup cvg ON (hcvg.id = cvg.id)
-WHERE hgc.name = $P{csid}
+WHERE hgc.name = $P{groupcsid}
 order by con.numbervalue]]>
 	</queryString>
 	<field name="groupcsid" class="java.lang.String"/>

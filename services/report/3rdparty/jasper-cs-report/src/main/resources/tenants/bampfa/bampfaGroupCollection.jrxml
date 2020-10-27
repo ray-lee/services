@@ -3,7 +3,7 @@
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<parameter name="csid" class="java.lang.String">
+	<parameter name="groupcsid" class="java.lang.String">
 		<defaultValueExpression><![CDATA["d0b6211b-8f83-4639-b441"]]></defaultValueExpression>
 	</parameter>
 	<queryString>
@@ -45,7 +45,7 @@ LEFT OUTER JOIN hierarchy hmpg ON (
    AND hmpg.name = 'collectionobjects_common:measuredPartGroupList'
    AND hmpg.pos = 0)
 LEFT OUTER JOIN measuredpartgroup mpg ON (hmpg.id = mpg.id)
-WHERE hgc.name = $P{csid}
+WHERE hgc.name = $P{groupcsid}
 ORDER BY cob.sortableEffectiveObjectNumber]]>
 	</queryString>
 	<field name="groupcsid" class="java.lang.String"/>

@@ -3,7 +3,7 @@
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<parameter name="csid" class="java.lang.String">
+	<parameter name="groupcsid" class="java.lang.String">
 		<defaultValueExpression><![CDATA["d0b6211b-8f83-4639-b441"]]></defaultValueExpression>
 	</parameter>
 	<queryString>
@@ -56,7 +56,7 @@ from
    LEFT OUTER JOIN hierarchy h2
       ON (h2.parentid = coc.id AND h2.name='collectionobjects_common:objectProductionDateGroupList' and h2.pos=0)
    LEFT OUTER JOIN structuredDateGroup sdg ON (h2.id = sdg.id)
-WHERE hgc.name = $P{csid}
+WHERE hgc.name = $P{groupcsid}
 order by artist, sdg.dateearliestscalarvalue, btg.bampfaformattedtitle, accnNumberSort]]>
 	</queryString>
 	<field name="grouptitle" class="java.lang.String"/>
