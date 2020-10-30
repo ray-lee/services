@@ -3,7 +3,25 @@
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.exclude.origin.band.1" value="pageHeader"/>
+        <property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageFooter"/>
+        <property name="net.sf.jasperreports.export.xls.exclude.origin.band.3" value="lastPageFooter"/>
+        <property name="net.sf.jasperreports.export.xls.auto.fit.column" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.column.width.ratio" value="1.10f"/>
+        <property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.ignore.cell.background" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.ignore.graphics" value="false"/>
+        <property name="net.sf.jasperreports.export.xls.ignore.page.margins=true"/>
+        <property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.one.page.per.sheet=true"/>
+        <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+        <property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+        <property name="net.sf.jasperreports.export.xls.wrap.text" value="true"/>
+        <property name="net.sf.jasperreports.exports.xls.font.size.fix.enabled" value="false"/>
+        <property name="net.sf.jasperreports.page.break.no.pagination" value="apply"/>
+        <property name="net.sf.jasperreports.print.keep.full.text" value="true"/>
 	<parameter name="csid" class="java.lang.String">
 		<defaultValueExpression><![CDATA["9a222828-c1a8-434c-99e5"]]></defaultValueExpression>
 	</parameter>
