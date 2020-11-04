@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <document name="report">
   <ns2:reports_common xmlns:ns2="http://collectionspace.org/services/report">
-    <name>Rare Status (Genus)</name>
-    <filename>ucbgRareStatusGenus.jrxml</filename>
+    <name>Taxon Count</name>
+    <filename>ucbgTaxonCount.jrxml</filename>
     <forDocTypes>
       <forDocType/>
     </forDocTypes>
@@ -10,7 +10,7 @@
     <supportsDocList>false</supportsDocList>
     <supportsGroup>false</supportsGroup>
     <supportsNoContext>true</supportsNoContext>
-    <supportsParams>true</supportsParams>
+    <supportsParams>false</supportsParams>
     <supportsOutputMIMEList>
       <outputMIME>application/pdf</outputMIME>
     </supportsOutputMIMEList>
