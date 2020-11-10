@@ -4,37 +4,36 @@
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<parameter name="location" class="java.lang.String">
-		<parameterDescription><![CDATA[Use percent as wild card (e.g., 3A%) or full name as in CollectionSpace (e.g., 3A, Vernal Pool, Californian).  Case sensitive.]]></parameterDescription>
-		<defaultValueExpression><![CDATA["3A%"]]></defaultValueExpression>
-	</parameter>
+        <parameter name="csid" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[select co1.objectnumber,
+		<![CDATA[select
+co.objectnumber,
 case when (tn.family is not null and tn.family <> '')
    then getdispl(tn.family)
 end as family,
-findhybridaffinname(tig.id) Determination,
+findhybridaffinname(tig.id) determination,
 date(mc.locationdate + interval '8 hours') actiondate,
 getdispl(mc.reasonformove) actionreason,
 case when (mb.previouslocation is not null and mb.previouslocation <> '')
      then getdispl(mb.previouslocation)
 end as previouslocation
-from collectionobjects_common co1
-join hierarchy h1 on co1.id=h1.id
+from collectionobjects_common co
+join hierarchy hco on co.id = hco.id
 left outer join hierarchy htig
-     on (co1.id = htig.parentid and htig.pos = 0 and htig.name = 'collectionobjects_naturalhistory:taxonomicIdentGroupList')
-left outer join taxonomicIdentGroup tig on (tig.id = htig.id)
-left outer join taxon_common tc on (tig.taxon=tc.refname)
-left outer join taxon_naturalhistory tn on (tc.id=tn.id)
-join relations_common r1 on (h1.name=r1.subjectcsid and objectdocumenttype='Movement')
-join hierarchy h2 on (r1.objectcsid=h2.name and h2.isversion is true)
-join movements_common mc on (mc.id=h2.id)
-left outer join movements_botgarden mb on (mc.id=mb.id)
-left outer join loctermgroup lct on (getdispl(mb.previouslocation)=lct.termdisplayname)
-inner join misc misc1 on (mc.id=misc1.id and misc1.lifecyclestate <> 'deleted')
-join collectionspace_core core on mc.id=core.id
-where getdispl(mc.reasonformove) = 'Dead' and lct.termdisplayname like $P{location}
-order by determination, locationdate desc]]>
+     on (co.id = htig.parentid and htig.pos = 0 and htig.name = 'collectionobjects_naturalhistory:taxonomicIdentGroupList')
+left outer join taxonomicIdentGroup tig on (htig.id = tig.id)
+left outer join taxon_common tc on (tig.taxon = tc.refname)
+left outer join taxon_naturalhistory tn on (tc.id = tn.id)
+join relations_common rc on (hco.name = rc.subjectcsid and objectdocumenttype = 'Movement')
+join hierarchy hmc on (rc.objectcsid = hmc.name and hmc.isversion is true)
+join movements_common mc on (hmc.id = mc.id)
+left outer join movements_botgarden mb on (mc.id = mb.id)
+left outer join locations_common lc on (mb.previouslocation = lc.refname)
+left outer join hierarchy hlc on (lc.id = hlc.id)
+inner join misc mmc on (mc.id = mmc.id and mmc.lifecyclestate <> 'deleted')
+where getdispl(mc.reasonformove) = 'Dead'
+and hlc.name = $P{csid}
+order by determination, mc.locationdate desc]]>
 	</queryString>
 	<field name="objectnumber" class="java.lang.String"/>
 	<field name="family" class="java.lang.String"/>
@@ -42,6 +41,10 @@ order by determination, locationdate desc]]>
 	<field name="actiondate" class="java.sql.Date"/>
 	<field name="actionreason" class="java.lang.String"/>
 	<field name="previouslocation" class="java.lang.String"/>
+	<variable name="location" class="java.lang.String" calculation="First">
+		<variableExpression><![CDATA[$F{previouslocation}]]></variableExpression>
+		<initialValueExpression><![CDATA[$F{previouslocation}]]></initialValueExpression>
+	</variable>
 	<group name="objectnumber">
 		<groupExpression><![CDATA[$F{objectnumber}]]></groupExpression>
 	</group>
@@ -55,7 +58,7 @@ order by determination, locationdate desc]]>
 				<textElement textAlignment="Center" markup="none">
 					<font size="12" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Individuals that died in location: " + $P{location}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Individuals that died in location: " + $V{location}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement positionType="FixRelativeToBottom" x="0" y="57" width="540" height="1" uuid="411090bf-650f-426a-85f9-3ad76e1fbea2"/>
@@ -174,4 +177,3 @@ order by determination, locationdate desc]]>
 		</band>
 	</pageFooter>
 </jasperReport>
-

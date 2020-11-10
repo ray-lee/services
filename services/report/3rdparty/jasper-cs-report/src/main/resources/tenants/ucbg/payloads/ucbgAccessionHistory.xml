@@ -2,16 +2,19 @@
 <document name="report">
   <ns2:reports_common xmlns:ns2="http://collectionspace.org/services/report">
     <name>Accession History</name>
-    <notes></notes>
+    <filename>ucbgAccessionHistory.jrxml</filename>
     <forDocTypes>
       <forDocType>CollectionObject</forDocType>
     </forDocTypes>
     <supportsSingleDoc>true</supportsSingleDoc>
     <supportsDocList>false</supportsDocList>
     <supportsGroup>false</supportsGroup>
-    <supportsNoContext>true</supportsNoContext>
-    <filename>ucbgAccessionHistory.jasper</filename>
-    <outputMIME>application/pdf</outputMIME>
+    <supportsNoContext>false</supportsNoContext>
     <supportsParams>false</supportsParams>
+    <supportsOutputMIMEList>
+      <outputMIME>application/pdf</outputMIME>
+    </supportsOutputMIMEList>
+    <outputMIME>application/pdf</outputMIME>
+    <notes></notes>
   </ns2:reports_common>
 </document>
