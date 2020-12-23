@@ -6,7 +6,8 @@
     <forDocTypes>
       <forDocType>CollectionObject</forDocType>
     </forDocTypes>
-    <supportsSingleDoc>false</supportsSingleDoc>
+    <!--supportsSingleDoc is set to true to make it available in the right sidebar of the Object record.-->
+    <supportsSingleDoc>true</supportsSingleDoc>    
     <supportsDocList>false</supportsDocList>
     <supportsGroup>false</supportsGroup>
     <supportsNoContext>true</supportsNoContext>
