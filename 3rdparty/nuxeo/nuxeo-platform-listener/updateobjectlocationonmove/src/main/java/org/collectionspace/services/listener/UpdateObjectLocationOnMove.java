@@ -40,6 +40,14 @@ public class UpdateObjectLocationOnMove extends AbstractUpdateObjectLocationValu
         if (movementRecordsLocation.equalsIgnoreCase(existingComputedCurrentLocation) == false) {
             collectionObjectDocModel.setProperty(COLLECTIONOBJECTS_COMMON_SCHEMA,
             		COMPUTED_CURRENT_LOCATION_PROPERTY, movementRecordsLocation);
+
+            // Get the display name of the current location value from the Movement
+            String currentLocationDisplayName = RefNameUtils.getDisplayName(movementRecordsLocation);
+
+            // TODO: make sure this is only executed when COLLECTIONOBJECTS_OMCA_SCHEMA is valid
+            collectionObjectDocModel.setProperty(COLLECTIONOBJECTS_OMCA_SCHEMA,
+                    COMPUTED_CURRENT_LOCATION_DISPLAY_PROPERTY, currentLocationDisplayName);
+
             result = true; // We've updated the location field.
         }
         

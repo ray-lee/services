@@ -471,22 +471,22 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 		Integer num2 = (Integer) stack.pop();
 		Integer num1 = (Integer) stack.pop();
 
-		// Default to a month-day-year interpretation.
+		// Default to a year-month-day interpretation.
 
-		int numMonth = num1;
-		int dayOfMonth = num2;
-		int year = num3;
+		int year = num1;
+		int numMonth = num2;
+		int dayOfMonth = num3;
 
-		if (DateUtils.isValidDate(num3, num1, num2, era)) {
-			// Interpreting as month-day-year produces a valid date. Go with it.
+		if (DateUtils.isValidDate(num1, num2, num3, era)) {
+			// Interpreting as year-month-day produces a valid date. Go with it.
 		}
-		else if (DateUtils.isValidDate(num1, num2, num3, era)) {
-			// Interpreting as month-day-year doesn't produce a valid date, but
-			// year-month-day does. Go with year-month-day.
+		else if (DateUtils.isValidDate(num3, num1, num2, era)) {
+			// Interpreting as year-month-day doesn't produce a valid date, but
+			// month-day-year does. Go with month-day-year.
 
-			year = num1;
-			numMonth = num2;
-			dayOfMonth = num3;
+			year = num3;
+			numMonth = num1;
+			dayOfMonth = num2;
 		}
 
 		stack.push(year);

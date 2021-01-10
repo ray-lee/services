@@ -136,15 +136,6 @@ without parts.',
       <initialValue>1</initialValue>
       <currentValue>-1</currentValue>
     </org.collectionspace.services.id.NumericIDGeneratorPart>
-    <org.collectionspace.services.id.StringIDGeneratorPart>
-      <initialValue>.</initialValue>
-      <currentValue>.</currentValue>
-    </org.collectionspace.services.id.StringIDGeneratorPart>
-    <org.collectionspace.services.id.NumericIDGeneratorPart>
-      <maxLength>6</maxLength>
-      <initialValue>1</initialValue>
-      <currentValue>-1</currentValue>
-    </org.collectionspace.services.id.NumericIDGeneratorPart>
   </parts>
 </org.collectionspace.services.id.SettableIDGenerator>'
   WHERE '9dd92952-c384-44dc-a736-95e435c1759c' NOT IN
@@ -943,6 +934,616 @@ INSERT INTO id_generators
   </parts>
 </org.collectionspace.services.id.SettableIDGenerator>'
   WHERE 'aad54202-404d-4f19-ada9-8b1e378ad1b2' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- RESTRICTEDMEDIA_RESOURCE_IDENTIFICATION_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     'd49b096b-7b01-4f53-9c49-b437a7e5418e',
+     'Restricted Media Resource Identification Number',
+     'Unambiguously identifies a restricted media resource within a given context.
+Recommended best practice is to identify the resource by means of a string
+conforming to a formal identification system.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>MHR</initialValue>
+      <currentValue>MHR</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'd49b096b-7b01-4f53-9c49-b437a7e5418e' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA ID GENERATORS FOLLOW
+--
+-- OMCA ACCESSION_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     'fe1895df-1b59-43b4-81bb-b1fc2109bd30',
+     'OMCA Accession Number',
+     'OMCA. Identifies individual collection objects formally
+acquired by the institution. Used for collection objects
+without parts.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'fe1895df-1b59-43b4-81bb-b1fc2109bd30' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA_CLAIM_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     'a2d23669-8fbd-4efd-88c0-4590dc17f40f',
+     'Claim Number',
+     'Identifies a Claim.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>NGP</initialValue>
+      <currentValue>NGP</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'a2d23669-8fbd-4efd-88c0-4590dc17f40f' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA EXHIBITION_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     'c95150b5-ec47-4db9-bcae-f4a532b2624f',
+     'OMCA Exhibition Number',
+     'OMCA. Identifies exhibition activities, in which one
+or more exhibition events occur at an institution.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+   <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>EX</initialValue>
+      <currentValue>EX</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>81</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'c95150b5-ec47-4db9-bcae-f4a532b2624f' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA LOANS_IN_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     '8adfb11a-009b-4d13-969b-5ee6e4c47446',
+     'OMCA Loan In Number',
+     'OMCA. Identifies activities in which collection objects are
+received on loan.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>LI</initialValue>
+      <currentValue>LI</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '8adfb11a-009b-4d13-969b-5ee6e4c47446' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA LOANS_OUT_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     'd02966b6-dfd9-452b-ae6b-0a476e52ec42',
+     'OMCA Loan Out Number',
+     'OMCA. Identifies activities in which collection objects are
+loaned out of the institution.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>LO</initialValue>
+      <currentValue>LO</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'd02966b6-dfd9-452b-ae6b-0a476e52ec42' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA OBJECT_EXIT_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     'd4d5e989-b63b-49bb-b769-e24f02ac2ef0',
+     'OMCA Object Exit Number',
+     'OMCA. Identifies an exit from the museum of collection objects, via
+transfer or destruction, and the deaccessioning of those objects
+from the museum''s collections.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>OE</initialValue>
+      <currentValue>OE</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'd4d5e989-b63b-49bb-b769-e24f02ac2ef0' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA MEDIA_RESOURCE_IDENTIFICATION_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     '411d7920-353f-408a-a2ff-3f79db964d5c',
+     'OMCA Media Resource Identification Number',
+     'OMCA. Unambiguously identifies a media resource within a given context.
+Recommended best practice is to identify the resource by means of a string
+conforming to a formal identification system.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>MH</initialValue>
+      <currentValue>MH</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '411d7920-353f-408a-a2ff-3f79db964d5c' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA LOCATION_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     '60ac6299-d709-421b-9a62-bb265c34539c',
+     'OMCA Location Number',
+     'OMCA. Unambiguously identifies a general location, not associated with an
+inventory or movement event.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>LOC</initialValue>
+      <currentValue>LOC</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '60ac6299-d709-421b-9a62-bb265c34539c' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA MOVEMENT_REFERENCE_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     'ebc86516-3476-4977-85d1-da941b5cca57',
+     'OMCA Movement Reference Number',
+     'OMCA. Identifies a movement of a collection object or a group of collection objects.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>MOV</initialValue>
+      <currentValue>MOV</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'ebc86516-3476-4977-85d1-da941b5cca57' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA INVENTORY_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     '0ac91666-0c6e-4d71-b29d-91ae9be786e4',
+     'OMCA Inventory Number',
+     'OMCA. Unambiguously identifies a location associated with an inventory event.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>INV</initialValue>
+      <currentValue>INV</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '0ac91666-0c6e-4d71-b29d-91ae9be786e4' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA CATALOGING ACCESSION_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     'ea057127-f567-4963-b88a-49eaf0e65d28',
+     'OMCA Cataloging Accession Number',
+     'OMCA Cataloging. Identifies individual collection objects formally
+acquired by the institution. Used for collection objects
+without parts.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'ea057127-f567-4963-b88a-49eaf0e65d28' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA CATALOGING INTAKE_OBJECT_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     '50596d48-cca9-405a-86c3-aecf3fb74dcb',
+     'OMCA Cataloging Intake Object Number',
+     'OMCA Cataloging. Identifies individual collection objects that enter
+the institution through intake activities, before they are 
+either returned to their owner or formally acquired.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>IN</initialValue>
+      <currentValue>IN</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '50596d48-cca9-405a-86c3-aecf3fb74dcb' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA CATALOGING LOANS_IN_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     'c9366eed-8207-4d06-b55a-c9846dece67f',
+     'OMCA Cataloging Loan In Number',
+     'OMCA Cataloging. Identifies activities in which collection objects are
+received on loan.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>LI</initialValue>
+      <currentValue>LI</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE 'c9366eed-8207-4d06-b55a-c9846dece67f' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA CATALOGING LOANS_IN_NUMBER_ALT
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT 
+     '6b6fdbee-fe3b-428a-9987-d4da96885bcc',
+     'OMCA Cataloging Loan In Number Alternate',
+     'OMCA Cataloging. Identifies activities in which collection objects are
+received on loan. Uses alternate prefix.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+   <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>EX</initialValue>
+      <currentValue>EX</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>0</initialValue>
+      <currentValue>0</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '6b6fdbee-fe3b-428a-9987-d4da96885bcc' NOT IN
+        (
+        SELECT  csid
+        FROM    id_generators
+        );
+
+-- OMCA VALUATION_CONTROL_REFERENCE_NUMBER
+
+INSERT INTO id_generators
+    (csid, displayname, description, priority, last_generated_id, id_generator_state)
+  SELECT
+     '962faf0e-4e72-4c36-8756-86956a4a3753',
+     'OMCA Valuation Control Reference Number',
+     'OMCA. Identifies the valuation control of an object record.',
+     '9',
+     '',
+'<org.collectionspace.services.id.SettableIDGenerator>
+  <parts>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>V</initialValue>
+      <currentValue>V</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.YearIDGeneratorPart>
+      <currentValue></currentValue>
+    </org.collectionspace.services.id.YearIDGeneratorPart>
+    <org.collectionspace.services.id.StringIDGeneratorPart>
+      <initialValue>.</initialValue>
+      <currentValue>.</currentValue>
+    </org.collectionspace.services.id.StringIDGeneratorPart>
+    <org.collectionspace.services.id.NumericIDGeneratorPart>
+      <maxLength>6</maxLength>
+      <initialValue>1</initialValue>
+      <currentValue>-1</currentValue>
+    </org.collectionspace.services.id.NumericIDGeneratorPart>
+  </parts>
+</org.collectionspace.services.id.SettableIDGenerator>'
+  WHERE '962faf0e-4e72-4c36-8756-86956a4a3753' NOT IN
         (
         SELECT  csid
         FROM    id_generators
