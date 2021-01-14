@@ -63,7 +63,7 @@ COALESCE(STRING_AGG(DISTINCT getdispl(fcoll.item),'␥'),'') AS "Field_collector
 COALESCE(scd.datedisplaydate,'') AS "Field_collection_date",
 COALESCE(REGEXP_REPLACE(cc.fieldcollectionnote, E'[\\n\\r]+', '¶', 'g' ),'') AS "Field_collection_note",
 COALESCE(cp.pahmatmslegacydepartment,'') AS "Legacy_department",
-COALESCE(STRING_AGG(DISTINCT nal.item,'␥'),'') AS "Museums_NAGPRA_category_determinations",
+COALESCE(STRING_AGG(DISTINCT getdispl(nc.item),'␥'),'') AS "Museums_NAGPRA_category_determinations",
 COALESCE(STRING_AGG(DISTINCT getdispl(inv.item),'␥'),'') AS "NAGPRA_inventory",
 COALESCE(STRING_AGG(DISTINCT acc.accnumber,'␥'),'') AS "Accession_numbers",
 COALESCE(STRING_AGG(DISTINCT acc.accdate, '␥'),'') AS "Accession_dates",
@@ -107,8 +107,8 @@ JOIN hierarchy h1 ON (cc.id=h1.id)
 LEFT OUTER JOIN hierarchy hn ON (cc.id=hn.parentid AND hn.name='collectionobjects_common:objectNameList' AND (hn.pos=0))
 LEFT OUTER JOIN objectnamegroup ong ON (ong.id=hn.id)
 LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id=cc.id AND (bd.pos=0))
-LEFT OUTER JOIN collectionobjects_anthropology_nagpraapplicabilitylist nal ON (nal.id=cc.id)
-LEFT OUTER JOIN collectionobjects_anthropology_nagprainventorynamelist inv ON (inv.id=cc.id)
+LEFT OUTER JOIN collectionobjects_nagpra_nagpracategories nc ON (nc.id=cc.id)
+LEFT OUTER JOIN collectionobjects_nagpra_nagprainventorynames inv ON (inv.id=cc.id)
 LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (fcp.id=cc.id AND (fcp.pos=0 OR fcp.pos IS NULL))
 LEFT OUTER JOIN places_common pcfcp ON (pcfcp.shortidentifier=REGEXP_REPLACE(fcp.item, '^.*item:name\((.*?)\)''.*', '\1'))
 LEFT OUTER JOIN hierarchy pcsidfcp ON (pcfcp.id=pcsidfcp.id)
