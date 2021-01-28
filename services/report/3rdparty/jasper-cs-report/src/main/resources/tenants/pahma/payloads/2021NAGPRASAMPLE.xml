@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document name="collectionobjects">
+    <ns2:collectionobjects_common xmlns:ns2="http://collectionspace.org/services/collectionobject" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <objectNumber>2021NAGPRASAMPLE</objectNumber>
+    </ns2:collectionobjects_common>
+    <ns2:collectionobjects_nagpra xmlns:ns2="http://collectionspace.org/services/collectionobject/domain/nagpra" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <graveAssocCodes>
+            <graveAssocCode>urn:cspace:pahma.cspace.berkeley.edu:vocabularies:name(pahmaNagpraCodeLegacies):item:name(pahmaNagpraCodeLegacies10)' 10: not reportable'</graveAssocCode>
+        </graveAssocCodes>
+        <repatriationNotes>
+            <repatriationNote>Repat notes for MN 2021NAGPRASAMPLE</repatriationNote>
+        </repatriationNotes>
+        <nagpraCategories>
+            <nagpraCategory>urn:cspace:pahma.cspace.berkeley.edu:vocabularies:name(nagpraPahmaApplicabilities):item:name(nagpraPahmaApplicabilities01)'affiliated human skeletal remains (HSR)'</nagpraCategory>
+        </nagpraCategories>
+        <nagpraReportFiledGroupList>
+            <nagpraReportFiledGroup>
+                <nagpraReportFiledWith>urn:cspace:pahma.cspace.berkeley.edu:orgauthorities:name(organization):item:name(NAGPRA1611346562666)'NAGPRA'</nagpraReportFiledWith>
+                <nagpraReportFiledNote>RH note for PAHMA-NAGPRA Staff</nagpraReportFiledNote>
+                <nagpraReportFiledDate>
+                    <scalarValuesComputed>true</scalarValuesComputed>
+                    <dateEarliestSingleCertainty/>
+                    <dateEarliestSingleQualifierUnit/>
+                    <dateDisplayDate>1/1/2001</dateDisplayDate>
+                    <dateLatestScalarValue>2001-01-02T00:00:00.000Z</dateLatestScalarValue>
+                    <dateEarliestSingleQualifierValue/>
+                    <datePeriod/>
+                    <dateLatestEra/>
+                    <dateEarliestSingleDay>1</dateEarliestSingleDay>
+                    <dateEarliestSingleQualifier/>
+                    <dateEarliestSingleYear>2001</dateEarliestSingleYear>
+                    <dateLatestCertainty/>
+                    <dateAssociation/>
+                    <dateLatestDay/>
+                    <dateEarliestSingleMonth>1</dateEarliestSingleMonth>
+                    <dateEarliestSingleEra>urn:cspace:pahma.cspace.berkeley.edu:vocabularies:name(dateera):item:name(ce)'CE'</dateEarliestSingleEra>
+                    <dateLatestYear/>
+                    <dateLatestQualifierUnit/>
+                    <dateNote/>
+                    <dateLatestQualifierValue/>
+                    <dateLatestQualifier/>
+                    <dateEarliestScalarValue>2001-01-01T00:00:00.000Z</dateEarliestScalarValue>
+                    <dateLatestMonth/>
+                </nagpraReportFiledDate>
+                <nagpraReportFiled>true</nagpraReportFiled>
+                <nagpraReportFiledBy>urn:cspace:pahma.cspace.berkeley.edu:orgauthorities:name(organization):item:name(PAHMANAGPRAStaff1611346539517)'PAHMA-NAGPRA Staff'</nagpraReportFiledBy>
+            </nagpraReportFiledGroup>
+        </nagpraReportFiledGroupList>
+        <nagpraCulturalDeterminations>
+            <nagpraCulturalDetermination>PAHMA cultural determination notes for 2021NAGPRASAMPLE</nagpraCulturalDetermination>
+        </nagpraCulturalDeterminations>
+        <nagpraInventoryNames>
+            <nagpraInventoryName>urn:cspace:pahma.cspace.berkeley.edu:vocabularies:name(nagpraPahmaInventoryNames):item:name(nagpraPahmaInventoryNames01)'AK-Alaska'</nagpraInventoryName>
+        </nagpraInventoryNames>
+        <nagpraDetermGroupList>
+            <nagpraDetermGroup>
+                <nagpraDetermType>urn:cspace:pahma.cspace.berkeley.edu:vocabularies:name(nagpradetermtype):item:name(unknown1)'unknown1'</nagpraDetermType>
+                <nagpraDetermBy>urn:cspace:pahma.cspace.berkeley.edu:personauthorities:name(person):item:name(NatashaJohnson1611346486489)'Natasha Johnson'</nagpraDetermBy>
+                <nagpraDetermNote>CD note for 2021NAGPRASAMPLE</nagpraDetermNote>
+                <nagpraDetermCulture>urn:cspace:pahma.cspace.berkeley.edu:orgauthorities:name(organization):item:name(KaagwaantaanClanofKlukwan1611346415910)'Kaagwaantaan Clan of Klukwan'</nagpraDetermCulture>
+            </nagpraDetermGroup>
+        </nagpraDetermGroupList>
+    </ns2:collectionobjects_nagpra>
+</document>
