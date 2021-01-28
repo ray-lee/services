@@ -12,6 +12,9 @@
     <supportsGroup>true</supportsGroup>
     <supportsNoContext>false</supportsNoContext>
     <supportsParams>false</supportsParams>
+    <supportsOutputMIMEList>
+      <outputMIME>text/csv</outputMIME>
+    </supportsOutputMIMEList>
     <outputMIME>text/csv</outputMIME>
   </ns2:reports_common>
 </document>

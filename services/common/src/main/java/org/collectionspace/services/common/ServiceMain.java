@@ -117,6 +117,8 @@ public class ServiceMain {
     private static final String DROP_OBJECTS_SQL_COMMENT = "-- drop all the objects before dropping roles";
 	private static final String CSPACE_JEESERVER_HOME = "CSPACE_JEESERVER_HOME";
 
+	private static final String CSPACE_UTILS_SCHEMANAME = "utils";
+
     private ServiceMain() {
     	// Intentionally blank
     }
@@ -770,7 +772,7 @@ public class ServiceMain {
                     Object o = instantiate(initHandlerClassname, IInitHandler.class);
                     if (o != null && o instanceof IInitHandler){
                         IInitHandler handler = (IInitHandler)o;
-                        handler.onRepositoryInitialized(JDBCTools.NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId,
+                        handler.onRepositoryInitialized(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId,
                         		sbt, fields, props);
                         //The InitHandler may be the default one,
                         //  or specialized classes which still implement this interface and are registered in tenant-bindings.xml.
@@ -957,7 +959,8 @@ public class ServiceMain {
 							JDBCTools.createNewDatabaseUser(JDBCTools.CSADMIN_DATASOURCE_NAME, repositoryName, cspaceInstanceId, dbType, readerUser, readerPW);
 						}
 						// Create the database
-						createDatabaseWithRights(dbType, dbName, nuxeoUser, nuxeoPW, readerUser, readerPW);
+						createDatabaseWithRights(dbType, dbName, nuxeoUser, nuxeoPW, readerUser);
+						createUtilsSchemaWithRights(dbType, nuxeoUser, repositoryName, cspaceInstanceId);
 						initRepositoryDatabaseVersion(JDBCTools.NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId);
 					}
 					nuxeoDBsChecked.add(dbName);
@@ -984,7 +987,7 @@ public class ServiceMain {
 	 * @throws Exception
 	 */
 	private void createDatabaseWithRights(DatabaseProductType dbType, String dbName, String ownerName,
-			String ownerPW, String readerName, String readerPW) throws Exception {
+			String ownerPW, String readerName) throws Exception {
 		Connection conn = null;
 		Statement stmt = null;
 		
@@ -1009,30 +1012,56 @@ public class ServiceMain {
 				}
 				// Note that select rights for reader must be granted after
 				// Nuxeo startup.
-			} else if (dbType == DatabaseProductType.MYSQL) {
-				sql = "CREATE database " + dbName + " DEFAULT CHARACTER SET utf8";
-				stmt.executeUpdate(sql);
-				sql = "GRANT ALL PRIVILEGES ON " + dbName + ".* TO '" + ownerName + "'@'localhost' IDENTIFIED BY '"
-						+ ownerPW + "' WITH GRANT OPTION";
-				stmt.executeUpdate(sql);
-				if (logger.isDebugEnabled()) {
-					logger.debug("Created db: '" + dbName + "' with owner: '" + ownerName + "'");
-				}
-				if (readerName != null) {
-					sql = "GRANT SELECT ON " + dbName + ".* TO '" + readerName + "'@'localhost' IDENTIFIED BY '"
-							+ readerPW + "' WITH GRANT OPTION";
-					stmt.executeUpdate(sql);
-					if (logger.isDebugEnabled()) {
-						logger.debug(" Granted SELECT rights on: '" + dbName + "' to reader: '" + readerName + "'");
-					}
-				}
 			} else {
-				throw new UnsupportedOperationException("createDatabaseWithRights only supports PSQL - MySQL NYI!");
+				throw new UnsupportedOperationException(String.format("", dbType));
 			}
 		} catch (Exception e) {
 			String errMsg = String.format("The following SQL statement failed using credentials from datasource '%s': %s",
 					JDBCTools.CSADMIN_DATASOURCE_NAME, sql);
 			logger.error("createDatabaseWithRights failed on exception: " + e.getLocalizedMessage());
+			if (errMsg != null) {
+				logger.error(errMsg);
+			}
+			throw e; // propagate
+		} finally { // close resources
+			try {
+				if (stmt != null) {
+					stmt.close();
+				}
+				if (conn != null) {
+					conn.close();
+				}
+			} catch (SQLException se) {
+				se.printStackTrace();
+			}
+		}
+	}
+	
+	/*
+	 * For a specific repo/db, create a schema for misc SQL functions
+	 */
+	private void createUtilsSchemaWithRights(DatabaseProductType dbType, String ownerName,
+			String repositoryName, String cspaceInstanceId) throws Exception {
+		Connection conn = null;
+		Statement stmt = null;
+		
+		String sql = null;
+		try {
+			conn = JDBCTools.getConnection(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId);
+			stmt = conn.createStatement();
+			if (dbType == DatabaseProductType.POSTGRESQL) {
+				sql = "CREATE SCHEMA IF NOT EXISTS " + CSPACE_UTILS_SCHEMANAME + " AUTHORIZATION " + ownerName;
+				stmt.executeUpdate(sql);
+				if (logger.isDebugEnabled()) {
+					logger.debug("Created SCHEMA: '" + CSPACE_UTILS_SCHEMANAME + "' with owner: '" + ownerName + "'");
+				}
+			} else {
+				throw new UnsupportedOperationException("CollectionSpace supports only PostgreSQL database servers.");
+			}
+		} catch (Exception e) {
+			String errMsg = String.format("The following SQL statement failed using credentials from datasource '%s': %s",
+					JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, sql);
+			logger.error("createUtilsSchemaWithRights() failed with exception: " + e.getLocalizedMessage());
 			if (errMsg != null) {
 				logger.error(errMsg);
 			}

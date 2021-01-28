@@ -17,22 +17,22 @@
 	<queryString>
 		<![CDATA[SELECT
         coc.objectnumber AS objectNumber,
-        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_nagprainventorynames', '|'), '%NULL_VALUE%') AS nagpraInventoryNameRefname,
-        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_nagpracategories', '|'), '%NULL_VALUE%') AS nagpraCategoryRefname,
-        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_graveassoccodes', '|'), '%NULL_VALUE%') AS graveAssocCodeRefname,
-        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_repatriationnotes', '|'), '%NULL_VALUE%') AS repatriationNote,
-        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_nagpraculturaldeterminations', '|'), '%NULL_VALUE%') AS nagpraCulturalDetermination,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermculture', '|'), '%NULL_VALUE%') AS nagpraDetermCultureRefname,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermtype', '|'), '%NULL_VALUE%') AS nagpraDetermTypeRefname,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermby', '|'), '%NULL_VALUE%') AS nagpraDetermByRefname,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermnote', '|'), '%NULL_VALUE%') AS nagpraDetermNote,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfiled', '|'), '%NULL_VALUE%') AS nagpraReportFiled,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfiledwith', '|'), '%NULL_VALUE%') AS nagpraReportFiledWithRefname,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfiledby', '|'), '%NULL_VALUE%') AS nagpraReportFiledByRefname,
-        coalesce(utils.aggRepDateField(coc.id, 'nagprareportfiledgroup', 'datedisplaydate', '|'), '%NULL_VALUE%') AS nagpraReportFiledDate,
-        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfilednote', '|'), '%NULL_VALUE%') AS nagpraReportFiledNote,
-        coalesce(utils.aggRepGroupField(coc.id, 'referencegroup', 'reference', '|'), '%NULL_VALUE%') AS referenceGroup_referenceRefname,
-        coalesce(utils.aggRepGroupField(coc.id, 'referencegroup', 'referencenote', '|'), '%NULL_VALUE%') AS referenceNote
+        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_nagprainventorynames', '|'), '%NULLVALUE%') AS nagpraInventoryNameRefname,
+        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_nagpracategories', '|'), '%NULLVALUE%') AS nagpraCategoryRefname,
+        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_graveassoccodes', '|'), '%NULLVALUE%') AS graveAssocCodeRefname,
+        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_repatriationnotes', '|'), '%NULLVALUE%') AS repatriationNote,
+        coalesce(utils.aggRepField(coc.id, 'collectionobjects_nagpra_nagpraculturaldeterminations', '|'), '%NULLVALUE%') AS nagpraCulturalDetermination,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermculture', '|'), '%NULLVALUE%') AS nagpraDetermCultureRefname,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermtype', '|'), '%NULLVALUE%') AS nagpraDetermTypeRefname,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermby', '|'), '%NULLVALUE%') AS nagpraDetermByRefname,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagpradetermgroup', 'nagpradetermnote', '|'), '%NULLVALUE%') AS nagpraDetermNote,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfiled', '|'), '%NULLVALUE%') AS nagpraReportFiled,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfiledwith', '|'), '%NULLVALUE%') AS nagpraReportFiledWithRefname,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfiledby', '|'), '%NULLVALUE%') AS nagpraReportFiledByRefname,
+        coalesce(utils.aggRepDateField(coc.id, 'nagprareportfiledgroup', 'datedisplaydate', '|'), '%NULLVALUE%') AS nagpraReportFiledDate,
+        coalesce(utils.aggRepGroupField(coc.id, 'nagprareportfiledgroup', 'nagprareportfilednote', '|'), '%NULLVALUE%') AS nagpraReportFiledNote,
+        coalesce(utils.aggRepGroupField(coc.id, 'referencegroup', 'reference', '|'), '%NULLVALUE%') AS referenceGroup_referenceRefname,
+        coalesce(utils.aggRepGroupField(coc.id, 'referencegroup', 'referencenote', '|'), '%NULLVALUE%') AS referenceNote
 	FROM collectionobjects_common coc
 	JOIN hierarchy h on (coc.id = h.id)
 	WHERE h.name = $P{csid}
