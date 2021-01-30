@@ -15,6 +15,7 @@ import org.collectionspace.services.config.service.ServiceBindingType;
 public interface IInitHandler {
     public void onRepositoryInitialized(String dataSourceName,
     		String repositoryName,
+    		String tenantShortName,
     		String cspaceInstanceId,
     		ServiceBindingType sbt, 
     		List<Field> fields, 

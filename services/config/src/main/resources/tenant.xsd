@@ -62,8 +62,10 @@
 			<xs:element name="configMD5Hash" type="xs:string" minOccurs="0" maxOccurs="1"/>					<!-- Transient, only used during startup.  Not part of config file. -->
 			<xs:element name="configChangedSinceLastStart" type="xs:boolean" minOccurs="0" maxOccurs="1"/>	<!-- Transient, only used during startup.  Not part of config file. -->
 		</xs:sequence>
-		<!-- tenant id, a UUID -->
+		<!-- tenant id -->
 		<xs:attribute name="id" type="xs:ID" use="required"/>
+		<!-- tenant shortName -->
+		<xs:attribute name="shortName" type="xs:string" use="required"/>
 		<!-- domain name including subdomain but not TLD -->
 		<!-- e.g. hearstmuseum.berkeley or movingimage.us -->
 		<xs:attribute name="name" type="xs:string" use="required"/>

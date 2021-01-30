@@ -58,6 +58,7 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
     public void onRepositoryInitialized(String dataSourceName,
             String repositoryName,
             String cspaceInstanceId,
+            String tenantShortName,
             ServiceBindingType sbt,
             List<Field> fields,
             List<Property> properties) throws Exception {
@@ -79,7 +80,7 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
             return;
         }
         for (String scriptName : scriptNames) {
-            String scriptPath = getSqlScriptPath(dataSourceName, repositoryName, scriptName);
+            String scriptPath = getSqlScriptPath(dataSourceName, repositoryName, tenantShortName, scriptName);
             if (Tools.isBlank(scriptPath)) {
                 logger.warn("Could not get path to SQL script.");
                 logger.warn(CANNOT_PERFORM_TASKS_MESSAGE);
@@ -102,7 +103,7 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
 
         // Next, run a second sequence of SQL scripts, where those scripts may be
         // stored on disk, in a resources directory within the server directory.
-        List<File> scriptFiles = getSqlScriptFiles(dataSourceName, repositoryName);
+        List<File> scriptFiles = getSqlScriptFiles(dataSourceName, repositoryName, tenantShortName);
         // Run these scripts in a sequence based on the ascending order of their filenames.
         // FIXME: consider adding functionality to specify the locale for filename
         // sorting here. (The current sort order is based on the system's default locale.)
@@ -141,23 +142,27 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
         return scriptNames;
     }
 
-    private String getSqlScriptPath(String dataSourceName, String repositoryName, String scriptName) throws Exception {
+    private String getSqlScriptPath(String dataSourceName, String repositoryName, String tenantShortName, String scriptName) throws Exception {
         String scriptPath =
                 DATABASE_RESOURCE_DIRECTORY_NAME
                 + RESOURCE_PATH_SEPARATOR
                 + JDBCTools.getDatabaseProductType(dataSourceName, repositoryName)
                 + RESOURCE_PATH_SEPARATOR
+                + tenantShortName
+                + RESOURCE_PATH_SEPARATOR
                 + scriptName;
         return scriptPath;
     }
 
-    private String getSqlScriptDirectoryPath(String dataSourceName, String repositoryName) throws Exception {
+    private String getSqlScriptDirectoryPath(String dataSourceName, String repositoryName, String tenantShortName) throws Exception {
         String scriptDirectoryPath =
                 getServerResourcesDirectoryPath()
                 + DATABASE_RESOURCE_DIRECTORY_NAME
                 + File.separator
                 + JDBCTools.getDatabaseProductType(dataSourceName, repositoryName)
-                + File.separator;
+                + File.separator
+        		+ tenantShortName
+        		+ File.separator;
         return scriptDirectoryPath;
     }
 
@@ -168,9 +173,9 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
         return serverResourcesPath;
     }
 
-    private List<File> getSqlScriptFiles(String dataSourceName, String repositoryName) throws Exception {
+    private List<File> getSqlScriptFiles(String dataSourceName, String repositoryName, String tenantShortName) throws Exception {
         List<File> sqlScriptFiles = new ArrayList<>();
-        File folder = new File(getSqlScriptDirectoryPath(dataSourceName, repositoryName));
+        File folder = new File(getSqlScriptDirectoryPath(dataSourceName, repositoryName, tenantShortName));
         if (!folder.isDirectory() || !folder.canRead()) {
             return sqlScriptFiles; // Return an empty list of files
         }
