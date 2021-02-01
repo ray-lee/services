@@ -772,7 +772,7 @@ public class ServiceMain {
                     Object o = instantiate(initHandlerClassname, IInitHandler.class);
                     if (o != null && o instanceof IInitHandler){
                         IInitHandler handler = (IInitHandler)o;
-                        handler.onRepositoryInitialized(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, tbt.getShortName(), cspaceInstanceId,
+                        handler.onRepositoryInitialized(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId, tbt.getShortName(),
                         		sbt, fields, props);
                         //The InitHandler may be the default one,
                         //  or specialized classes which still implement this interface and are registered in tenant-bindings.xml.

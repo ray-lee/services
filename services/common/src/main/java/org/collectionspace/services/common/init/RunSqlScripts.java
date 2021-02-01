@@ -88,16 +88,26 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
             }
             scriptContents = getSqlScriptContents(scriptPath);
             if (Tools.isBlank(scriptContents)) {
-                logger.warn("Could not get contents of SQL script from resource " + scriptPath);
-                logger.warn(CANNOT_PERFORM_TASKS_MESSAGE);
-                continue;
+            	//
+            	// Since we couldn't find the script in the tenant qualified location, let's look in the shared/common (non-tenant qualified) location
+            	//
+            	String commonPath = getSqlScriptCommonPath(dataSourceName, repositoryName, scriptName);
+                scriptContents = getSqlScriptContents(commonPath);
+                logger.warn(String.format("Could not get contents of SQL script from resource '%s'.  Looking here instead: '%s'",
+                		scriptPath, commonPath));
+                if (Tools.isBlank(scriptContents)) {
+                    logger.warn("Could not get contents of SQL script from resource " + commonPath);
+                    logger.warn(CANNOT_PERFORM_TASKS_MESSAGE);
+                    continue;
+                }
             }
-            
+
             if (logger.isInfoEnabled()) {
             	String msg = String.format("Running SQL script from Java class path '%s'", scriptPath);
             	logger.info(msg);
             	logger.trace(scriptContents);
             }
+            
             runScript(dataSourceName, repositoryName, cspaceInstanceId, scriptContents, "resource path " + scriptPath);
         }
 
@@ -141,12 +151,24 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
         }
         return scriptNames;
     }
+    
+    private String getSqlScriptCommonPath(String dataSourceName, String repositoryName, String scriptName) throws Exception {
+        String scriptPath =
+                DATABASE_RESOURCE_DIRECTORY_NAME
+                + RESOURCE_PATH_SEPARATOR
+                + JDBCTools.getDatabaseProductType(dataSourceName, repositoryName)
+                + RESOURCE_PATH_SEPARATOR
+                + scriptName;
+        return scriptPath;
+    }
 
     private String getSqlScriptPath(String dataSourceName, String repositoryName, String tenantShortName, String scriptName) throws Exception {
         String scriptPath =
                 DATABASE_RESOURCE_DIRECTORY_NAME
                 + RESOURCE_PATH_SEPARATOR
                 + JDBCTools.getDatabaseProductType(dataSourceName, repositoryName)
+                + RESOURCE_PATH_SEPARATOR
+                + "tenants"
                 + RESOURCE_PATH_SEPARATOR
                 + tenantShortName
                 + RESOURCE_PATH_SEPARATOR
@@ -160,6 +182,8 @@ public class RunSqlScripts extends InitHandler implements IInitHandler {
                 + DATABASE_RESOURCE_DIRECTORY_NAME
                 + File.separator
                 + JDBCTools.getDatabaseProductType(dataSourceName, repositoryName)
+                + File.separator
+                + "tenants"
                 + File.separator
         		+ tenantShortName
         		+ File.separator;
