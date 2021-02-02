@@ -119,6 +119,8 @@ public class ServiceMain {
 
 	private static final String CSPACE_UTILS_SCHEMANAME = "utils";
 
+	private static final String RUNSQLSCRIPTS_SERVICE_NAME = "runsqlscripts";
+
     private ServiceMain() {
     	// Intentionally blank
     }
@@ -732,11 +734,74 @@ public class ServiceMain {
 			}
         }
 	}
+	
+	//
+	// Search through the service bindings for the RUNSQLSCRIPTS_SERVICE_NAME service.  Each tenant can add a set of SQL that
+	// will be run before the other Services' initHandlers.
+	//
+	private void firePostInitRunSQLScripts(Hashtable<String, TenantBindingType> tenantBindingTypeMap) throws Exception {
+        String cspaceInstanceId = getCspaceInstanceId();
+        for (TenantBindingType tbt : tenantBindingTypeMap.values()) {
+        	//
+        	//Loop through all the services in this tenant
+        	//
+            List<ServiceBindingType> sbtList = tbt.getServiceBindings();
+            for (ServiceBindingType sbt: sbtList) {
+            	if (sbt.getName().equalsIgnoreCase(RUNSQLSCRIPTS_SERVICE_NAME)) {
+            		runInitHandler(cspaceInstanceId, tbt, sbt);
+            		return;
+            	}
+            }
+        }
+	}
+
+	private void runInitHandler(String cspaceInstanceId, TenantBindingType tbt, ServiceBindingType sbt) throws Exception {
+    	String repositoryName = null;
+    	if (sbt.getType().equalsIgnoreCase(ServiceBindingUtils.SERVICE_TYPE_SECURITY) == false) {
+    		repositoryName = ConfigUtils.getRepositoryName(tbt, sbt.getRepositoryDomain()); // Each service can have a different repo domain
+    	}
+        //Get the list of InitHandler elements, extract the first one (only one supported right now) and fire it using reflection.
+        List<org.collectionspace.services.config.service.InitHandler> list = sbt.getInitHandler();
+        if (list != null && list.size() > 0) {
+        	org.collectionspace.services.config.service.InitHandler handlerType = list.get(0);  // REM - 12/2012: We might want to think about supporting multiple post-init handlers
+            String initHandlerClassname = handlerType.getClassname();
+            if (Tools.isEmpty(initHandlerClassname)) {
+                return;
+            }
+            if (ServiceMain.logger.isTraceEnabled()) {
+            	ServiceMain.logger.trace(String.format("Firing post-init handler %s ...", initHandlerClassname));
+            }
+
+            List<org.collectionspace.services.config.service.InitHandler.Params.Field>
+                    fields = handlerType.getParams().getField();
+
+            List<org.collectionspace.services.config.service.InitHandler.Params.Property>
+                    props = handlerType.getParams().getProperty();
+
+            //org.collectionspace.services.common.service.InitHandler.Fields ft = handlerType.getFields();
+            //List<String> fields = ft.getField();
+            Object o = instantiate(initHandlerClassname, IInitHandler.class);
+            if (o != null && o instanceof IInitHandler){
+                IInitHandler handler = (IInitHandler)o;
+                handler.onRepositoryInitialized(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId, tbt.getShortName(),
+                		sbt, fields, props);
+                // The InitHandler may be the default one,
+                // or specialized classes which still implement this interface and are registered in tenant-bindings.xml.
+            }
+        }
+	}
 
     public void firePostInitHandlers() throws Exception {
         Hashtable<String, TenantBindingType> tenantBindingTypeMap = tenantBindingConfigReader.getTenantBindings();
+
         //
-        //Loop through all tenants in tenant-bindings.xml
+        // We first need to run the init handler for the 'runsqlscripts' service to allow a tenant to perform
+        // any required tenant specific SQL setup.
+        //
+        firePostInitRunSQLScripts(tenantBindingTypeMap);
+        
+        //
+        // Loop through all tenants in tenant-bindings.xml and run each service's initHandler
         //
         String cspaceInstanceId = getCspaceInstanceId();
         for (TenantBindingType tbt : tenantBindingTypeMap.values()) {
@@ -745,39 +810,9 @@ public class ServiceMain {
         	//
             List<ServiceBindingType> sbtList = tbt.getServiceBindings();
             for (ServiceBindingType sbt: sbtList) {
-            	String repositoryName = null;
-            	if (sbt.getType().equalsIgnoreCase(ServiceBindingUtils.SERVICE_TYPE_SECURITY) == false) {
-            		repositoryName = ConfigUtils.getRepositoryName(tbt, sbt.getRepositoryDomain()); // Each service can have a different repo domain
+            	if (sbt.getName().equalsIgnoreCase(RUNSQLSCRIPTS_SERVICE_NAME) == false) { // skip the RUNSQLSCRIPTS_SERVICE_NAME since we ran it already
+            		runInitHandler(cspaceInstanceId, tbt, sbt);
             	}
-                //Get the list of InitHandler elements, extract the first one (only one supported right now) and fire it using reflection.
-                List<org.collectionspace.services.config.service.InitHandler> list = sbt.getInitHandler();
-                if (list != null && list.size() > 0) {
-                	org.collectionspace.services.config.service.InitHandler handlerType = list.get(0);  // REM - 12/2012: We might want to think about supporting multiple post-init handlers
-                    String initHandlerClassname = handlerType.getClassname();
-                    if (Tools.isEmpty(initHandlerClassname)) {
-                        continue;
-                    }
-                    if (ServiceMain.logger.isTraceEnabled()) {
-                    	ServiceMain.logger.trace(String.format("Firing post-init handler %s ...", initHandlerClassname));
-                    }
-
-                    List<org.collectionspace.services.config.service.InitHandler.Params.Field>
-                            fields = handlerType.getParams().getField();
-
-                    List<org.collectionspace.services.config.service.InitHandler.Params.Property>
-                            props = handlerType.getParams().getProperty();
-
-                    //org.collectionspace.services.common.service.InitHandler.Fields ft = handlerType.getFields();
-                    //List<String> fields = ft.getField();
-                    Object o = instantiate(initHandlerClassname, IInitHandler.class);
-                    if (o != null && o instanceof IInitHandler){
-                        IInitHandler handler = (IInitHandler)o;
-                        handler.onRepositoryInitialized(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId, tbt.getShortName(),
-                        		sbt, fields, props);
-                        //The InitHandler may be the default one,
-                        //  or specialized classes which still implement this interface and are registered in tenant-bindings.xml.
-                    }
-                }
             }
         }
     }

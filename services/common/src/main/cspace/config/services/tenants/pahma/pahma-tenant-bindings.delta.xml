@@ -34,16 +34,35 @@
 			<service:validatorHandler merge:matcher="tag" merge:action="replace" xmlns:service="http://collectionspace.org/services/config/service">org.collectionspace.services.collectionobject.nuxeo.PahmaCollectionObjectValidatorHandler</service:validatorHandler>
 		</tenant:serviceBindings>
 
+		<tenant:serviceBindings merge:matcher="id" id="runsqlscripts">
+			<service:initHandler xmlns:service="http://collectionspace.org/services/config/service">
+				<service:params>
+					<service:property merge:matcher="skip" merge:action="insert">
+						<service:key>sqlScriptName</service:key>
+						<service:value>grant_pahma_reporters_privileges.sql</service:value>
+					</service:property>
+					<service:property merge:matcher="skip" merge:action="insert">
+						<service:key>sqlScriptName</service:key>
+						<service:value>function_pahma_aggRepDateField.sql</service:value>
+					</service:property>
+					<service:property merge:matcher="skip" merge:action="insert">
+						<service:key>sqlScriptName</service:key>
+						<service:value>function_pahma_aggRepField.sql</service:value>
+					</service:property>
+					<service:property merge:matcher="skip" merge:action="insert">
+						<service:key>sqlScriptName</service:key>
+						<service:value>function_pahma_aggRepGroupField.sql</service:value>
+					</service:property>
+				</service:params>
+			</service:initHandler>
+		</tenant:serviceBindings>
+		
 		<tenant:serviceBindings merge:matcher="id" id="idgenerators">
 			<service:initHandler xmlns:service="http://collectionspace.org/services/config/service">
 				<service:params>
 					<service:property merge:matcher="skip" merge:action="insert">
 						<service:key>sqlScriptName</service:key>
 						<service:value>load_pahma_id_generators.sql</service:value>
-					</service:property>
-					<service:property merge:matcher="skip" merge:action="insert">
-						<service:key>sqlScriptName</service:key>
-						<service:value>grant_pahma_reporters_privileges.sql</service:value>
 					</service:property>
 				</service:params>
 			</service:initHandler>
