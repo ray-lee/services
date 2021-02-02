@@ -783,7 +783,7 @@ public class ServiceMain {
             Object o = instantiate(initHandlerClassname, IInitHandler.class);
             if (o != null && o instanceof IInitHandler){
                 IInitHandler handler = (IInitHandler)o;
-                handler.onRepositoryInitialized(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId, tbt.getShortName(),
+                handler.onRepositoryInitialized(JDBCTools.NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId, tbt.getShortName(),
                 		sbt, fields, props);
                 // The InitHandler may be the default one,
                 // or specialized classes which still implement this interface and are registered in tenant-bindings.xml.
@@ -1082,7 +1082,7 @@ public class ServiceMain {
 		
 		String sql = null;
 		try {
-			conn = JDBCTools.getConnection(JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId);
+			conn = JDBCTools.getConnection(JDBCTools.NUXEO_DATASOURCE_NAME, repositoryName, cspaceInstanceId);
 			stmt = conn.createStatement();
 			if (dbType == DatabaseProductType.POSTGRESQL) {
 				sql = "CREATE SCHEMA IF NOT EXISTS " + CSPACE_UTILS_SCHEMANAME + " AUTHORIZATION " + ownerName;
@@ -1095,7 +1095,7 @@ public class ServiceMain {
 			}
 		} catch (Exception e) {
 			String errMsg = String.format("The following SQL statement failed using credentials from datasource '%s': %s",
-					JDBCTools.CSADMIN_NUXEO_DATASOURCE_NAME, sql);
+					JDBCTools.NUXEO_DATASOURCE_NAME, sql);
 			logger.error("createUtilsSchemaWithRights() failed with exception: " + e.getLocalizedMessage());
 			if (errMsg != null) {
 				logger.error(errMsg);
