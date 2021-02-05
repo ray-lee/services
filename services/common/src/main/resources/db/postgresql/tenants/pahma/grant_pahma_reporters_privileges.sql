@@ -1,5 +1,8 @@
 DO $$
 BEGIN
+   CREATE SCHEMA IF NOT EXISTS utils AUTHORIZATION nuxeo_pahma;
+   GRANT USAGE ON SCHEMA utils TO reader_pahma;
+
    IF EXISTS (
       SELECT *
       FROM   pg_catalog.pg_group
