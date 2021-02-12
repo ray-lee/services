@@ -42,6 +42,7 @@ BEGIN
         coid varchar,
         pos integer,
         objectNumber varchar,
+        sortableObjectNumber varchar,
         nagpraInventoryName varchar,
         nagpraCategory varchar,
         graveAssocCode varchar,
@@ -78,10 +79,12 @@ BEGIN
     UNION
     SELECT parentid, pos FROM hierarchy WHERE parentid = cocid AND primarytype = 'referenceGroup';
 
-    -- get csid and objectnumber for collection object record.
+    -- get csid, objectnumber, sortableobjectnumber for collection object record.
     UPDATE getnagpra_temp SET cocsid = h.name FROM hierarchy h WHERE getnagpra_temp.coid = h.id;
 
     UPDATE getnagpra_temp SET objectNumber = c.objectnumber FROM collectionobjects_common c WHERE getnagpra_temp.coid = c.id;
+
+    UPDATE getnagpra_temp SET sortableobjectnumber = c.sortableobjectnumber FROM collectionobjects_pahma c WHERE getnagpra_temp.coid = c.id;
     
     -- get displaynames for refnames in repeating fields
     FOREACH t SLICE 1 IN ARRAY reptabs LOOP
