@@ -136,17 +136,17 @@ LEFT OUTER JOIN hierarchy han ON (han.parentid=cc.id AND han.primarytype='pahmaA
 LEFT OUTER JOIN pahmaaltnumgroup ang ON (ang.id=han.id)
 LEFT OUTER JOIN hierarchy hpd ON (hpd.parentid=cc.id AND hpd.primarytype='structuredDateGroup' AND hpd.name='collectionobjects_common:objectProductionDateGroupList' AND (hpd.pos=0 or hpd.pos IS NULL))
 LEFT OUTER JOIN structureddategroup spd ON (spd.id=hpd.id)
-LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslAFIL ON (oslAFIL.id=cc.id AND oslAFIL.item IN (
+LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslAFIL ON (oslAFIL.id=cc.id AND getdispl(oslAFIL.item) IN (
 'culturally affiliated',
 'culturally unaffiliated'))
-LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslDISP ON (oslDISP.id=cc.id AND oslDISP.item IN (
+LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslDISP ON (oslDISP.id=cc.id AND getdispl(oslDISP.item) IN (
 'deaccessioned',
 'accessioned',
 '(unknown)',
 'partially deaccessioned',
 'recataloged',
 'partially recataloged'))
-LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslMODE ON (oslMODE.id=cc.id AND oslMODE.item IN (
+LEFT OUTER JOIN collectionobjects_pahma_pahmaobjectstatuslist oslMODE ON (oslMODE.id=cc.id AND getdispl(oslMODE.item) IN (
 'intended for repatriation',
 'pending repatriation',
 'intended for transfer',
