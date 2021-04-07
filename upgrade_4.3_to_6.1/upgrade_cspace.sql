@@ -19,6 +19,6 @@ CREATE TABLE tokens (
   updated_at TIMESTAMP, PRIMARY KEY (id)
 );
 
-ALTER TABLE tokens OWNER TO cspace_default;
+ALTER TABLE tokens OWNER TO cspace_omca;
 
 ANALYZE;

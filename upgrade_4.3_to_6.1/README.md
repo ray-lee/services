@@ -30,6 +30,12 @@ Install the OMCA customizations from the `omca-6.1` branches.
    sudo systemctl stop collectionspace.service
    ```
 
+1. Change the instance ID from `_default` to `_omca`, to match the instance ID from the 4.3 installation.
+   ```
+   sudo sed -i 's/"_default"/"_omca"/' /home/collectionspace/.config/environment.d/collectionspace.conf
+   sudo rm -r /opt/collectionspace/server/cspace/services/db/postgresql
+   ```
+
 1. As the CollectionSpace user, check out the `omca-6.1` branches in the `services` and `application` source code directories.
    ```
    sudo su - collectionspace
@@ -45,7 +51,7 @@ Install the OMCA customizations from the `omca-6.1` branches.
    git checkout omca-6.1
    ```
 
-1. Build and deploy the `services` and `application` projects from the `omca-6.1` branches. This will delete and recreate the CollectionSpace databases, which at this point only contains the test record just entered.
+1. Build and deploy the `services` and `application` projects from the `omca-6.1` branches.
    ```
    cd ../services
    mvn clean install -DskipTests
@@ -92,43 +98,43 @@ Two types of data need to be migrated from 4.3 to 6.1: record data stored in pos
    sudo systemctl stop collectionspace.service
    ```
 
-1. On the 4.3 server, export the `omca_domain_default` and `cspace_default` databases:
+1. On the 4.3 server, export the `omca_domain_omca` and `cspace_omca` databases:
    ```
-   sudo -u postgres pg_dump -Fc -f omca_domain_default.dump omca_domain_default
-   sudo -u postgres pg_dump -Fc -f cspace_default.dump cspace_default
+   sudo -u postgres pg_dump -Fc -f omca_domain_omca.dump omca_domain_omca
+   sudo -u postgres pg_dump -Fc -f cspace_omca.dump cspace_omca
    ```
 
 1. Transfer the dump files to the 6.1 server, to a location accessible by the postgres user.
 
-1. Run a script to create empty databases to receive 4.3 data. This will delete the existing `omca_domain_default` and `cspace_default` databases, which at this point only contain the test records just entered.
+1. Run a script to create empty databases to receive 4.3 data. This will delete the existing `omca_domain_omca` and `cspace_omca` databases, which at this point only contain the test records just entered.
    ```
    cd /opt/collectionspace/services/upgrade_4.3_to_6.1
    sudo -u postgres psql -d postgres -f create_db.sql
    ```
 
 1. Restore the 4.3 databases into the newly created databases.
-   1. Restore `omca_domain_default`.
+   1. Restore `omca_domain_omca`.
       ```
-      sudo -u postgres pg_restore -e -d omca_domain_default omca_domain_default.dump
+      sudo -u postgres pg_restore -e -d omca_domain_omca omca_domain_omca.dump
       ```
 
-   1. Restore `cspace_default`.
+   1. Restore `cspace_omca`.
       ```
-      sudo -u postgres pg_restore -e -d cspace_default cspace_default.dump
+      sudo -u postgres pg_restore -e -d cspace_omca cspace_omca.dump
       ```
 
 1. Upgrade the restored 4.3 databases to 6.1.
-   1. Run a script to upgrade the `omca_domain_default` database.
+   1. Run a script to upgrade the `omca_domain_omca` database.
       ```
       cd /opt/collectionspace/services/upgrade_4.3_to_6.1
-      sudo -u postgres psql -d omca_domain_default -f upgrade_nuxeo.sql
+      sudo -u postgres psql -d omca_domain_omca -f upgrade_nuxeo.sql
       ```
 
       Note: Since 6.0, database upgrades are applied automatically when CollectionSpace is started. The above script only includes the changes that are needed to get from 4.3 to 6.0. Additional changes will be applied on startup.
 
-   1. Run a script to upgrade the `cspace_default` database.
+   1. Run a script to upgrade the `cspace_omca` database.
       ```
-      sudo -u postgres psql -d cspace_default -f upgrade_cspace.sql
+      sudo -u postgres psql -d cspace_omca -f upgrade_cspace.sql
       ```
 
 1. Initialize permissions for record types that did not exist in 4.3.
@@ -142,7 +148,12 @@ Two types of data need to be migrated from 4.3 to 6.1: record data stored in pos
 1. The previous step can result in duplicate permissions, because of changes to how permissions are initialized in 6.1 vs. 4.3. Run a script to remove the duplicates.
    ```
    cd /opt/collectionspace/services/upgrade_4.3_to_6.1
-   sudo -u postgres psql -d cspace_default -f dedupe_permissions.sql
+   sudo -u postgres psql -d cspace_omca -f dedupe_permissions.sql
+   ```
+
+1. Delete `_default` databases and roles that were created from the initial installation. These aren't needed, since we're now using the `_omca` instance ID.
+   ```
+   sudo -u postgres psql -f drop_default.sql
    ```
 
 ### Migrate user-uploaded binaries
