@@ -112,6 +112,13 @@ Two types of data need to be migrated from 4.3 to 6.1: record data stored in pos
    sudo -u postgres psql -d postgres -f create_db.sql
    ```
 
+1. Run a script to create missing text functions in the `nuxeo_omca`, `omca_domain_omca`, and `cspace_omca` databases.
+   ```
+   sudo -u postgres psql -d nuxeo_omca -f create_text_functions.sql
+   sudo -u postgres psql -d omca_domain_omca -f create_text_functions.sql
+   sudo -u postgres psql -d cspace_omca -f create_text_functions.sql
+   ```
+
 1. Restore the 4.3 databases into the newly created databases.
    1. Restore `omca_domain_omca`.
       ```
