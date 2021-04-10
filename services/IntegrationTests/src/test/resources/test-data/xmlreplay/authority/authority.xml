@@ -1,11 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xmlReplay>
     
-    <auths>
 	<!-- IMPORTANT: THESE ARE STICKY :: THEY STICK AROUND UNTIL RESET, IN EXEC ORDER OF THIS FILE. -->
-        <auth ID="admin@core.collectionspace.org">YWRtaW5AY29yZS5jb2xsZWN0aW9uc3BhY2Uub3JnOkFkbWluaXN0cmF0b3I=</auth>
+    <auths default="admin@pahma.cspace.berkeley.edu">
+       <auth ID="admin@pahma.cspace.berkeley.edu">YWRtaW5AcGFobWEuY3NwYWNlLmJlcmtlbGV5LmVkdTpBZG1pbmlzdHJhdG9y</auth>
     </auths>
-        
+
+    <testGroup ID="TestAuthorityItemsWithContacts" autoDeletePOSTS="false">
+        <test ID="createPersonAuthority1" auth="admin@pahma.cspace.berkeley.edu">
+            <expectedCodes>201</expectedCodes>
+            <method>POST</method>
+            <uri>/cspace-services/personauthorities</uri>
+            <filename>authority/personauthority.xml</filename>
+            <vars>
+                <!-- Nonsense words to build short identifiers and display -->
+                <!-- names, and to populate text field(s). -->
+                <var ID="word1">jlmbsoq</var>
+                <var ID="word2">tqbfjotld</var>
+                <var ID="word3">mepqcgjt</var>
+                <var ID="word4">fqgtmjb</var>
+                <var ID="word5">brvffaqj</var>
+                <!-- Partial term searches using one or more of those words. -->
+                <var ID="word1PartialTermStem">jlmb</var>
+                <var ID="word2PartialTermStem">tqbf</var>
+                <var ID="word2PartialTermMid">fjotl</var>
+                <!-- Populate the current record with those words. -->
+                <var ID="authDisplayName">jlmbsoqauth1</var>
+                <var ID="authShortIdentifier">jlmbsoqauth2</var>
+            </vars>
+        </test>
+<!--         <test ID="personitemWithContact1">
+            <expectedCodes>201</expectedCodes>
+            <method>POST</method>
+            <uri>/cspace-services/personauthorities/${createPersonAuthority1.CSID}/items</uri>
+            <filename>authority/personitemWithContact1.xml</filename>
+            <vars>
+                <var ID="itemDisplayName">${createPersonAuthority1.word1} ${createPersonAuthority1.word2}</var>
+                <var ID="itemShortIdentifier">${createPersonAuthority1.word1}item1</var>
+                <var ID="itemBioNote">A bio note for this Person.</var>
+            </vars>
+        </test>        
+ -->	</testGroup>
+	
     <testGroup ID="TestAuthoritiesMultiVocabSearch" autoDeletePOSTS="true">
         
         <!--

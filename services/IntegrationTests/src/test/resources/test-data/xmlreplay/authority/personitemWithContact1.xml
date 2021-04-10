@@ -10,4 +10,12 @@
         <bioNote>${itemBioNote}</bioNote>
         <foreName>${itemDisplayName}</foreName>
     </ns2:persons_common>
+    <ns2:contacts_common xmlns:ns2="http://collectionspace.org/services/contact">
+        <emailGroupList>
+            <emailGroup>
+                <email>xow@town.com</email>
+                <emailType>business</emailType>
+            </emailGroup>
+        </emailGroupList>
+    </ns2:contacts_common>
 </document>
