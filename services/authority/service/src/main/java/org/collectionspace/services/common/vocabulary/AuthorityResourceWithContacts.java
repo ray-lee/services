@@ -162,12 +162,12 @@ public abstract class AuthorityResourceWithContacts<AuthCommon, AuthItemHandler>
         //
         // CC-1145: Ensure no more than one contact is associated with an authority term.
         //
-        AbstractCommonList existingContactList = getContactList(NULL_CONTEXT, parentCsid, itemCsid, null);
+        AbstractCommonList existingContactList = getContactList(ctx, parentCsid, itemCsid, null);
         if (existingContactList.getTotalItems() > 0) {
         	String errMsg = String.format("Term '%s' in Authority '%s' has an existing contact.  CollectionSpace currently supports no more than one contact for a term.",
         			itemCsid, parentCsid);
         	logger.error(errMsg);
-        	throw new Exception(errMsg);
+        	throw new DocumentException(DocumentException.DUPLICATE_RECORD_ERR, DocumentException.DUPLICATE_RECORD_MSG);
         }
 
         DocumentHandler handler = createContactDocumentHandler(ctx, parentCsid, itemCsid, ui);

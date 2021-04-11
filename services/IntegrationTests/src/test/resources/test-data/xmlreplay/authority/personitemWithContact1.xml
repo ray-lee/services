@@ -13,7 +13,7 @@
     <ns2:contacts_common xmlns:ns2="http://collectionspace.org/services/contact">
         <emailGroupList>
             <emailGroup>
-                <email>xow@town.com</email>
+                <email>${emailAddress}</email>
                 <emailType>business</emailType>
             </emailGroup>
         </emailGroupList>
