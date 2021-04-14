@@ -7,14 +7,7 @@
 	<style name="SubTitle" forecolor="#666666" fontName="SansSerif" fontSize="18"/>
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
-	<parameter name="tenantid" class="java.lang.String" isForPrompting="false">
-		<defaultValueExpression><![CDATA[35]]></defaultValueExpression>
-	</parameter>
-	<parameter name="family" class="java.lang.String">
-		<parameterDescription><![CDATA[Use form %FAMILYNAME% (e.g., %CACTACEAE%)
-or %'FAMILYNAME' to avoid homonyms]]></parameterDescription>
-		<defaultValueExpression><![CDATA["%CACTACEAE'"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="family" class="java.lang.String"/>
 	<queryString>
 		<![CDATA[select co1.objectnumber,
 findhybridaffinname(tig.id) determination,
@@ -34,7 +27,7 @@ join relations_common r1 on (h1.name=r1.subjectcsid and objectdocumenttype='Coll
 join hierarchy h2 on (r1.objectcsid=h2.name)
 join collectionobjects_common co1 on (co1.id=h2.id)
 
-join collectionspace_core core on (core.id=co1.id and core.tenantid=$P{tenantid})
+join collectionspace_core core on (core.id=co1.id)
 join misc misc1 on (misc1.id = lc.id and misc1.lifecyclestate <> 'deleted')
 join misc misc2 on (misc2.id = co1.id and misc2.lifecyclestate <> 'deleted')
 
@@ -47,7 +40,7 @@ left outer join taxonomicIdentGroup tig on (tig.id = htig.id)
 left outer join taxon_common tc on (tig.taxon=tc.refname)
 left outer join taxon_naturalhistory tn on (tc.id=tn.id)
 
-where getdispl(tn.family) ~ $P{family}
+where tn.family = $P{family}
 
 order by determination]]>
 	</queryString>
