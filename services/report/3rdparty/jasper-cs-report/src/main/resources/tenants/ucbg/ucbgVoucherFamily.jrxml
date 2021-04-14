@@ -83,7 +83,7 @@ order by determination]]>
 				<textElement textAlignment="Center">
 					<font size="12" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Voucher by Family: " + $P{family}.replaceAll( "%", "" )]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Voucher by Family: " + $F{family}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="e4519f15-3730-4f4a-a69c-eacc8f6427c7" x="77" y="26" width="116" height="12"/>
