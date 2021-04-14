@@ -11,17 +11,17 @@
 		<defaultValueExpression><![CDATA[35]]></defaultValueExpression>
 	</parameter>
 	<parameter name="genus" class="java.lang.String">
-		<parameterDescription><![CDATA[Genus: %genusname% (e.g., %Armatocereus%)
+		<parameterDescription><![CDATA[Genus: genusname (e.g., Armatocereus)
 or %'genusname% to handle homonyms]]></parameterDescription>
-		<defaultValueExpression><![CDATA["%Armatocereus%"]]></defaultValueExpression>
+		<defaultValueExpression><![CDATA["Armatocereus"]]></defaultValueExpression>
 	</parameter>
 	<queryString>
 		<![CDATA[select co1.objectnumber,
 findhybridaffinname(tig.id) determination,
 case when (tn.family is not null and tn.family <> '')
-     then regexp_replace(tn.family, '^.*\)''(.*)''$', '\1')
+     then getdispl(tn.family)
 end as family,
-regexp_replace(lc.borrower, '^.*\)''(.*)''$', '\1') voucherinstitution,
+getdispl(lc.borrower) voucherinstitution,
 case when lb.hortwild='Horticultural' then 'hort'
      when lb.hortwild='Wild' then 'wild'
 end as hortwild
@@ -47,7 +47,7 @@ left outer join taxonomicIdentGroup tig on (tig.id = htig.id)
 left outer join taxon_common tc on (tig.taxon=tc.refname)
 left outer join taxon_naturalhistory tn on (tc.id=tn.id)
 
-where tig.taxon like $P{genus}
+where getdispl(tig.taxon) ~ $P{genus}
 
 order by determination]]>
 	</queryString>
