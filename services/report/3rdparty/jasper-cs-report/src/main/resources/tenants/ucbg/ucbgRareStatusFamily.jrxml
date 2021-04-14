@@ -19,13 +19,13 @@ or %'FAMILYNAME' to avoid homonyms]]></parameterDescription>
 		<![CDATA[select co1.objectnumber,
 findhybridaffinname(tig.id) determination,
 case when (tn.family is not null and tn.family <> '')
-     then regexp_replace(tn.family, '^.*\)''(.*)''$', '\1')
+     then getdispl(tn.family)
 end as family,
 case when (mc.currentlocation is not null and mc.currentlocation <> '')
-     then regexp_replace(mc.currentlocation, '^.*\)''(.*)''$', '\1')
+     then getdispl(mc.currentlocation)
 end as gardenlocation,
 co1.recordstatus dataQuality,
-case when (lg.fieldlocplace is not null and lg.fieldlocplace <> '') then regexp_replace(lg.fieldlocplace, '^.*\)''(.*)''$', '\1')
+case when (lg.fieldlocplace is not null and lg.fieldlocplace <> '') then getdispl(lg.fieldlocplace)
      when (lg.fieldlocplace is null and lg.taxonomicrange is not null) then 'Geographic range: '||lg.taxonomicrange
 end as locality
 
@@ -57,7 +57,7 @@ left outer join taxon_naturalhistory tn on (tc.id=tn.id)
 where cob.deadflag = 'false'
 and con.rare = 'true'
 -- and tig.taxon like '%Araucaria%'
-and tn.family like $P{family}]]>
+and getdispl(tn.family) ~ $P{family}]]>
 	</queryString>
 	<field name="objectnumber" class="java.lang.String"/>
 	<field name="determination" class="java.lang.String"/>
