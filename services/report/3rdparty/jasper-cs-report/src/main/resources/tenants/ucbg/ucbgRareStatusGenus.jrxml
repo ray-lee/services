@@ -14,6 +14,7 @@ findhybridaffinname(tig.id) determination,
 case when (tn.family is not null and tn.family <> '')
      then getdispl(tn.family)
 end as family,
+getdispl(tig.taxon) as genusname,
 case when (mc.currentlocation is not null and mc.currentlocation <> '')
      then getdispl(mc.currentlocation)
 end as gardenlocation,
@@ -54,6 +55,7 @@ and tig.taxon = $P{genus}]]>
 	<field name="objectnumber" class="java.lang.String"/>
 	<field name="determination" class="java.lang.String"/>
 	<field name="family" class="java.lang.String"/>
+	<field name="genusname" class="java.lang.String"/>
 	<field name="gardenlocation" class="java.lang.String"/>
 	<field name="dataquality" class="java.lang.String"/>
 	<field name="locality" class="java.lang.String"/>
@@ -91,7 +93,7 @@ and tig.taxon = $P{genus}]]>
 				<textElement textAlignment="Center">
 					<font size="12" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Rare Status by Genus: " + $P{genus}.replaceAll( "%", "" )]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Rare Status by Genus: " + $F{genusname}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="19649ec3-e766-4789-b087-5dddee22875a" x="21" y="22" width="60" height="15"/>
