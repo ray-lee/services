@@ -92,7 +92,7 @@ and tn.family = $P{family}]]>
 				<textElement textAlignment="Center">
 					<font size="12" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Rare Status by Family: " + $P{family}.replaceAll( "%", "" )]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Rare Status by Family: " + $F{family}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="3cadefb5-7f8c-4b76-baff-893fc4476790" x="24" y="22" width="60" height="15"/>
