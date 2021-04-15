@@ -7,21 +7,15 @@
 	<style name="SubTitle" forecolor="#666666" fontName="SansSerif" fontSize="18"/>
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
-	<parameter name="tenantid" class="java.lang.String" isForPrompting="false">
-		<defaultValueExpression><![CDATA[35]]></defaultValueExpression>
-	</parameter>
-	<parameter name="genus" class="java.lang.String">
-		<parameterDescription><![CDATA[Genus: %genusname% (e.g., %Armatocereus%)
-or %'genusname% to handle homonyms]]></parameterDescription>
-		<defaultValueExpression><![CDATA["%Armatocereus%"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="genus" class="java.lang.String"/>
 	<queryString>
 		<![CDATA[select co1.objectnumber,
 findhybridaffinname(tig.id) determination,
 case when (tn.family is not null and tn.family <> '')
-     then regexp_replace(tn.family, '^.*\)''(.*)''$', '\1')
+     then getdispl(tn.family)
 end as family,
-regexp_replace(lc.borrower, '^.*\)''(.*)''$', '\1') voucherinstitution,
+getdispl(tig.taxon) as genusname,
+getdispl(lc.borrower) voucherinstitution,
 case when lb.hortwild='Horticultural' then 'hort'
      when lb.hortwild='Wild' then 'wild'
 end as hortwild
@@ -34,7 +28,7 @@ join relations_common r1 on (h1.name=r1.subjectcsid and objectdocumenttype='Coll
 join hierarchy h2 on (r1.objectcsid=h2.name)
 join collectionobjects_common co1 on (co1.id=h2.id)
 
-join collectionspace_core core on (core.id=co1.id and core.tenantid=$P{tenantid})
+join collectionspace_core core on (core.id=co1.id)
 join misc misc1 on (misc1.id = lc.id and misc1.lifecyclestate <> 'deleted')
 join misc misc2 on (misc2.id = co1.id and misc2.lifecyclestate <> 'deleted')
 
@@ -47,13 +41,14 @@ left outer join taxonomicIdentGroup tig on (tig.id = htig.id)
 left outer join taxon_common tc on (tig.taxon=tc.refname)
 left outer join taxon_naturalhistory tn on (tc.id=tn.id)
 
-where tig.taxon like $P{genus}
+where tig.taxon = $P{genus}
 
 order by determination]]>
 	</queryString>
 	<field name="objectnumber" class="java.lang.String"/>
 	<field name="determination" class="java.lang.String"/>
 	<field name="family" class="java.lang.String"/>
+	<field name="genusname" class="java.lang.String"/>
 	<field name="voucherinstitution" class="java.lang.String"/>
 	<field name="hortwild" class="java.lang.String"/>
 	<background>
@@ -90,7 +85,7 @@ order by determination]]>
 				<textElement textAlignment="Center">
 					<font size="12" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Voucher by Genus: " + $P{genus}.replaceAll( "%", "" )]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Voucher by Genus: " + $F{genusname}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="dcaa6848-5cfa-4c9c-ad6e-0f1b7e781c04" x="78" y="26" width="116" height="12"/>
