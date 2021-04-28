@@ -8,34 +8,40 @@
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Location Header" fontName="SansSerif" fontSize="12"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
-	<parameter name="tenantid" class="java.lang.String" isForPrompting="false">
-		<defaultValueExpression><![CDATA[15]]></defaultValueExpression>
-	</parameter>
-	<parameter name="Agency Name" class="java.lang.String">
-		<parameterDescription><![CDATA[a distinctive portion of the government agency's name]]></parameterDescription>
-		<defaultValueExpression><![CDATA["forest service"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="AgencyName" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT DISTINCT cc.objectnumber AS "objectnumber", cp.sortableobjectnumber AS "sortnumber", cc.numberofobjects AS "pieces", ong.objectname AS "objectname", fcd.datedisplaydate AS "collectiondate", STRING_AGG(DISTINCT(ac.acquisitionreferencenumber), ', ') AS "accno", REGEXP_REPLACE(fcp.item, '^.*\)''(.*)''$', '\1') AS "site", REGEXP_REPLACE(pog.owner, '^.*\)''(.*)''$', '\1') AS "siteowner", pog.ownershipnote AS "ownershipnote", pc.placenote AS "placenote"
+		<![CDATA[SELECT DISTINCT cc.objectnumber AS objectnumber,
+        cp.sortableobjectnumber AS sortnumber,
+        cc.numberofobjects AS pieces,
+        ong.objectname AS objectname,
+        fcd.datedisplaydate AS collectiondate,
+        STRING_AGG(DISTINCT(ac.acquisitionreferencenumber), ', ') AS accno,
+        getdispl(fcp.item) AS site,
+        getdispl(pog.anthropologyplaceowner) AS siteowner,
+        pog.anthropologyplaceownershipnote AS ownershipnote,
+        pc.placenote AS placenote
 FROM collectionobjects_common cc
 LEFT OUTER JOIN collectionobjects_pahma cp ON (cc.id = cp.id)
 LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (fcp.id = cc.id)
 JOIN misc ms ON (ms.id = cc.id AND ms.lifecyclestate <> 'deleted')
 JOIN places_common pc ON (pc.refname = fcp.item)
-JOIN hierarchy h1 ON (h1.parentid = pc.id AND h1.name = 'places_common:placeOwnerGroupList')
-JOIN placeownergroup pog ON (pog.id = h1.id)
-FULL OUTER JOIN hierarchy h2 ON (h2.parentid = cc.id AND h2.name = 'collectionobjects_common:objectNameList' AND h2.pos = 0)
-FULL OUTER JOIN objectnamegroup ong ON (ong.id = h2.id)
-FULL OUTER JOIN hierarchy h3 ON (h3.id = cc.id)
-FULL OUTER JOIN relations_common rc ON (rc.subjectcsid = h3.name AND rc.objectdocumenttype = 'Acquisition')
-FULL OUTER JOIN hierarchy h4 ON (h4.name = rc.objectcsid)
-FULL OUTER JOIN acquisitions_common ac ON (ac.id = h4.id)
-FULL OUTER JOIN hierarchy h5 ON (h5.parentid = cc.id AND h5.pos = 0 AND h5.name = 'collectionobjects_pahma:pahmaFieldCollectionDateGroupList')
-FULL OUTER JOIN structureddategroup fcd ON (fcd.id = h5.id)
-WHERE REGEXP_REPLACE(pog.owner, '^.*\)''(.*)''$', '\1') ILIKE CONCAT('%', $P{Agency Name}, '%')
-OR (pog.owner IS NULL AND pog.ownershipnote ILIKE CONCAT('%', $P{Agency Name}, '%'))
-GROUP BY cc.objectnumber, cp.sortableobjectnumber, cc.numberofobjects, ong.objectname, fcd.datedisplaydate, fcp.item, pog.owner, pog.ownershipnote, pc.placenote
-ORDER BY REGEXP_REPLACE(fcp.item, '^.*\)''(.*)''$', '\1'), pog.ownershipnote, cp.sortableobjectnumber]]>
+JOIN hierarchy hpog ON (hpog.parentid = pc.id AND hpog.primarytype = 'anthropologyPlaceOwnerGroup')
+JOIN anthropologyPlaceOwnerGroup pog ON (pog.id = hpog.id)
+FULL OUTER JOIN hierarchy hong ON (hong.parentid = cc.id
+        AND hong.name = 'collectionobjects_common:objectNameList' AND hong.pos = 0)
+FULL OUTER JOIN objectnamegroup ong ON (ong.id = hong.id)
+FULL OUTER JOIN hierarchy hcc ON (hcc.id = cc.id)
+FULL OUTER JOIN relations_common rc ON (rc.subjectcsid = hcc.name AND rc.objectdocumenttype = 'Acquisition')
+FULL OUTER JOIN hierarchy hac ON (hac.name = rc.objectcsid)
+FULL OUTER JOIN acquisitions_common ac ON (ac.id = hac.id)
+FULL OUTER JOIN hierarchy hfcd ON (hfcd.parentid = cc.id 
+        AND hfcd.name = 'collectionobjects_pahma:pahmaFieldCollectionDateGroupList' AND hfcd.pos = 0)
+FULL OUTER JOIN structureddategroup fcd ON (fcd.id = hfcd.id)
+WHERE pog.anthropologyplaceowner = $P{AgencyName}
+OR (pog.anthropologyplaceowner IS NULL AND pog.anthropologyplaceownershipnote ~ getdispl($P{AgencyName}))
+GROUP BY cc.objectnumber, cp.sortableobjectnumber, cc.numberofobjects, ong.objectname, fcd.datedisplaydate,
+        fcp.item, pog.anthropologyplaceowner, pog.anthropologyplaceownershipnote, pc.placenote
+ORDER BY getdispl(fcp.item), pog.anthropologyplaceownershipnote, cp.sortableobjectnumber]]>
 	</queryString>
 	<field name="objectnumber" class="java.lang.String"/>
 	<field name="sortnumber" class="java.lang.String"/>
