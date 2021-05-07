@@ -21,8 +21,8 @@
 FROM groups_common gc
 JOIN hierarchy hgc ON (gc.id = hgc.id)
 JOIN relations_common rcg ON (hgc.name = rcg.subjectcsid)
-JOIN hierarchy hco ON (rcg.objectcsid = hco.name)
-JOIN collectionobjects_common co ON (hco.id = co.id)
+JOIN hierarchy hrco ON (rcg.objectcsid = hrco.name)
+JOIN collectionobjects_common co ON (hrco.id = co.id)
 LEFT OUTER JOIN collectionobjects_pahma cp ON (co.id = cp.id)
 LEFT OUTER JOIN collectionobjects_anthropology ca on (co.id = ca.id)
 JOIN misc ms ON (co.id = ms.id AND ms.lifecyclestate <> 'deleted')
@@ -51,7 +51,7 @@ ORDER BY cp.sortableobjectnumber]]>
 	<field name="objectCount" class="java.lang.Long"/>
 	<field name="culturalGroup" class="java.lang.String"/>
 	<field name="acqNumber" class="java.lang.String"/>
-	<field name="altNum" class="java.lang.String"/>
+	<field name="altNumber" class="java.lang.String"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -195,7 +195,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{altNum}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{altNumber}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
