@@ -3,46 +3,44 @@
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<parameter name="csid" class="java.lang.String">
-		<defaultValueExpression><![CDATA["0cca1640-6014-4b3e-8453"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="groupcsid" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT gc.title AS "GroupTitle",
-        h1.name AS "csid",
-        co.objectnumber AS "Museum No.",
-        cp.sortableobjectnumber AS "sort",
-        ong.objectName AS "Name",
-        bd.item AS "Description",
+		<![CDATA[SELECT gc.title AS groupTitle,
+        hgc.name AS csid,
+        co.objectnumber AS museumNumber,
+        cp.sortableobjectnumber AS sortableObjectNumber,
+        ong.objectName AS objectName,
+        bd.item AS briefDescription,
         CASE WHEN (fcp.item IS NOT NULL AND fcp.item <> '')
-          THEN regexp_replace(fcp.item, '^.*\)''(.*)''$', '\1') END AS "Site",
-        CASE WHEN ca.computedcrate IS NULL THEN regexp_replace(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1')
-	  ELSE regexp_replace(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1')||' '||regexp_replace(ca.computedcrate, '^.*\)''(.*)''$', '\1')
-	END AS "Currentlocation"
+          THEN GETDISPL(fcp.item) END AS site,
+        CASE WHEN ca.computedcrate IS NULL THEN GETDISPL(co.computedcurrentlocation)
+	  ELSE GETDISPL(co.computedcurrentlocation) || ' ' || GETDISPL(ca.computedcrate)
+	END AS currentLocation
 FROM groups_common gc
-JOIN hierarchy h1 ON (gc.id = h1.id)
-JOIN relations_common rc1 ON (h1.name = rc1.subjectcsid)
-JOIN hierarchy h2 ON (rc1.objectcsid = h2.name)
-JOIN collectionobjects_common co ON (h2.id = co.id)
+JOIN hierarchy hgc ON (gc.id = hgc.id)
+JOIN relations_common rc ON (hgc.name = rc.subjectcsid)
+JOIN hierarchy hco ON (rc.objectcsid = hco.name)
+JOIN collectionobjects_common co ON (hco.id = co.id)
 LEFT OUTER JOIN collectionobjects_pahma cp ON (co.id = cp.id)
-LEFT OUTER JOIN collectionobjects_anthropology ca ON (co.id=ca.id)
-LEFT OUTER JOIN hierarchy h3 ON (co.id = h3.parentid AND h3.primarytype = 'objectNameGroup' AND h3.pos=0)
-LEFT OUTER JOIN objectnamegroup ong ON (ong.id = h3.id)
-LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id = co.id and bd.pos=0)
+LEFT OUTER JOIN collectionobjects_anthropology ca ON (co.id = ca.id)
+LEFT OUTER JOIN hierarchy hong ON (co.id = hong.parentid AND hong.primarytype = 'objectNameGroup' AND hong.pos = 0)
+LEFT OUTER JOIN objectnamegroup ong ON (ong.id = hong.id)
+LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id = co.id and bd.pos = 0)
 LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (co.id = fcp.id AND fcp.pos = 0)
 JOIN misc ms ON (co.id=ms.id AND ms.lifecyclestate <> 'deleted')
-WHERE rc1.subjectcsid = $P{csid}
-ORDER BY sort]]>
+WHERE rc.subjectcsid = $P{groupcsid}
+ORDER BY sortableObjectNumber]]>
 	</queryString>
-	<field name="GroupTitle" class="java.lang.String"/>
+	<field name="groupTitle" class="java.lang.String"/>
 	<field name="csid" class="java.lang.String"/>
-	<field name="Museum No." class="java.lang.String"/>
-	<field name="sort" class="java.lang.String"/>
-	<field name="Name" class="java.lang.String"/>
-	<field name="Description" class="java.lang.String"/>
-	<field name="Site" class="java.lang.String"/>
-	<field name="Currentlocation" class="java.lang.String"/>
-	<group name="Currentlocation">
-		<groupExpression><![CDATA[$F{Currentlocation}]]></groupExpression>
+	<field name="museumNumber" class="java.lang.String"/>
+	<field name="sortableObjectNumber" class="java.lang.String"/>
+	<field name="objectName" class="java.lang.String"/>
+	<field name="briefDescription" class="java.lang.String"/>
+	<field name="site" class="java.lang.String"/>
+	<field name="currentLocation" class="java.lang.String"/>
+	<group name="currentLocation">
+		<groupExpression><![CDATA[$F{currentLocation}]]></groupExpression>
 	</group>
 	<background>
 		<band splitType="Stretch"/>
@@ -54,7 +52,7 @@ ORDER BY sort]]>
 				<textElement textAlignment="Center">
 					<font size="18"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{GroupTitle}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{groupTitle}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="315cb7c5-69e8-4a2e-be10-42a3cdaa6fbe" x="0" y="0" width="373" height="30"/>
@@ -115,35 +113,35 @@ ORDER BY sort]]>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Museum No.}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{museumNumber}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement uuid="3282969a-e7aa-4d6f-924d-e413691e0ab4" stretchType="RelativeToBandHeight" x="88" y="6" width="111" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Name}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objectName}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="37941031-7b61-4f3e-b63e-10538bfe27db" stretchType="RelativeToBandHeight" x="565" y="6" width="187" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Currentlocation}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{currentLocation}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="8846d652-92b8-4eb7-8c92-6864f18b90e1" stretchType="RelativeToBandHeight" x="209" y="6" width="156" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Description}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{briefDescription}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="96da5af3-7c77-4553-8150-3f89afe9b205" stretchType="RelativeToBandHeight" x="373" y="6" width="182" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Site}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{site}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement uuid="fd27534c-cac9-4569-be58-a154c601dc39" x="0" y="1" width="749" height="1"/>
