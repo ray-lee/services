@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="inventory" language="groovy" pageWidth="612" pageHeight="792" columnWidth="572" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="baa3a829-2cdf-4505-b140-15d9282910ca">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="inventory" pageWidth="612" pageHeight="792" columnWidth="572" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="baa3a829-2cdf-4505-b140-15d9282910ca">
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -8,54 +8,53 @@
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Location Header" fontName="SansSerif" fontSize="12"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
-	<parameter name="tenantid" class="java.lang.String" isForPrompting="false">
-		<defaultValueExpression><![CDATA[15]]></defaultValueExpression>
+	<parameter name="Start Location" class="java.lang.String"/>
+	<parameter name="End Location" class="java.lang.String"/>
+	<parameter name="startLocDispl" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{Start Location}.replaceAll("^.*\\)'(.*)'$", "$1")]]></defaultValueExpression>
 	</parameter>
-	<parameter name="Start Location" class="java.lang.String">
-		<defaultValueExpression><![CDATA["Kroeber, 20A, AA  1,  1"]]></defaultValueExpression>
-	</parameter>
-	<parameter name="End Location" class="java.lang.String">
-		<defaultValueExpression><![CDATA["Kroeber, 20A, AA  1, 10"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="endLocDispl" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{End Location}.replaceAll("^.*\\)'(.*)'$", "$1")]]></defaultValueExpression>
 	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA["/"]]></defaultValueExpression>
 	</parameter>
 	<queryString>
 		<![CDATA[SELECT
-   csid.name AS "csid",
-   CASE WHEN ca.computedcrate IS NULL THEN REGEXP_REPLACE(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1')
-      ELSE REGEXP_REPLACE(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1')||': '||REGEXP_REPLACE(ca.computedcrate, '^.*\)''(.*)''$', '\1')
-      END AS storageLocation,
-   CASE WHEN ca.computedcrate IS NULL THEN REPLACE(REGEXP_REPLACE(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1'), ' ', '0')
-      ELSE REPLACE(REGEXP_REPLACE(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1'), ' ', '0')||'0'||REPLACE(REGEXP_REPLACE(ca.computedcrate, '^.*\)''(.*)''$', '\1'), ' ', '0')
-      END AS locationkey,
-   REGEXP_REPLACE(ca.computedcrate, '^.*\)''(.*)''$', '\1') AS computedcrate,
-   co.objectnumber AS "objectNumber",
-   cp.sortableobjectnumber,
-   co.numberofobjects AS "objectCount",
-   ong.objectName AS objectName, cp.inventorycount as countnote
+  hco.name AS csid,
+  CASE WHEN ca.computedcrate IS NULL THEN GETDISPL(co.computedcurrentlocation)
+    ELSE GETDISPL(co.computedcurrentlocation) || ': ' || GETDISPL(ca.computedcrate)
+  END AS storageLocation,
+  CASE WHEN ca.computedcrate IS NULL THEN REPLACE(GETDISPL(co.computedcurrentlocation), ' ', '0')
+    ELSE REPLACE(GETDISPL(co.computedcurrentlocation), ' ', '0') || '0' || REPLACE(GETDISPL(ca.computedcrate), ' ', '0')
+  END AS locationKey,
+  GETDISPL(ca.computedcrate) AS computedCrate,
+  co.objectnumber AS objectNumber,
+  cp.sortableobjectnumber AS sortableObjectNumber,
+  co.numberofobjects AS objectCount,
+  ong.objectName AS objectName,
+  cp.inventorycount AS countNote
 FROM collectionobjects_common co
-JOIN hierarchy csid ON (co.id = csid.id)
-LEFT OUTER JOIN hierarchy h1 ON (co.id = h1.parentid AND h1.pos=0 AND h1.name='collectionobjects_common:objectNameList')
-LEFT OUTER JOIN objectnamegroup ong ON (ong.id=h1.id)
-LEFT OUTER JOIN collectionobjects_pahma cp ON (co.id=cp.id)
-LEFT OUTER JOIN collectionobjects_anthropology ca ON (co.id=ca.id)
-JOIN misc ms ON (co.id=ms.id AND ms.lifecyclestate <> 'deleted')
-WHERE REPLACE(REGEXP_REPLACE(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1'), ' ', '0') >= REPLACE($P{Start Location}, ' ', '0')
-  AND REPLACE(REGEXP_REPLACE(co.computedcurrentlocation, '^.*\)''(.*)''$', '\1'), ' ', '0') <= REPLACE($P{End Location}, ' ', '0')
-ORDER BY locationkey, sortableobjectnumber, objectName DESC]]>
+JOIN hierarchy hco ON (co.id = hco.id)
+LEFT OUTER JOIN hierarchy hong ON (co.id = hong.parentid AND hong.pos = 0 AND hong.name = 'collectionobjects_common:objectNameList')
+LEFT OUTER JOIN objectnamegroup ong ON (ong.id = hong.id)
+LEFT OUTER JOIN collectionobjects_pahma cp ON (co.id = cp.id)
+LEFT OUTER JOIN collectionobjects_anthropology ca ON (co.id = ca.id)
+JOIN misc ms ON (co.id = ms.id AND ms.lifecyclestate <> 'deleted')
+WHERE REPLACE(GETDISPL(co.computedcurrentlocation), ' ', '0') >= REPLACE($P{startLocDispl}, ' ', '0')
+  AND REPLACE(GETDISPL(co.computedcurrentlocation), ' ', '0') <= REPLACE($P{endLocDispl}, ' ', '0')
+ORDER BY locationKey, sortableObjectNumber, objectName DESC]]>
 	</queryString>
 	<field name="csid" class="java.lang.String"/>
-	<field name="storagelocation" class="java.lang.String"/>
-	<field name="locationkey" class="java.lang.String"/>
-	<field name="computedcrate" class="java.lang.String"/>
-	<field name="objectnumber" class="java.lang.String"/>
-	<field name="sortableobjectnumber" class="java.lang.String"/>
-	<field name="objectcount" class="java.lang.Long"/>
-	<field name="objectname" class="java.lang.String"/>
-	<field name="countnote" class="java.lang.String"/>
+	<field name="storageLocation" class="java.lang.String"/>
+	<field name="locationKey" class="java.lang.String"/>
+	<field name="computedCrate" class="java.lang.String"/>
+	<field name="objectNumber" class="java.lang.String"/>
+	<field name="sortableObjectNumber" class="java.lang.String"/>
+	<field name="objectCount" class="java.lang.Long"/>
+	<field name="objectName" class="java.lang.String"/>
+	<field name="countNote" class="java.lang.String"/>
 	<group name="storageLocation" isReprintHeaderOnEachPage="true">
-		<groupExpression><![CDATA[$F{storagelocation}]]></groupExpression>
+		<groupExpression><![CDATA[$F{storageLocation}]]></groupExpression>
 		<groupHeader>
 			<band height="21">
 				<textField>
@@ -63,7 +62,7 @@ ORDER BY locationkey, sortableobjectnumber, objectName DESC]]>
 					<textElement>
 						<font fontName="SansSerif" size="11" isBold="true"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{storagelocation}]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$F{storageLocation}]]></textFieldExpression>
 				</textField>
 				<rectangle>
 					<reportElement positionType="Float" x="554" y="5" width="12" height="12" uuid="07552d11-1abf-4e09-9fa6-08699a32fb3d"/>
@@ -105,14 +104,14 @@ ORDER BY locationkey, sortableobjectnumber, objectName DESC]]>
 				<textElement>
 					<font fontName="SansSerif" size="8" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{Start Location}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{startLocDispl}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement style="Detail" positionType="Float" stretchType="RelativeToTallestObject" x="171" y="24" width="115" height="27" uuid="b3a93249-4c39-4e71-958a-c461bfbccd4f"/>
 				<textElement>
 					<font fontName="SansSerif" size="8" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{End Location}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{endLocDispl}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement style="SubTitle" x="0" y="29" width="28" height="16" uuid="05b4bc60-59c1-41b9-ae06-7d763309b2a0"/>
@@ -178,7 +177,7 @@ ORDER BY locationkey, sortableobjectnumber, objectName DESC]]>
 				<textElement>
 					<font fontName="SansSerif" size="8" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{objectnumber}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objectNumber}]]></textFieldExpression>
 				<hyperlinkReferenceExpression><![CDATA["https://pahma.cspace.berkeley.edu/collectionspace/ui/pahma/html/cataloging.html?csid="+$F{csid}]]></hyperlinkReferenceExpression>
 			</textField>
 			<line>
@@ -192,14 +191,14 @@ ORDER BY locationkey, sortableobjectnumber, objectName DESC]]>
 				<textElement>
 					<font fontName="SansSerif" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{objectname}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objectName}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="164" y="0" width="27" height="14" uuid="0c622f99-69e7-4100-8ecf-d55d7f2458f7"/>
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{objectcount}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objectCount}]]></textFieldExpression>
 			</textField>
 			<subreport>
 				<reportElement positionType="Float" x="222" y="0" width="348" height="14" uuid="38bbf6ea-bf8d-4b68-a160-4460b872f58d"/>
@@ -214,7 +213,7 @@ ORDER BY locationkey, sortableobjectnumber, objectName DESC]]>
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{countnote}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{countNote}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
