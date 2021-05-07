@@ -3,57 +3,46 @@
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<parameter name="csid" class="java.lang.String">
-		<defaultValueExpression><![CDATA["0cca1640-6014-4b3e-8453"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="groupcsid" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT  gc.title AS "GroupTitle",
-        h1.name AS "csid",
-        co.objectnumber AS "Museum No.",
-        cp.sortableobjectnumber AS "sort",
-        ong.objectName AS "Name",
-        bd.item AS "Description",
+		<![CDATA[SELECT gc.title AS groupTitle,
+        hco.name AS csid,
+        co.objectnumber AS museumNumber,
+        cp.sortableobjectnumber AS sortableObjectNumber,
+        ong.objectName AS objectName,
+        bd.item AS briefDescription,
         CASE WHEN (fcp.item IS NOT NULL AND fcp.item <> '')
-          THEN regexp_replace(fcp.item, '^.*\)''(.*)''$', '\1') END AS "Site",
-        co.numberofobjects objectCount,
-        case when (apg.assocpeople is not null and apg.assocpeople <> '') then
-          regexp_replace(apg.assocpeople, '^.*\)''(.*)''$', '\1')
-        end as culturalgroup
+          THEN GETDISPL(fcp.item) END AS site,
+        co.numberofobjects AS objectCount,
+        CASE WHEN (apg.assocpeople is not null and apg.assocpeople <> '')
+          THEN GETDISPL(apg.assocpeople)
+        END AS culturalGroup
 FROM groups_common gc
-JOIN hierarchy h1 ON (gc.id=h1.id)
-JOIN relations_common rc1 ON (h1.name=rc1.subjectcsid)
-JOIN hierarchy h2 ON (rc1.objectcsid=h2.name)
-JOIN collectionobjects_common co ON (h2.id=co.id)
-LEFT OUTER JOIN collectionobjects_pahma cp ON (co.id=cp.id)
-LEFT OUTER JOIN collectionobjects_anthropology ca on (co.id=ca.id)
-
-LEFT OUTER JOIN hierarchy h3 ON (co.id = h3.parentid AND h3.primarytype='objectNameGroup' AND h3.pos=0)
-LEFT OUTER JOIN objectnamegroup ong ON (ong.id=h3.id)
-
-left outer join hierarchy h4 on (co.id=h4.parentid and h4.pos=0 and h4.name='collectionobjects_common:assocPeopleGroupList')
-left outer join assocpeoplegroup apg on (apg.id=h4.id)
-
-LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id=co.id and bd.pos=0)
-
-LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (co.id=fcp.id AND fcp.pos=0)
-
-JOIN misc ms ON (co.id=ms.id AND ms.lifecyclestate <> 'deleted')
-WHERE rc1.subjectcsid =$P{csid}
-
+JOIN hierarchy hgc ON (gc.id = hgc.id)
+JOIN relations_common rc ON (hgc.name = rc.subjectcsid)
+JOIN hierarchy hco ON (rc.objectcsid = hco.name)
+JOIN collectionobjects_common co ON (hco.id = co.id)
+LEFT OUTER JOIN collectionobjects_pahma cp ON (co.id = cp.id)
+LEFT OUTER JOIN collectionobjects_anthropology ca on (co.id = ca.id)
+LEFT OUTER JOIN hierarchy hong ON (co.id = hong.parentid AND hong.primarytype = 'objectNameGroup' AND hong.pos = 0)
+LEFT OUTER JOIN objectnamegroup ong ON (ong.id = hong.id)
+LEFT OUTER JOIN hierarchy hapg on (co.id = hapg.parentid and hapg.pos = 0 and hapg.name = 'collectionobjects_common:assocPeopleGroupList')
+LEFT OUTER JOIN assocpeoplegroup apg on (apg.id = hapg.id)
+LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id = co.id and bd.pos = 0)
+LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (co.id = fcp.id AND fcp.pos = 0)
+JOIN misc ms ON (co.id = ms.id AND ms.lifecyclestate <> 'deleted')
+WHERE rc.subjectcsid = $P{groupcsid}
 ORDER BY cp.sortableobjectnumber]]>
 	</queryString>
-	<field name="GroupTitle" class="java.lang.String"/>
+	<field name="groupTitle" class="java.lang.String"/>
 	<field name="csid" class="java.lang.String"/>
-	<field name="Museum No." class="java.lang.String"/>
-	<field name="sort" class="java.lang.String"/>
-	<field name="Name" class="java.lang.String"/>
-	<field name="Description" class="java.lang.String"/>
-	<field name="Site" class="java.lang.String"/>
-	<field name="objectcount" class="java.lang.Long"/>
-	<field name="culturalgroup" class="java.lang.String"/>
-	<background>
-		<band splitType="Stretch"/>
-	</background>
+	<field name="museumNumber" class="java.lang.String"/>
+	<field name="sortableObjectNumber" class="java.lang.String"/>
+	<field name="objectName" class="java.lang.String"/>
+	<field name="briefDescription" class="java.lang.String"/>
+	<field name="site" class="java.lang.String"/>
+	<field name="objectCount" class="java.lang.Long"/>
+	<field name="culturalGroup" class="java.lang.String"/>
 	<title>
 		<band height="92" splitType="Stretch">
 			<textField>
@@ -61,7 +50,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement textAlignment="Center">
 					<font size="18"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{GroupTitle}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{groupTitle}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement uuid="86429841-bce1-4e5b-9d06-e541effc1458" x="0" y="0" width="373" height="30"/>
@@ -129,28 +118,28 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Museum No.}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{museumNumber}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="1f02941d-d757-423d-9853-d129af3c578e" stretchType="RelativeToBandHeight" x="88" y="6" width="111" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Name}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objectName}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="62ac87f5-1e4b-4585-b4ea-7b2e9f5522d1" stretchType="RelativeToBandHeight" x="209" y="6" width="156" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Description}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{briefDescription}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="dbc076e1-baea-44c9-84bd-79e4e70cd512" stretchType="RelativeToBandHeight" x="401" y="6" width="182" height="18" isPrintWhenDetailOverflows="true"/>
 				<textElement>
 					<font size="11"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Site}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{site}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement uuid="0dae4543-2d2b-4a7e-a50d-bda169db3543" x="0" y="1" width="749" height="1"/>
@@ -161,12 +150,12 @@ ORDER BY cp.sortableobjectnumber]]>
 			<textField>
 				<reportElement uuid="bb27a611-e139-421f-93e7-e90dcebf1c82" x="368" y="6" width="33" height="18"/>
 				<textElement textAlignment="Center"/>
-				<textFieldExpression><![CDATA[$F{objectcount}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objectCount}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement uuid="75c28066-7f32-42bb-bccc-5aacc8400009" x="585" y="6" width="166" height="18"/>
 				<textElement/>
-				<textFieldExpression><![CDATA[$F{culturalgroup}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{culturalGroup}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
