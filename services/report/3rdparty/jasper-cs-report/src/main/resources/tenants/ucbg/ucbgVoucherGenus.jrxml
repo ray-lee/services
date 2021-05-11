@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="object" language="groovy" pageWidth="612" pageHeight="792" columnWidth="540" leftMargin="36" rightMargin="36" topMargin="36" bottomMargin="36" uuid="97313553-b1d5-443d-a5b4-cc117b44dcd8">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="object" pageWidth="612" pageHeight="792" columnWidth="540" leftMargin="36" rightMargin="36" topMargin="36" bottomMargin="36" uuid="97313553-b1d5-443d-a5b4-cc117b44dcd8">
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -8,41 +8,30 @@
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
 	<parameter name="genus" class="java.lang.String"/>
+	<parameter name="genusName" class="java.lang.String">
+		<defaultValueExpression><![CDATA[$P{genus}.replaceAll("^.*\\)'(.*)'$", "$1").replaceAll(" .*$", "")]]></defaultValueExpression>
+	</parameter>
 	<queryString>
-		<![CDATA[select co1.objectnumber,
-findhybridaffinname(tig.id) determination,
-case when (tn.family is not null and tn.family <> '')
-     then getdispl(tn.family)
-end as family,
-getdispl(tig.taxon) as genusname,
-getdispl(lc.borrower) voucherinstitution,
-case when lb.hortwild='Horticultural' then 'hort'
-     when lb.hortwild='Wild' then 'wild'
-end as hortwild
+		<![CDATA[select co.objectnumber,
+findhybridaffinname(tig.id) as determination,
+case when (tn.family is not null and tn.family <> '') then getdispl(tn.family) end as family,
+regexp_replace(getdispl(tig.taxon), ' .*$', '') as genusname,
+getdispl(lc.borrower) as voucherinstitution,
+case when lb.hortwild='Horticultural' then 'hort' when lb.hortwild='Wild' then 'wild' else '' end as hortwild
 from loansout_common lc
-left outer join loansout_naturalhistory lnh on (lc.id=lnh.id)
-left outer join loansout_botgarden lb on (lc.id=lb.id)
-
-join hierarchy h1 on lc.id=h1.id
-join relations_common r1 on (h1.name=r1.subjectcsid and objectdocumenttype='CollectionObject')
-join hierarchy h2 on (r1.objectcsid=h2.name)
-join collectionobjects_common co1 on (co1.id=h2.id)
-
-join collectionspace_core core on (core.id=co1.id)
-join misc misc1 on (misc1.id = lc.id and misc1.lifecyclestate <> 'deleted')
-join misc misc2 on (misc2.id = co1.id and misc2.lifecyclestate <> 'deleted')
-
-left outer join collectionobjects_naturalhistory con on (co1.id=con.id)
-
+left outer join loansout_botgarden lb on (lc.id = lb.id)
+join hierarchy hlc on (lc.id = hlc.id)
+join relations_common rc on (hlc.name = rc.subjectcsid and objectdocumenttype = 'CollectionObject')
+join hierarchy hco on (rc.objectcsid = hco.name)
+join collectionobjects_common co on (co.id = hco.id)
+join misc mlc on (mlc.id = lc.id and mlc.lifecyclestate <> 'deleted')
+join misc mco on (mco.id = co.id and mco.lifecyclestate <> 'deleted')
 left outer join hierarchy htig
-     on (co1.id = htig.parentid and htig.pos = 0 and htig.name = 'collectionobjects_naturalhistory:taxonomicIdentGroupList')
+     on (co.id = htig.parentid and htig.pos = 0 and htig.name = 'collectionobjects_naturalhistory:taxonomicIdentGroupList')
 left outer join taxonomicIdentGroup tig on (tig.id = htig.id)
-
-left outer join taxon_common tc on (tig.taxon=tc.refname)
-left outer join taxon_naturalhistory tn on (tc.id=tn.id)
-
-where tig.taxon = $P{genus}
-
+left outer join taxon_common tc on (tig.taxon = tc.refname)
+left outer join taxon_naturalhistory tn on (tc.id = tn.id)
+where regexp_replace(getdispl(tig.taxon), ' .*$', '') = $P{genusName}
 order by determination]]>
 	</queryString>
 	<field name="objectnumber" class="java.lang.String"/>
