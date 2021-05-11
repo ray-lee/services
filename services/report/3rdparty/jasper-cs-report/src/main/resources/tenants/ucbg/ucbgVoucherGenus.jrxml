@@ -17,7 +17,7 @@ findhybridaffinname(tig.id) as determination,
 case when (tn.family is not null and tn.family <> '') then getdispl(tn.family) end as family,
 regexp_replace(getdispl(tig.taxon), ' .*$', '') as genusname,
 getdispl(lc.borrower) as voucherinstitution,
-case when lb.hortwild='Horticultural' then 'hort' when lb.hortwild='Wild' then 'wild' end as hortwild
+case when lb.hortwild='Horticultural' then 'hort' when lb.hortwild='Wild' then 'wild' else '' end as hortwild
 from loansout_common lc
 left outer join loansout_botgarden lb on (lc.id = lb.id)
 join hierarchy hlc on (lc.id = hlc.id)
