@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <document name="report">
   <ns2:reports_common xmlns:ns2="http://collectionspace.org/services/report">
-    <notes></notes>
+    <name>Systematic Inventory</name>
     <filename>SystematicInventory.jrxml</filename>
     <forDocTypes>
       <forDocType/>
     </forDocTypes>
-    <supportsGroup>false</supportsGroup>
-    <name>Systematic Inventory</name>
-    <supportsSingleDoc>true</supportsSingleDoc>
-    <outputMIME>application/pdf</outputMIME>
-    <supportsDocList>false</supportsDocList>
     <supportsNoContext>true</supportsNoContext>
+    <supportsDocList>false</supportsDocList>
+    <supportsGroup>false</supportsGroup>
+    <supportsSingleDoc>false</supportsSingleDoc>
+    <outputMIME>application/pdf</outputMIME>
+    <supportsOutputMIMEList>
+      <outputMIME>application/pdf</outputMIME>
+    </supportsOutputMIMEList>
     <supportsParams>true</supportsParams>
+    <notes/>
+    <forRoles/>
+    <resourceActionGroupList/>
   </ns2:reports_common>
 </document>
