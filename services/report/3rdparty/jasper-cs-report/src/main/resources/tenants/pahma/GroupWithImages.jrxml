@@ -3,73 +3,55 @@
 <!-- 2015-09-04T15:23:04 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="GroupWithImages" pageWidth="612" pageHeight="792" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="6ff7d5f1-1ce4-458e-bc9c-a91b39731abf">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Tunnel to CSpace Prod"/>
-	<parameter name="csid" class="java.lang.String">
-		<defaultValueExpression><![CDATA["b7b7562d-66b5-42f0-b7a4"]]></defaultValueExpression>
-	</parameter>
+	<parameter name="groupcsid" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT gc.title AS "Title", cc.objectnumber AS "Mus. number", cc.numberofobjects AS "Count", cp.sortableobjectnumber AS "Sort",  
-ong.objectName AS "Name", bd.item AS "Description",
-STRING_AGG(DISTINCT REGEXP_REPLACE(apg.assocpeople, '^.*\)''(.*)''$', '\1'),'; ') AS "Culture",
-REGEXP_REPLACE(fcp.item, '^.*\)''(.*)''$', '\1') AS "Field collection place",
-CASE WHEN (
-        SELECT mp.primarydisplay 
-        FROM relations_common rcm
-        LEFT OUTER JOIN hierarchy hmd ON (hmd.name=rcm.objectcsid)
-        LEFT OUTER JOIN media_pahma mp ON (hmd.id=mp.id AND mp.primarydisplay='true')
-        LEFT OUTER JOIN misc ON (misc.id=mp.id)
-        WHERE h1.name=rcm.subjectcsid AND rcm.objectdocumenttype='Media' AND misc.lifecyclestate<>'deleted'
-        LIMIT 1) IS NULL
-THEN (SELECT 'https://webapps.cspace.berkeley.edu/pahma/imageserver/blobs/'||mc.blobcsid||'/derivatives/Medium/content' 
-        FROM relations_common rcm
-        LEFT OUTER JOIN hierarchy hmd ON (hmd.name=rcm.objectcsid)
-        LEFT OUTER JOIN media_pahma mp ON (hmd.id=mp.id)
-        LEFT OUTER JOIN media_common mc ON (mp.id=mc.id)
-        LEFT OUTER JOIN misc ON (misc.id=mc.id)
-        WHERE h1.name=rcm.subjectcsid AND rcm.objectdocumenttype='Media' AND misc.lifecyclestate<>'deleted'
-        LIMIT 1)
-ELSE (SELECT 'https://webapps.cspace.berkeley.edu/pahma/imageserver/blobs/'||mc.blobcsid||'/derivatives/Medium/content' 
-        FROM relations_common rcm
-        LEFT OUTER JOIN hierarchy hmd ON (hmd.name=rcm.objectcsid)
-        LEFT OUTER JOIN media_pahma mp ON (hmd.id=mp.id AND mp.primarydisplay='true')
-        LEFT OUTER JOIN media_common mc ON (mp.id=mc.id)
-        LEFT OUTER JOIN misc ON (misc.id=mc.id)
-        LEFT OUTER JOIN collectionspace_core c ON (mc.id=c.id)
-        WHERE h1.name=rcm.subjectcsid AND rcm.objectdocumenttype='Media' AND misc.lifecyclestate<>'deleted'
-        ORDER BY c.updatedat DESC
-        LIMIT 1)
-END AS "imagefilepath"
-
-FROM collectionobjects_common cc
-LEFT OUTER JOIN collectionobjects_pahma cp ON (cc.id=cp.id)
-LEFT OUTER JOIN collectionobjects_anthropology ca ON (cc.id=ca.id)
-LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (bd.id=cc.id AND bd.pos=0)
-JOIN hierarchy h1 ON (cc.id=h1.id)
-JOIN relations_common rc ON (h1.name=rc.subjectcsid AND rc.objectdocumenttype='Group')
-JOIN hierarchy h2 ON (rc.objectcsid=h2.name)
-LEFT OUTER JOIN groups_common gc ON (h2.id=gc.id)
-LEFT OUTER JOIN hierarchy hn ON (cc.id=hn.parentid AND hn.name='collectionobjects_common:objectNameList' AND (hn.pos=0 OR hn.pos IS NULL))
-LEFT OUTER JOIN objectnamegroup ong ON (ong.id=hn.id)
-LEFT OUTER JOIN hierarchy hc ON (hc.parentid=cc.id AND hc.primarytype='assocPeopleGroup')
-LEFT OUTER JOIN assocpeoplegroup apg ON (apg.id=hc.id)
-LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (fcp.id=cc.id AND (fcp.pos=0 OR fcp.pos IS NULL))
-LEFT OUTER JOIN places_common pc ON (pc.shortidentifier=REGEXP_REPLACE(fcp.item, '^.*item:name\((.*)\)''.*', '\1'))
-
-WHERE h2.name = $P{csid}
-
-GROUP BY gc.title, cc.objectnumber, cc.numberofobjects, ong.objectname, bd.item,
-fcp.item, cp.sortableobjectnumber, h1.name
-
+		<![CDATA[SELECT
+  gc.title AS groupTitle,
+  coc.objectnumber AS museumNum,
+  coc.numberofobjects AS objCount,
+  cp.sortableobjectnumber AS sortableObjNum,
+  ong.objectName AS objName,
+  bd.item AS objDesc,
+  STRING_AGG(DISTINCT GETDISPL(apg.assocpeople), '; ') AS culture,
+  GETDISPL(fcp.item) AS fieldCollPlace,
+  (SELECT 'https://webapps.cspace.berkeley.edu/pahma/imageserver/blobs/' || mc.blobcsid || '/derivatives/Medium/content' 
+    FROM relations_common rcmc
+    LEFT OUTER JOIN hierarchy hmc ON (hmc.name = rcmc.subjectcsid)
+    LEFT OUTER JOIN media_common mc ON (hmc.id = mc.id)
+    LEFT OUTER JOIN media_pahma mp ON (mc.id = mp.id)
+    LEFT OUTER JOIN misc mmc ON (mmc.id = mc.id)
+    LEFT OUTER JOIN collectionspace_core csc ON (mc.id = csc.id)
+    WHERE hcoc.name = rcmc.objectcsid
+    AND rcmc.subjectdocumenttype = 'Media'
+    AND mmc.lifecyclestate <> 'deleted'
+    ORDER BY coalesce(mp.primarydisplay::integer, 0) DESC, csc.updatedat DESC LIMIT 1) AS imageFilepath
+FROM collectionobjects_common coc
+LEFT OUTER JOIN collectionobjects_pahma cp ON (coc.id = cp.id)
+LEFT OUTER JOIN collectionobjects_anthropology ca ON (coc.id = ca.id)
+LEFT OUTER JOIN collectionobjects_common_briefdescriptions bd ON (coc.id = bd.id AND bd.pos = 0)
+JOIN hierarchy hcoc ON (coc.id = hcoc.id)
+JOIN relations_common rc ON (hcoc.name = rc.objectcsid AND rc.subjectdocumenttype = 'Group')
+JOIN hierarchy hgc ON (rc.subjectcsid = hgc.name)
+LEFT OUTER JOIN groups_common gc ON (hgc.id = gc.id)
+LEFT OUTER JOIN hierarchy hong ON (coc.id = hong.parentid AND hong.primarytype = 'objectNameGroup' AND (hong.pos = 0 OR hong.pos IS NULL))
+LEFT OUTER JOIN objectnamegroup ong ON (hong.id = ong.id)
+LEFT OUTER JOIN hierarchy hapg ON (coc.id = hapg.parentid AND hapg.primarytype = 'assocPeopleGroup')
+LEFT OUTER JOIN assocpeoplegroup apg ON (hapg.id = apg.id)
+LEFT OUTER JOIN collectionobjects_pahma_pahmafieldcollectionplacelist fcp ON (coc.id = fcp.id AND (fcp.pos = 0 OR fcp.pos IS NULL))
+WHERE hgc.name = $P{groupcsid}
+GROUP BY gc.title, coc.objectnumber, coc.numberofobjects, ong.objectname, bd.item,
+  fcp.item, cp.sortableobjectnumber, hcoc.name
 ORDER BY cp.sortableobjectnumber]]>
 	</queryString>
-	<field name="Title" class="java.lang.String"/>
-	<field name="Mus. number" class="java.lang.String"/>
-	<field name="Count" class="java.lang.Long"/>
-	<field name="Sort" class="java.lang.String"/>
-	<field name="Name" class="java.lang.String"/>
-	<field name="Description" class="java.lang.String"/>
-	<field name="Culture" class="java.lang.String"/>
-	<field name="Field collection place" class="java.lang.String"/>
-	<field name="imagefilepath" class="java.lang.String"/>
+	<field name="groupTitle" class="java.lang.String"/>
+	<field name="museumNum" class="java.lang.String"/>
+	<field name="objCount" class="java.lang.Long"/>
+	<field name="sortableObjNum" class="java.lang.String"/>
+	<field name="objName" class="java.lang.String"/>
+	<field name="objDesc" class="java.lang.String"/>
+	<field name="culture" class="java.lang.String"/>
+	<field name="fieldCollPlace" class="java.lang.String"/>
+	<field name="imageFilepath" class="java.lang.String"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -87,7 +69,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="16"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Title}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{groupTitle}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement x="-20" y="53" width="591" height="1" uuid="02e15f4a-ceaf-4553-9bce-cb52fa8ed3b1">
@@ -103,7 +85,7 @@ ORDER BY cp.sortableobjectnumber]]>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
-				<imageExpression><![CDATA[$F{imagefilepath}]]></imageExpression>
+				<imageExpression><![CDATA[$F{imageFilepath}]]></imageExpression>
 			</image>
 			<textField>
 				<reportElement x="89" y="3" width="170" height="12" uuid="dadbac2c-d86c-4c7c-9d00-ca6826875833">
@@ -112,7 +94,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Mus. number}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{museumNum}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="-10" y="3" width="92" height="12" uuid="34797665-840f-49e2-8f99-d4e06d9c8b44">
@@ -167,7 +149,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Count}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objCount}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="-10" y="37" width="92" height="12" uuid="14279684-d9a7-4161-8b9b-d1be24b5a144">
@@ -187,7 +169,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Name}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objName}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement x="90" y="38" width="360" height="12" uuid="a6778e25-d050-48b3-bab0-3555e312ebe5">
@@ -196,7 +178,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Field collection place}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{fieldCollPlace}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement x="90" y="54" width="360" height="12" uuid="873fdc2d-28e7-45bc-8823-8ef02ef7400e">
@@ -205,7 +187,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Culture}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{culture}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" x="90" y="71" width="360" height="25" uuid="d17d2487-27d9-4e1e-a1a6-27c35bb0c3f1">
@@ -214,7 +196,7 @@ ORDER BY cp.sortableobjectnumber]]>
 				<textElement>
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{Description}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{objDesc}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement positionType="Float" x="-20" y="103" width="591" height="1" uuid="32f9c462-0109-4b55-bdbb-9e199640ae69">
