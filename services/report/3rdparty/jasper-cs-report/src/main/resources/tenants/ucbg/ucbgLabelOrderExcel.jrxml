@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.6.0.final using JasperReports Library version 6.6.0  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Label Orders (Excel)" language="groovy" pageWidth="792" pageHeight="612" columnWidth="792" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isIgnorePagination="true" uuid="78deb05b-f9ff-4936-8d6f-c206cdc03776">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.1" value="pageHeader"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.3" value="lastPageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.auto.fit.column" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.column.width.ratio" value="1.10f"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.cell.background" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.graphics" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.page.margins=true"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet=true"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.wrap.text" value="true"/>
+	<property name="net.sf.jasperreports.exports.xls.font.size.fix.enabled" value="false"/>
+	<property name="net.sf.jasperreports.page.break.no.pagination" value="apply"/>
+	<property name="net.sf.jasperreports.print.keep.full.text" value="true"/>
+	<queryString>
+		<![CDATA[select
+        getdispl(mb.labelsize) as labelSize,
+        getdispl(mc.currentlocation) as gardenLoc,
+        coc.objectnumber as accessionNum,
+        getdispl(tn.family) as familyName,
+        findcommonname(tig.taxon) as commonName,
+        case
+                when (tig.hybridflag = 'true' or tig.affinitytaxon is not null) then findhybridaffinname(tig.id)
+                when ttg.termdisplayname is not null then ttg.termdisplayname
+                when tig.taxon is not null then getdispl(tig.taxon)
+        end as speciesName,
+        lg.fieldlocplace as placeName,
+        case when con.rare = 'true' then 'yes' when con.rare = 'false' then 'no' else '' end as redDot,
+        to_char(mb.labelcount, '999') as labelCount,
+        getdispl(mb.labelstandtype) as mount,
+        ccc.item as accessionNotes,
+        lg.county as county,
+        lg.state as state,
+        lg.country as country,
+        lg.taxonomicrange as taxonRange,
+        con.provenancetype as provenanceType
+from collectionobjects_common coc
+join hierarchy hcoc on (coc.id = hcoc.id)
+join relations_common rc on (hcoc.name = rc.objectcsid and rc.subjectdocumenttype = 'Movement')
+join hierarchy hmc on (rc.subjectcsid = hmc.name and hmc.isversion is not true)
+join movements_common mc on (hmc.id = mc.id)
+join movements_botgarden mb on (mc.id = mb.id)
+left outer join collectionobjects_naturalhistory con on (coc.id = con.id)
+left outer join hierarchy htig on (coc.id = htig.parentid and htig.primarytype = 'taxonomicIdentGroup' and htig.pos = 0)
+left outer join taxonomicIdentGroup tig on (htig.id = tig.id)
+left outer join taxon_common tc on (tig.taxon = tc.refname)
+left outer join hierarchy httg on (tc.id = httg.parentid and httg.primarytype = 'taxonTermGroup' and httg.pos = 1)
+        -- get no author name but assumes it's in pos = 1 or 2nd row
+left outer join taxontermgroup ttg on (ttg.id = httg.id and ttg.termtype = 'Taxon No Author Name')
+left outer join taxon_naturalhistory tn on (tc.id = tn.id)
+left outer join collectionobjects_common_comments ccc on (coc.id = ccc.id and ccc.pos = 0)
+left outer join hierarchy hlg on (coc.id = hlg.parentid and hlg.primarytype = 'localityGroup' and hlg.pos = 0)
+left outer join (select id, getdispl(fieldlocplace) as fieldlocplace, taxonomicrange,
+        trim(reverse( split_part( reverse(regexp_replace(getdispl(fieldlocplace), ', (North America|South America|Central America|Europe|Asia|Africa)', '')), ',', 1))) as country,
+        trim(reverse( split_part( reverse(regexp_replace(getdispl(fieldlocplace), ', (North America|South America|Central America|Europe|Asia|Africa)', '')), ',', 2))) as state,
+        trim(reverse( split_part( reverse(regexp_replace(getdispl(fieldlocplace), ', (North America|South America|Central America|Europe|Asia|Africa)', '')), ',', 3))) as county
+        from localitygroup ) lg on (hlg.id = lg.id)
+join misc mmc on (mc.id = mmc.id and mmc.lifecyclestate <> 'deleted')
+join misc mcoc on (coc.id = mcoc.id and mcoc.lifecyclestate <> 'deleted')
+where mb.labelrequested = 'Yes'
+order by gardenLoc, accessionNum]]>
+	</queryString>
+	<field name="labelSize" class="java.lang.String"/>
+	<field name="gardenLoc" class="java.lang.String"/>
+	<field name="accessionNum" class="java.lang.String"/>
+	<field name="familyName" class="java.lang.String"/>
+	<field name="commonName" class="java.lang.String"/>
+	<field name="speciesName" class="java.lang.String"/>
+	<field name="placeName" class="java.lang.String"/>
+	<field name="redDot" class="java.lang.String"/>
+	<field name="labelCount" class="java.lang.String"/>
+	<field name="mount" class="java.lang.String"/>
+	<field name="accessionNotes" class="java.lang.String"/>
+	<field name="county" class="java.lang.String"/>
+	<field name="state" class="java.lang.String"/>
+	<field name="country" class="java.lang.String"/>
+	<field name="taxonRange" class="java.lang.String"/>
+	<field name="provenanceType" class="java.lang.String"/>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.spreadsheet.SpreadsheetLayout"/>
+			<staticText>
+				<reportElement x="0" y="0" width="50" height="20" forecolor="#666666" uuid="feb778bc-c13f-4900-a943-bf1170b7f611"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Label Size]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="50" y="0" width="50" height="20" forecolor="#666666" uuid="b986452e-da5a-4525-868f-d1f11c198364"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Garden Location]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="100" y="0" width="50" height="20" forecolor="#666666" uuid="23076c14-39a0-447e-a79a-2e556fec7293"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Accession Number]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="150" y="0" width="50" height="20" forecolor="#666666" uuid="d6ade7f6-43c2-4858-94b6-a5b39ded0bc2"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Family]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="200" y="0" width="50" height="20" forecolor="#666666" uuid="7cda3dab-e7fa-4d9b-bbab-781df9fe160a"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Common Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="250" y="0" width="50" height="20" forecolor="#666666" uuid="67cc435e-fe89-4b8a-9164-659657a1dbd9"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Species Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="300" y="0" width="50" height="20" forecolor="#666666" uuid="6461a43d-decb-4e67-b686-f0a62a92f292"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Geographic Place Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="350" y="0" width="40" height="20" forecolor="#666666" uuid="a5f549a0-d137-4548-846f-c0513b458346"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Red Dot]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="390" y="0" width="50" height="20" forecolor="#666666" uuid="1f33e292-9339-4030-8dcc-ca454396425d"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Count]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="440" y="0" width="50" height="20" forecolor="#666666" uuid="a3b51c0a-7b65-4b64-915b-1fc80e6a057d"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Mount]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="490" y="0" width="50" height="20" forecolor="#666666" uuid="b78280b9-1700-4308-936a-e1423712f8d8"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Accession Notes]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="540" y="0" width="50" height="20" forecolor="#666666" uuid="d4d7994f-8c30-469b-a950-5725bab6ad64"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[County]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="590" y="0" width="50" height="20" forecolor="#666666" uuid="1f422847-353c-4e07-bad4-8a86898a056c"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[State]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="640" y="0" width="50" height="20" forecolor="#666666" uuid="f4262a3c-8823-4254-b561-c4550fc22e63"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Country]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="690" y="0" width="50" height="20" forecolor="#666666" uuid="51cd1b49-90d6-4c7c-ad86-50b3e6fbc8db"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Geographic Range of Taxon]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="740" y="0" width="50" height="20" forecolor="#666666" uuid="75155bef-597c-42d3-b3fd-91bbc87cacf7"/>
+				<textElement verticalAlignment="Bottom">
+					<font isBold="true" isUnderline="false"/>
+				</textElement>
+				<text><![CDATA[Provenance Type]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Prevent">
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.spreadsheet.SpreadsheetLayout"/>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="a01790be-77e8-4a0c-a242-a5a04284c140"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{labelSize}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="50" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="37371baf-50c7-40b0-adf2-675bd17a8f76"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{gardenLoc}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="100" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="5815fb5b-78fa-4887-a249-bbed611d632a"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{accessionNum}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="150" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="66638f4b-0555-4572-b636-cda8ae17ca46"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{familyName}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="200" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="1c35f622-bbe5-4463-b6ad-143068347c71"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{commonName}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="250" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="45982931-4377-4e2c-9c32-3857af12b5fc"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{speciesName}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="300" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="8f4dcbcd-d14d-47d1-86df-3324fe8f537b"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{placeName}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="350" y="0" width="40" height="20" isPrintWhenDetailOverflows="true" uuid="c46f3e1a-40d2-4789-9d7d-d4cbe92bf6f7"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{redDot}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="390" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="15ad2ff8-e8f5-4dbb-8eb4-5cc8a52d1b11"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{labelCount}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="440" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="6949b941-075b-4779-b4e9-aa422677dd37"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{commonName}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="490" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="4f6f6b8a-62b3-4b5e-ac92-ceaf842837ac"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{accessionNotes}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="540" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="4a80294b-9eb8-4988-a447-ac264d1708ac"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{county}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="590" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="68e5c5c0-1a5c-4740-9bde-e31ed77fb8bd"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{state}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="640" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="6e3f500a-be9b-4a9d-b9ff-cf99fdecd6a7"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{country}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="690" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="72331140-2efb-4b05-af14-38dcda46d044"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{taxonRange}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="740" y="0" width="50" height="20" isPrintWhenDetailOverflows="true" uuid="388164b8-58ea-4891-bbd0-d50502e9c8e2"/>
+				<box>
+					<topPen lineWidth="0.25" lineColor="#999696"/>
+				</box>
+				<textElement>
+					<paragraph spacingBefore="3" spacingAfter="3"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{provenanceType}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
