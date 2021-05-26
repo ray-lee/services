@@ -2,7 +2,7 @@
 <document name="report">
   <ns2:reports_common xmlns:ns2="http://collectionspace.org/services/report">
     <name>Use of Collections by Approval Status</name>
-    <filename>ucbgUOCbyApprovalStatus.jrxml</filename>
+    <filename>cinefilesUOCbyApprovalStatus.jrxml</filename>
     <forDocTypes>
       <forDocType>Uoc</forDocType>
     </forDocTypes>
@@ -18,4 +18,3 @@
     <notes>Lists Use of Collections requests with a value in the 'Authorized by' field, filtered by authorized by, authorization status, and/or date requested range. Displays the record number, title, requested date, completed date, authorization date, authorizer and authorization status. Available output formats: PDF, CSV, MS Word.</notes>
   </ns2:reports_common>
 </document>
-
