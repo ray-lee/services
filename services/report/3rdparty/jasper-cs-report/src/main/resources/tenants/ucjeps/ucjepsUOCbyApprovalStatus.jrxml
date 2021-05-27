@@ -10,11 +10,11 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<parameter name="StartDate" class="java.lang.String">
         <parameter name="csid" class="java.lang.String"/>
         <parameter name="andClause" class="java.lang.String">
                 <defaultValueExpression><![CDATA[$P{csid} != null ? ("huoc.name = '" + $P{csid} + "'") : "1 = 1"]]></defaultValueExpression>
         </parameter>
+	<parameter name="StartDate" class="java.lang.String">
 		<parameterDescription><![CDATA[StartDate]]></parameterDescription>
 		<defaultValueExpression><![CDATA["0001-01-01"]]></defaultValueExpression>
 	</parameter>
