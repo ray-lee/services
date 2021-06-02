@@ -6,7 +6,7 @@
     <forDocTypes>
       <forDocType>Uoc</forDocType>
     </forDocTypes>
-    <supportsSingleDoc>false</supportsSingleDoc>
+    <supportsSingleDoc>true</supportsSingleDoc>
     <supportsDocList>false</supportsDocList>
     <supportsGroup>false</supportsGroup>
     <supportsNoContext>true</supportsNoContext>
