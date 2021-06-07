@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 public class BulkObjectEditBatchJob extends  AbstractBatchJob {
   final Logger logger = LoggerFactory.getLogger(BulkObjectEditBatchJob.class);
+  final String HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><document name=\"collectionobjects\">";
 
   public BulkObjectEditBatchJob() {
     setSupportedInvocationModes(Arrays.asList(INVOCATION_MODE_LIST, INVOCATION_MODE_GROUP));
@@ -120,6 +121,7 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
   }
   public String preparePayload(HashMap<String, String> fieldsToUpdate)  {
     String commonValues = "";
+    String natHistValues = "";
 
     String otherNumber = "<otherNumberList><otherNumber>";
     Boolean otherNumFlag = false;
@@ -155,7 +157,11 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
       } else if (key.equals("contentDate")) {
         commonValues += "<contentDateGroup><dateDisplayDate>" + value + "</dateDisplayDate></contentDateGroup>";
       } else if (key.equals("fieldCollectionDateGroup")) {
-          commonValues += "<fieldCollectionDateGroup><dateDisplayDate>" + value + "</dateDisplayDate></fieldCollectionDateGroup>";
+        commonValues += "<fieldCollectionDateGroup><dateDisplayDate>" + value + "</dateDisplayDate></fieldCollectionDateGroup>";
+      } else if (key.equals("taxon")) {
+        natHistValues += "<taxonomicIdentGroupList><taxonomicIdentGroup>" + 
+                            "<" + key + ">" + value + "</" + key + ">" + 
+                            "</taxonomicIdentGroup></taxonomicIdentGroupList>";
       } else {
         commonValues += "<" + key + ">" + value + "</" + key + ">";
       }
@@ -165,16 +171,28 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
       otherNumber += "</otherNumber></otherNumberList>";
       commonValues += otherNumber;
     }
+   
+    String natHistPayload = "";
+    if (natHistValues.length() != 0) {
+      natHistPayload = 
+      "<ns2:collectionobjects_naturalhistory " +
+        "xmlns:ns2=\"http://collectionspace.org/services/collectionobject/domain/naturalhistory\" " +
+        "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
+        natHistValues + "</ns2:collectionobjects_naturalhistory>";
+    }
 
-    String commonPayload = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-    "<document name=\"collectionobjects\">" +
+    String commonPayload = "";
+
+    if (commonValues.length() != 0) {
+      commonPayload =
       "<ns2:collectionobjects_common " +
       "xmlns:ns2=\"http://collectionspace.org/services/collectionobject\" " +
       "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
       commonValues +
-      "</ns2:collectionobjects_common></document>";
+      "</ns2:collectionobjects_common>";
+    }
 
-    return commonPayload;
+    return HEADER + commonPayload + natHistPayload + "</document>";
   }
 
   public String mergePayloads(String csid, PoxPayloadOut batchPayload) throws Exception {
