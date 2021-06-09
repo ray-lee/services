@@ -24,13 +24,36 @@ AS
 $$
 
 DECLARE
-    updsql text;
-    t varchar[];
-    reptabs varchar[] := array[['collectionobjects_nagpra_nagprainventorynames', 'nagpraInventoryName']
+    updsql   text;
+    t        varchar[];
+    reptabs  varchar[] := array[['collectionobjects_pahma_pahmaobjectstatuslist', 'objectStatus']
+                             , ['collectionobjects_nagpra_nagprainventorynames', 'nagpraInventoryName']
                              , ['collectionobjects_nagpra_nagpracategories', 'nagpraCategory']
                              , ['collectionobjects_nagpra_graveassoccodes', 'graveAssocCode']
                              , ['collectionobjects_nagpra_repatriationnotes', 'repatriationNote']
                              , ['collectionobjects_nagpra_nagpraculturaldeterminations', 'nagpraCulturalDetermination']];
+    updcol   text;
+    col      varchar;
+    tempcols varchar[] := array['pos',
+                                'objectNumber',
+                                'sortableObjectNumber',
+                                'objectStatus',
+                                'nagpraInventoryName',
+                                'nagpraCategory',
+                                'graveAssocCode',
+                                'repatriationNote',
+                                'nagpraCulturalDetermination',
+                                'nagpraDetermCulture',
+                                'nagpraDetermType',
+                                'nagpraDetermBy',
+                                'nagpraDetermNote',
+                                'nagpraReportFiled',
+                                'nagpraReportFiledWith',
+                                'nagpraReportFiledBy',
+                                'nagpraReportFiledDate',
+                                'nagpraReportFiledNote',
+                                'reference',
+                                'referenceNote'];
 
 BEGIN
 
@@ -40,9 +63,10 @@ BEGIN
     CREATE TEMP TABLE getnagpra_temp (
         cocsid varchar,
         coid varchar,
-        pos integer,
+        pos varchar,
         objectNumber varchar,
         sortableObjectNumber varchar,
+        objectStatus varchar,
         nagpraInventoryName varchar,
         nagpraCategory varchar,
         graveAssocCode varchar,
@@ -52,7 +76,7 @@ BEGIN
         nagpraDetermType varchar,
         nagpraDetermBy varchar,
         nagpraDetermNote varchar,
-        nagpraReportFiled boolean,
+        nagpraReportFiled varchar,
         nagpraReportFiledWith varchar,
         nagpraReportFiledBy varchar,
         nagpraReportFiledDate varchar,
@@ -63,6 +87,8 @@ BEGIN
     
     -- get unique positions for repeating fields/groups.
     INSERT INTO getnagpra_temp (coid, pos)
+    SELECT id, pos FROM collectionobjects_pahma_pahmaobjectstatuslist WHERE id = cocid
+    UNION
     SELECT id, pos FROM collectionobjects_nagpra_nagprainventorynames WHERE id = cocid
     UNION
     SELECT id, pos FROM collectionobjects_nagpra_nagpracategories WHERE id = cocid
@@ -112,7 +138,7 @@ BEGIN
 
     -- get displaynames/notes for nagpraReportFiledGroup data.
     UPDATE getnagpra_temp
-    SET nagpraReportFiled = n.nagprareportfiled,
+    SET nagpraReportFiled = n.nagprareportfiled::text,
         nagpraReportFiledWith = getdispl(n.nagprareportfiledwith),
         nagpraReportFiledBy = getdispl(n.nagprareportfiledby),
         nagpraReportFiledNote = n.nagprareportfilednote
@@ -140,8 +166,16 @@ BEGIN
 
     -- convert returns and newlines to '\n'.
     UPDATE getnagpra_temp SET
-        repatriationNote = regexp_replace(repatriationNote, E'[\n\r]+', '\n', 'g'), 
+        repatriationNote = regexp_replace(repatriationNote, E'[\n\r]+', '\n', 'g'),
         nagpraCulturalDetermination = regexp_replace(nagpraCulturalDetermination, E'[\n\r]+', '\n', 'g');
+
+    FOREACH col in ARRAY tempcols LOOP
+        updcol := 'UPDATE getnagpra_temp SET ' || col || ' = ''%NULLVALUE%'' ' ||
+                           'WHERE ' || col || ' is NULL;';
+
+        EXECUTE updcol;
+ 
+    END LOOP;
 
     RETURN QUERY SELECT * FROM getnagpra_temp;
 
