@@ -5,22 +5,30 @@ import java.util.HashMap;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+
+
+import org.collectionspace.services.collectionobject.nuxeo.CollectionObjectConstants;
 import org.collectionspace.services.common.invocable.InvocationContext.ListCSIDs;
 import org.collectionspace.services.common.invocable.InvocationContext;
 import org.collectionspace.services.common.invocable.InvocationContext.Params.Param;
 import org.collectionspace.services.common.invocable.InvocationResults;
 import org.collectionspace.services.common.ResourceMap;
 import org.collectionspace.services.common.NuxeoBasedResource;
-
+import org.collectionspace.services.common.api.Tools;
 import org.collectionspace.services.client.CollectionObjectClient;
 import org.collectionspace.services.client.PayloadOutputPart;
 import org.collectionspace.services.client.PoxPayloadOut;
+import org.collectionspace.services.group.nuxeo.GroupConstants;
+import org.collectionspace.services.jaxb.AbstractCommonList;
 
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * A batch job that updates the following fields:
@@ -39,23 +47,48 @@ import org.dom4j.Element;
 
 public class BulkObjectEditBatchJob extends  AbstractBatchJob {
   final Logger logger = LoggerFactory.getLogger(BulkObjectEditBatchJob.class);
+  final String HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><document name=\"collectionobjects\">";
 
   public BulkObjectEditBatchJob() {
-    setSupportedInvocationModes(Arrays.asList(INVOCATION_MODE_LIST));
+    setSupportedInvocationModes(Arrays.asList(INVOCATION_MODE_LIST, INVOCATION_MODE_GROUP));
   }
 
   @Override
   public void run() {
     setCompletionStatus(STATUS_MIN_PROGRESS);
     try {
+      
       InvocationContext ctx = getInvocationContext();
 
       String mode = ctx.getMode();
 
+      ArrayList<String> csids  = new ArrayList<String>();
 
-      if (mode.equalsIgnoreCase(INVOCATION_MODE_LIST)) {
-        ArrayList<String> csids  = new ArrayList<String>();
-        csids.addAll(ctx.getListCSIDs().getCsid());
+      if (mode.equalsIgnoreCase(INVOCATION_MODE_GROUP)) { 
+        String groupCsid = getInvocationContext().getGroupCSID();
+        
+        if (Tools.isBlank(groupCsid)) {
+          throw new Exception(CSID_VALUES_NOT_PROVIDED_IN_INVOCATION_CONTEXT);
+        }
+
+        List <String> groupMemberCsids = findRelatedObjects(groupCsid, GroupConstants.NUXEO_DOCTYPE, "affects", null, CollectionObjectConstants.NUXEO_DOCTYPE);
+
+        if (groupMemberCsids.isEmpty()) {
+            throw new Exception(CSID_VALUES_NOT_PROVIDED_IN_INVOCATION_CONTEXT);
+        }        
+
+        csids.addAll(groupMemberCsids);
+      } else if (mode.equalsIgnoreCase(INVOCATION_MODE_LIST)) {
+        List<String> listCsids = ctx.getListCSIDs().getCsid();
+
+        if (listCsids.isEmpty()) {
+          throw new Exception(CSID_VALUES_NOT_PROVIDED_IN_INVOCATION_CONTEXT);
+        }
+        
+        csids.addAll(listCsids);
+      } else {
+        throw new Exception("Unsupported invocation mode " + mode);
+      }
         HashMap<String, String>  fieldsToValues = this.getValues();
         InvocationResults results = new InvocationResults();
 
@@ -73,7 +106,6 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
             if(updateRecord(csid, mergedPayload) != -1) {
               numAffected += 1;
             } else {
-              // Make this more obvious?
               logger.warn("The record with csid " +  csid + " was not updated.");
             }
           }
@@ -81,11 +113,7 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
         setCompletionStatus(STATUS_COMPLETE);
         results.setNumAffected(numAffected);
         results.setUserNote("Updated " + numAffected + " records with the following " + fieldsToValues.toString());
-
-        setResults(results);
-      } else {
-        throw new Exception("Unsupported invocation mode " + mode);
-      }
+        setResults(results); 
     } catch (Exception e) {
       setCompletionStatus(STATUS_ERROR);
       setErrorInfo(new InvocationError(INT_ERROR_STATUS, e.getMessage()));
@@ -93,6 +121,7 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
   }
   public String preparePayload(HashMap<String, String> fieldsToUpdate)  {
     String commonValues = "";
+    String natHistValues = "";
 
     String otherNumber = "<otherNumberList><otherNumber>";
     Boolean otherNumFlag = false;
@@ -128,7 +157,11 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
       } else if (key.equals("contentDate")) {
         commonValues += "<contentDateGroup><dateDisplayDate>" + value + "</dateDisplayDate></contentDateGroup>";
       } else if (key.equals("fieldCollectionDateGroup")) {
-          commonValues += "<fieldCollectionDateGroup><dateDisplayDate>" + value + "</dateDisplayDate></fieldCollectionDateGroup>";
+        commonValues += "<fieldCollectionDateGroup><dateDisplayDate>" + value + "</dateDisplayDate></fieldCollectionDateGroup>";
+      } else if (key.equals("taxon")) {
+        natHistValues += "<taxonomicIdentGroupList><taxonomicIdentGroup>" + 
+                            "<" + key + ">" + value + "</" + key + ">" + 
+                            "</taxonomicIdentGroup></taxonomicIdentGroupList>";
       } else {
         commonValues += "<" + key + ">" + value + "</" + key + ">";
       }
@@ -138,16 +171,28 @@ public class BulkObjectEditBatchJob extends  AbstractBatchJob {
       otherNumber += "</otherNumber></otherNumberList>";
       commonValues += otherNumber;
     }
+   
+    String natHistPayload = "";
+    if (natHistValues.length() != 0) {
+      natHistPayload = 
+      "<ns2:collectionobjects_naturalhistory " +
+        "xmlns:ns2=\"http://collectionspace.org/services/collectionobject/domain/naturalhistory\" " +
+        "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
+        natHistValues + "</ns2:collectionobjects_naturalhistory>";
+    }
 
-    String commonPayload = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-    "<document name=\"collectionobjects\">" +
+    String commonPayload = "";
+
+    if (commonValues.length() != 0) {
+      commonPayload =
       "<ns2:collectionobjects_common " +
       "xmlns:ns2=\"http://collectionspace.org/services/collectionobject\" " +
       "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" +
       commonValues +
-      "</ns2:collectionobjects_common></document>";
+      "</ns2:collectionobjects_common>";
+    }
 
-    return commonPayload;
+    return HEADER + commonPayload + natHistPayload + "</document>";
   }
 
   public String mergePayloads(String csid, PoxPayloadOut batchPayload) throws Exception {
