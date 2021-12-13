@@ -60,16 +60,16 @@ import org.collectionspace.services.common.document.BadRequestException;
  * $LastChangedDate$
  */
 public class YearIDGeneratorPart implements IDGeneratorPart {
-    
+
 	private String currentValue = null;
-	
+
     // NOTE: Currently hard-coded to accept only a range of
     // four-digit Gregorian Calendar year dates.
     final static String REGEX_PATTERN = "(\\d{4})";
 
 	public YearIDGeneratorPart() {
 	}
-	
+
 	public YearIDGeneratorPart(String yearValue) throws BadRequestException {
         setCurrentID(yearValue);
 	}
@@ -92,13 +92,22 @@ public class YearIDGeneratorPart implements IDGeneratorPart {
     @Override
 	public String getCurrentID() {
         String currentYear = "";
+
+        // HACK always look up current year since there is no automatic way
+        // to update the year once it's set
+        // JJM
+        currentYear = getCurrentYear();
+
+        /*
         if (this.currentValue == null || this.currentValue.trim().isEmpty()) {
             currentYear = getCurrentYear();
         } else {
             currentYear = this.currentValue;
         }
-		return currentYear;
-	}
+        */
+
+        return currentYear;
+    }
 
     @Override
     public String newID() {
@@ -107,11 +116,11 @@ public class YearIDGeneratorPart implements IDGeneratorPart {
 
     @Override
     public boolean isValidID(String id) {
-    
+
         if (id == null) {
             return false;
         }
- 
+
         // @TODO May potentially throw java.util.regex.PatternSyntaxException.
         // We'll need to catch and handle this here, as well as in all
         // derived classes and test cases that invoke validation.
@@ -123,7 +132,7 @@ public class YearIDGeneratorPart implements IDGeneratorPart {
         } else {
             return false;
         }
-        
+
     }
 
     @Override
@@ -136,6 +145,6 @@ public class YearIDGeneratorPart implements IDGeneratorPart {
 		Calendar cal = GregorianCalendar.getInstance();
         int year = cal.get(Calendar.YEAR);
 		return Integer.toString(year);
-	}	
-	
+	}
+
 }
