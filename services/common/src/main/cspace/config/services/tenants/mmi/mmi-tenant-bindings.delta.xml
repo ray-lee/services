@@ -8,5 +8,15 @@
     <!-- value in cspace/config/services/tenants/publicart-tenant-bindings-proto.xml -->
 
     <tenant:tenantBinding id="42">
+        <tenant:serviceBindings merge:matcher="id" id="idgenerators">
+            <service:initHandler xmlns:service="http://collectionspace.org/services/config/service">
+                <service:params>
+                    <service:property merge:matcher="skip" merge:action="insert">
+                        <service:key>sqlScriptName</service:key>
+                        <service:value>load_mmi_id_generators.sql</service:value>
+                    </service:property>
+                </service:params>
+            </service:initHandler>
+        </tenant:serviceBindings>
     </tenant:tenantBinding>
 </tenant:TenantBindingConfig>
