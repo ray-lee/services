@@ -10,7 +10,7 @@
 	<name>services</name>
 
 	<properties>
-		<revision>6.1.0</revision>
+		<revision>6.1.2</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<cspace.services.version>${revision}</cspace.services.version>
 		<cspace.services.client.version>${revision}</cspace.services.client.version>
@@ -23,7 +23,7 @@
 		<spring.security.version>4.1.1.RELEASE</spring.security.version>
 		<spring.security.oauth2.version>2.0.10.RELEASE</spring.security.oauth2.version>
 		<aspectj.version>1.7.4</aspectj.version>
-		<log4j.version>2.12.0</log4j.version>
+		<log4j.version>2.15.0</log4j.version>
 	</properties>
 
 	<distributionManagement>
@@ -56,7 +56,15 @@
 
 		<repository>
 			<id>jboss</id>
-			<url>http://repository.jboss.org/nexus/content/groups/public-jboss</url>
+			<url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
+		<repository>
+			<id>nuxeo-public-releases</id>
+			<url>https://maven-eu.nuxeo.org/nexus/content/repositories/public-releases</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
