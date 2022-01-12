@@ -62,7 +62,7 @@ COALESCE(STRING_AGG(DISTINCT getdispl(fcsrc.item),'␥'),'') AS "Field_collectio
 COALESCE(STRING_AGG(DISTINCT getdispl(fcoll.item),'␥'),'') AS "Field_collectors",
 COALESCE(scd.datedisplaydate,'') AS "Field_collection_date",
 COALESCE(REGEXP_REPLACE(cc.fieldcollectionnote, E'[\\n\\r]+', '¶', 'g' ),'') AS "Field_collection_note",
-COALESCE(cp.pahmatmslegacydepartment,'') AS "Legacy_department",
+COALESCE(getdispl(cp.pahmatmslegacydepartment),'') AS "Legacy_department",
 COALESCE(STRING_AGG(DISTINCT getdispl(nc.item),'␥'),'') AS "Museums_NAGPRA_category_determinations",
 COALESCE(STRING_AGG(DISTINCT getdispl(inv.item),'␥'),'') AS "NAGPRA_inventory",
 COALESCE(STRING_AGG(DISTINCT acc.accnumber,'␥'),'') AS "Accession_numbers",
