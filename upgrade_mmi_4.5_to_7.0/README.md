@@ -8,6 +8,7 @@ Perform the following steps to upgrade MMI CollectionSpace from version 4.5 to v
 - [Verify the upgrade](#verify-the-upgrade)
 - [Update permissions](#update-permissions)
 - [Update reports and external integrations](#update-reports-and-external-integrations)
+- [Install public gateway](#install-public-gateway)
 
 ## Install CollectionSpace 7.0
 
@@ -249,3 +250,143 @@ New resources exist in 7.0 that did not exist in 4.5. Permissions on these resou
 Since database schemas have changed between 4.5 and 7.0, reports and external integrations that retrieve CollectionSpace data through SQL queries or REST API calls may need to be updated. To see the changes, review the database update scripts:
 
 - All scripts in [/src/main/resources/db/postgresql/upgrade](../src/main/resources/db/postgresql/upgrade)
+
+## Install public gateway
+
+The public gateway provides controlled public access to the CollectionSpace and Elasticsearch APIs, allowing anonymous users to retrieve published data.
+
+1. In the CollectionSpace UI, use the Administration tab to create a CollectionSpace role and user to be used for anonymous access.
+
+   1. Create a role with read-only access to a minimal set of resources. For a default installation of the CollectionSpace public browser, `Read` permission is required on Objects, Media Handling, and Blobs. Set the permission to `None` for all other resources.
+
+   1. Create a user, assigning the newly created role. Make note of the email address and password assigned to this user.
+
+   1. Verify that the user can access the CollectionSpace REST API (replace `gateway@movingimage.us` with the email address of your newly created user):
+      ```
+      curl -i -u gateway@movingimage.us http://localhost:8180/cspace-services/systeminfo
+      ```
+
+1. Enable Elasticsearch.
+
+   Note: The CollectionSpace automated installer automatically installs and starts Elasticsearch. If you did not use the automated installer to install CollectionSpace, you must install Elasticsearch manually. Ensure that the Elasticsearch service is running, and is accessible on port 9200 before continuing.
+
+   1. As the CollectionSpace user, edit `/opt/collectionspace/server/nuxeo-server/config/nuxeo.properties`, and set `elasticsearch.enabled` to `true`.
+      ```
+      sudo -u collectionspace sed -i 's|^elasticsearch.enabled=false|elasticsearch.enabled=true|' /opt/collectionspace/server/nuxeo-server/config/nuxeo.properties
+      ```
+
+   1. Restart CollectionSpace.
+      ```
+      sudo systemctl restart collectionspace.service
+      ```
+
+1. Create the Elasticsearch index.
+
+   1. Reindex CollectionSpace data.
+      ```
+      curl -i -u admin@movingimage.us -X POST http://localhost:8180/cspace-services/index/elasticsearch
+      ```
+
+   1. Verify that the index exists:
+      ```
+      curl -i http://localhost:9200/mmi_default/_count
+      ```
+
+1. As the CollectionSpace user, clone the [cspace-public-gateway](https://github.com/collectionspace/cspace-public-gateway) repository.
+   ```
+   sudo su - collectionspace
+
+   cd /opt/collectionspace
+   git clone https://github.com/collectionspace/cspace-public-gateway
+   ```
+
+1. Build the application war.
+   ```
+   cd cspace-public-gateway
+   mvn clean package
+   ```
+
+1. Deploy the application to the CollectionSpace Tomcat container.
+   ```
+   cp target/org.collectionspace.publicbrowser-1.0.0-SNAPSHOT.war /opt/collectionspace/server/webapps/gateway.war
+   ```
+
+1. Configure the gateway.
+
+   1. Add routes.
+
+      - If CollectionSpace was installed using the automated installer, edit `/home/collectionspace/.config/environment.d/collectionspace.conf`, and add the `SPRING_APPLICATION_JSON` environment variable. Replace the `username` and `password` values with the email address and password of the anonymous access user created above.
+        ```
+        SPRING_APPLICATION_JSON='
+        {
+          "zuul": {
+            "routes": {
+              "mmi-cspace-services": {
+                "password": "gatewaypassword",
+                "path": "/mmi/cspace-services/**",
+                "url": "http://localhost:8180/cspace-services",
+                "username": "gateway@movingimage.us"
+              },
+              "mmi-es": {
+                "path": "/mmi/es/**",
+                "url": "http://localhost:9200/mmi_default"
+              }
+            }
+          }
+        }
+        '
+        ```
+
+      - If CollectionSpace was installed manually, the `SPRING_APPLICATION_JSON` environment variable may be added to `/opt/collectionspace/server/bin/setenv.sh`. Replace the `username` and `password` values with the email address and password of the anonymous access user created above.
+        ```
+        export SPRING_APPLICATION_JSON='
+        {
+          "zuul": {
+            "routes": {
+              "mmi-cspace-services": {
+                "password": "gatewaypassword",
+                "path": "/mmi/cspace-services/**",
+                "url": "http://localhost:8180/cspace-services",
+                "username": "gateway@movingimage.us"
+              },
+              "mmi-es": {
+                "path": "/mmi/es/**",
+                "url": "http://localhost:9200/mmi_default"
+              }
+            }
+          }
+        }
+        '
+        ```
+
+   1. Restart CollectionSpace.
+      ```
+      exit
+      sudo systemctl restart collectionspace.service
+      ```
+
+1. Set the gateway to be accessible through the web server.
+
+   1. As root, edit `/etc/nginx/sites-enabled/cspace.conf`, and add a mapping for `/gateway/mmi`:
+      ```
+      location /gateway/mmi/ {
+          proxy_pass http://collectionspace;
+      }
+      ```
+
+   1. Reload the web server configuration.
+      ```
+      sudo systemctl reload nginx.service
+      ```
+
+1. Verify the installation.
+
+   1. Verify anonymous access to the CollectionSpace REST API (replace `{hostname}` with the hostname of your CollectionSpace server):
+      ```
+      curl https://{hostname}/gateway/mmi/cspace-services/systeminfo
+      ```
+
+   1. Verify anonymous access to the Elasticsearch API (replace `{hostname}` with the hostname of your CollectionSpace server):
+      ```
+      curl https://{hostname}/gateway/mmi/es/_count
+      ```
