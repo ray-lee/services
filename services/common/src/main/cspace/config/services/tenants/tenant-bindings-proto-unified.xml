@@ -29,6 +29,9 @@
 			<tenant:eventListenerConfig id="Reindex">
 				<tenant:className>org.collectionspace.services.listener.Reindex</tenant:className>
 			</tenant:eventListenerConfig>
+			<tenant:eventListenerConfig id="CSpaceAuditLogger">
+				<tenant:className>org.collectionspace.services.listener.CSpaceAuditLogger</tenant:className>
+			</tenant:eventListenerConfig>
 		</tenant:eventListenerConfigurations>
 		<tenant:properties>
 			<!-- Controls whether term completion (aka partial term matching, aka autocomplete) searches will automatically insert
@@ -69,10 +72,23 @@
 						<service:key>sqlScriptName</service:key>
 						<service:value>grant_reporters_privileges.sql</service:value>
 					</service:property>
+					<service:property>
+						<service:key>sqlScriptName</service:key>
+						<service:value>fnc-public-getdispl.sql</service:value>
+					</service:property>
 				</service:params>
 			</service:initHandler>
 		</tenant:serviceBindings>
 		<!-- end runsqlscripts service meta-data -->
+
+		<!-- begin auditservice -->
+		<tenant:serviceBindings id="Audit" merge:matcher="id" name="Audit" type="procedure" version="1.1" elasticsearchIndexed="false" globalActionGroup="RL">
+	      <service:repositoryDomain xmlns:service="http://collectionspace.org/services/config/service">default-domain</service:repositoryDomain>
+	      <service:documentHandler xmlns:service="http://collectionspace.org/services/config/service">org.collectionspace.services.audit.nuxeo.AuditDocumentHandler</service:documentHandler>
+	      <service:validatorHandler xmlns:service="http://collectionspace.org/services/config/service">org.collectionspace.services.audit.nuxeo.AuditValidatorHandler</service:validatorHandler>
+	      <service:clientHandler xmlns:service="http://collectionspace.org/services/config/service">org.collectionspace.services.client.AuditClient</service:clientHandler>
+	    </tenant:serviceBindings>		
+		<!-- end audit service meta-data -->
 		
 		<!-- begin idgenerator service meta-data -->
 		<tenant:serviceBindings id="idgenerators" merge:matcher="id" name="idgenerators" type="utility"
