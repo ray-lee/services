@@ -6,6 +6,7 @@
 dev-master.xml
 .metadata/
 *tenant-bindings.merged.xml
+build
 target
 .settings
 .classpath
@@ -16,6 +17,7 @@ target
 .factorypath
 m2-settings.xml
 *.log
+*.log.*
 cspace-app-perflog.csv
 .flattened-pom.xml
 bin
