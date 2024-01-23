@@ -8,11 +8,11 @@
         <groupId>org.collectionspace.services</groupId>
         <version>${revision}</version>
     </parent>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    
+
     <artifactId>org.collectionspace.services.listener.botgarden</artifactId>
     <name>org.collectionspace.services.listener.botgarden</name>
     <url>http://maven.apache.org</url>
