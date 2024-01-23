@@ -10,18 +10,19 @@
 	<name>services</name>
 
 	<properties>
-		<revision>6.0-SNAPSHOT</revision>
+		<revision>8.0.0-SNAPSHOT</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<cspace.services.version>${revision}</cspace.services.version>
 		<cspace.services.client.version>${revision}</cspace.services.client.version>
+		<jackson.version>2.14.3</jackson.version>
 		<nuxeo.general.release>9.10-HF30</nuxeo.general.release>
 		<nuxeo.shell.version>${nuxeo.general.release}</nuxeo.shell.version>
 		<nuxeo.platform.version>${nuxeo.general.release}</nuxeo.platform.version>
 		<nuxeo.core.version>${nuxeo.general.release}</nuxeo.core.version>
 		<chemistry.opencmis.version.nx>0.12.0-NX2</chemistry.opencmis.version.nx>
-		<spring.version>4.3.16.RELEASE</spring.version>
-		<spring.security.version>4.1.1.RELEASE</spring.security.version>
-		<spring.security.oauth2.version>2.0.10.RELEASE</spring.security.oauth2.version>
+		<spring.version>5.3.28</spring.version>
+		<spring.security.version>5.8.4</spring.security.version>
+		<spring.security.authorization.server.version>0.4.3</spring.security.authorization.server.version>
 		<aspectj.version>1.7.4</aspectj.version>
 		<log4j.version>2.17.1</log4j.version>
 	</properties>
@@ -45,12 +46,6 @@
 	</modules>
 
 	<repositories>
-		<repository>
-			<id>maven-nexus</id>
-			<name>maven-nexus</name>
-			<url>https://maven-us.nuxeo.org/nexus/content/groups/public/</url>
-		</repository>
-		
 		<repository>
 			<id>maven-central</id>
 			<name>maven-central</name>
@@ -212,6 +207,8 @@
 						<archive>
 							<manifest>
 								<addClasspath>true</addClasspath>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
 							</manifest>
 						</archive>
 					</configuration>
@@ -221,6 +218,36 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
 					<version>2.2</version>
+					<configuration>
+						<archive>
+							<manifest>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							</manifest>
+						</archive>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>pl.project13.maven</groupId>
+					<artifactId>git-commit-id-plugin</artifactId>
+					<version>4.9.10</version>
+					<executions>
+						<execution>
+							<goals>
+								<goal>revision</goal>
+							</goals>
+							<phase>initialize</phase>
+						</execution>
+					</executions>
+					<configuration>
+						<generateGitPropertiesFile>true</generateGitPropertiesFile>
+						<generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+						<includeOnlyProperties>
+							<includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
+						</includeOnlyProperties>
+						<commitIdGenerationMode>full</commitIdGenerationMode>
+					</configuration>
 				</plugin>
 
 				<plugin>
@@ -324,7 +351,7 @@
 							</pluginExecutions>
 						</lifecycleMappingMetadata>
 					</configuration>
-            	</plugin>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 
@@ -357,7 +384,7 @@
 				before we perform any build related tasks. -->
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
+				<version>1.8</version> <!-- Most recent version is 3.0.0 -->
 				<executions>
 					<execution>
 						<id>check-environment-vars</id>
@@ -410,6 +437,11 @@
                     </files>
                 </configuration>
             </plugin>
+
+			<plugin>
+				<groupId>pl.project13.maven</groupId>
+				<artifactId>git-commit-id-plugin</artifactId>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -460,11 +492,15 @@
 					</exclusion>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j17</artifactId>
+						<artifactId>slf4j-log4j12</artifactId>
 					</exclusion>
 					<exclusion>
 						<groupId>xml-apis</groupId>
 						<artifactId>xml-apis</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>xalan</groupId>
+						<artifactId>xalan</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -506,12 +542,6 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.jboss.remoting</groupId>
-				<artifactId>jboss-remoting</artifactId>
-				<version>2.5.1</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
 				<groupId>jboss</groupId>
 				<artifactId>jboss-annotations-ejb3</artifactId>
 				<version>3.0-RC8</version>
@@ -529,6 +559,12 @@
 				<artifactId>ejb-api</artifactId>
 				<version>3.0</version>
 				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.dom4j</groupId>
+				<artifactId>dom4j</artifactId>
+				<version>2.1.4</version>
 			</dependency>
 
 			<!-- Start of Nuxeo dependencies -->
@@ -552,7 +588,12 @@
 					</exclusion>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j17</artifactId>
+						<artifactId>slf4j-log4j12</artifactId>
+					</exclusion>
+					<exclusion>
+						<!-- Exclude dom4j:dom4j so we can upgrade to org.dom4j:dom4j. -->
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -563,11 +604,16 @@
 				<exclusions>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j17</artifactId>
+						<artifactId>slf4j-log4j12</artifactId>
 					</exclusion>
 					<exclusion>
 						<groupId>xerces</groupId>
 						<artifactId>xercesImpl</artifactId>
+					</exclusion>
+					<!-- Exclude dom4j:dom4j so we can upgrade to org.dom4j:dom4j. -->
+					<exclusion>
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -605,6 +651,11 @@
 						<groupId>com.sun.jersey</groupId>
 						<artifactId>jersey-servlet</artifactId>
 					</exclusion>
+					<!-- Exclude dom4j:dom4j so we can upgrade to org.dom4j:dom4j. -->
+					<exclusion>
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
+					</exclusion>
 				</exclusions>
 			</dependency>
 			<dependency>
@@ -624,7 +675,7 @@
 				<exclusions>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j17</artifactId>
+						<artifactId>slf4j-log4j12</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -637,6 +688,13 @@
 				<groupId>org.nuxeo.ecm.core</groupId>
 				<artifactId>nuxeo-core-io</artifactId>
 				<version>${nuxeo.core.version}</version>
+				<exclusions>
+					<!-- Exclude dom4j:dom4j so we can upgrade to org.dom4j:dom4j. -->
+					<exclusion>
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.nuxeo.ecm.core</groupId>
@@ -668,7 +726,12 @@
 					</exclusion>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j17</artifactId>
+						<artifactId>slf4j-log4j12</artifactId>
+					</exclusion>
+					<!-- Exclude dom4j:dom4j so we can upgrade to org.dom4j:dom4j. -->
+					<exclusion>
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -680,6 +743,11 @@
 					<exclusion>
 						<groupId>com.sun.jersey</groupId>
 						<artifactId>jersey-core</artifactId>
+					</exclusion>
+					<!-- Exclude dom4j:dom4j so we can upgrade to org.dom4j:dom4j. -->
+					<exclusion>
+						<groupId>dom4j</groupId>
+						<artifactId>dom4j</artifactId>
 					</exclusion>
 				</exclusions>
 			</dependency>
@@ -693,7 +761,6 @@
 				<artifactId>nuxeo-runtime-datasource</artifactId>
 				<version>${nuxeo.core.version}</version>
 			</dependency>
-
 			<!-- End of Nuxeo dependencies -->
 
 			<!-- Tomcat -->
@@ -716,6 +783,32 @@
 				<scope>provided</scope>
 			</dependency>
 
+			<!-- Jackson -->
+
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
+				<version>${jackson.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jsr310</artifactId>
+				<version>${jackson.version}</version>
+				<scope>provided</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
