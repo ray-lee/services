@@ -51,7 +51,6 @@ public class DeleteDeadLocationListener extends AbstractCSEventSyncListenerImpl 
     	
     	logger.debug("actionCode=" + actionCode);
 
-
     	if (actionCode != null && RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.DEAD_ACTION_CODE)) {
     		CoreSession session = context.getCoreSession();
     		
