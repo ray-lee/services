@@ -7,6 +7,11 @@
     <briefDescription>briefDescription2</briefDescription>
 </briefDescriptions>
 <distinguishingFeatures>distFeatures</distinguishingFeatures>
+<objectCountGroupList>
+    <objectCountGroup>
+        <objectCount>1</objectCount>
+    </objectCountGroup>
+</objectCountGroupList>
 <numberOfObjects>1</numberOfObjects>
 <!-- test newline and tab whitespace -->
 <responsibleDepartments>

@@ -33,7 +33,6 @@ import org.collectionspace.services.iterationreport.IterationreportResource;
 import org.collectionspace.services.media.MediaResource;
 import org.collectionspace.services.group.GroupResource;
 import org.collectionspace.services.hit.HitResource;
-import org.collectionspace.services.heldintrust.HeldintrustResource;
 import org.collectionspace.services.intake.IntakeResource;
 import org.collectionspace.services.index.IndexResource;
 import org.collectionspace.services.loanin.LoaninResource;
