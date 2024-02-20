@@ -143,7 +143,6 @@ public class CollectionSpaceJaxRsApplication extends Application
         addResourceToMapAndSingletons(new InsuranceResource());
         addResourceToMapAndSingletons(new IntakeResource());
         addResourceToMapAndSingletons(new HitResource());
-        addResourceToMapAndSingletons(new HeldintrustResource());
         addResourceToMapAndSingletons(new DimensionResource());
         addResourceToMapAndSingletons(new RelationResource());
         addResourceToMapAndSingletons(new LoaninResource());

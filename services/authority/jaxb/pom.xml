@@ -7,11 +7,11 @@
         <groupId>org.collectionspace.services</groupId>
         <version>${revision}</version>
     </parent>
-    
+
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.collectionspace.services.authority.jaxb</artifactId>
     <name>services.authority.jaxb</name>
-    
+
     <dependencies>
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
@@ -25,7 +25,6 @@
             <groupId>org.collectionspace.services</groupId>
             <artifactId>org.collectionspace.services.jaxb</artifactId>
             <version>${project.version}</version>
-        </dependency>        
+        </dependency>
     </dependencies>
 </project>
-

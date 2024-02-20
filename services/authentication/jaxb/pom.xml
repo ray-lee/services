@@ -12,12 +12,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.collectionspace.services.authentication.jaxb</artifactId>
     <name>services.authentication.jaxb</name>
-    
+
     <properties>
         <sql.file>authentication.sql</sql.file>
         <sql.dir>src/main/resources/db/mysql</sql.dir>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>com.sun.xml.bind</groupId>

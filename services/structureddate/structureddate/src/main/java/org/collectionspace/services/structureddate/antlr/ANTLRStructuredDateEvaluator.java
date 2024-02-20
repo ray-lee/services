@@ -1,7 +1,5 @@
 package org.collectionspace.services.structureddate.antlr;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.Stack;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -35,9 +33,9 @@ import org.collectionspace.services.structureddate.DeferredQuarterCenturyEndDate
 import org.collectionspace.services.structureddate.DeferredQuarterCenturyStartDate;
 import org.collectionspace.services.structureddate.Era;
 import org.collectionspace.services.structureddate.Part;
-import org.collectionspace.services.structureddate.StructuredDateInternal;
 import org.collectionspace.services.structureddate.StructuredDateEvaluator;
 import org.collectionspace.services.structureddate.StructuredDateFormatException;
+import org.collectionspace.services.structureddate.StructuredDateInternal;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.AllOrPartOfContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.BeforeOrAfterDateContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.CenturyContext;
@@ -82,6 +80,7 @@ import org.collectionspace.services.structureddate.antlr.StructuredDateParser.Qu
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.QuarterInYearRangeContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.QuarterYearContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.RomanMonthContext;
+import org.collectionspace.services.structureddate.antlr.StructuredDateParser.RomanStringDateContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.SeasonYearContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.StrCenturyContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.StrDateContext;
@@ -94,10 +93,6 @@ import org.collectionspace.services.structureddate.antlr.StructuredDateParser.Un
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.UnknownDateContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.YearContext;
 import org.collectionspace.services.structureddate.antlr.StructuredDateParser.YearSpanningWinterContext;
-import org.collectionspace.services.structureddate.antlr.StructuredDateParser.RomanStringDateContext;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A StructuredDateEvaluator that uses an ANTLR parser to parse the display date,
@@ -110,7 +105,6 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 	 */
 	protected StructuredDateInternal result;
 	private final int BP_ZERO_YEAR = 1950;
-	private static final Logger logger = LoggerFactory.getLogger(ANTLRStructuredDateEvaluator.class);
 
 	/**
 	 * The operation stack. The parse listener methods that are implemented here
@@ -122,6 +116,24 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 
 	}
 
+	/**
+	 * Normalizes a display date for evaluation.
+	 * - Remove leading and trailing whitespace
+	 * - Remove leading and trailing braces
+	 * - Convert to lowercase
+	 *
+	 * @param displayDate
+	 * @return The normalized display date
+	 */
+	protected String normalizeDisplayDate(String displayDate) {
+		String normalDisplayDate =
+			displayDate
+				.replaceAll("^[\\[\\(\\{\\s]+|[\\]\\)\\}\\s]+$", "")
+				.toLowerCase();
+
+		return normalDisplayDate;
+	}
+
 	@Override
 	public StructuredDateInternal evaluate(String displayDate) throws StructuredDateFormatException {
 		stack = new Stack<Object>();
@@ -129,8 +141,8 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 		result = new StructuredDateInternal();
 		result.setDisplayDate(displayDate);
 
-		// Instantiate a parser from the lowercased display date, so that parsing will be case insensitive
-		ANTLRInputStream inputStream = new ANTLRInputStream(displayDate.toLowerCase());
+		// Instantiate a parser from the normalized display date.
+		ANTLRInputStream inputStream = new ANTLRInputStream(normalizeDisplayDate(displayDate));
 		StructuredDateLexer lexer = new StructuredDateLexer(inputStream);
 		CommonTokenStream tokenStream = new CommonTokenStream(lexer);
 		StructuredDateParser parser = new StructuredDateParser(tokenStream);
@@ -165,17 +177,11 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 	@Override
 	public void exitDisplayDate(DisplayDateContext ctx) {
 		if (ctx.exception != null) return;
-		logger.warn("The stack in exitDisplayDate");
-		logger.info(stack.toString());
-		logger.warn(stack.toString());
 
-		logger.warn("The dates:in exitDisplayDate ");
 		Date latestDate = (Date) stack.pop();
 		Date earliestDate = (Date) stack.pop();
 
-		logger.warn(latestDate.toString());
-		logger.warn(earliestDate.toString());
-		if (earliestDate.getYear() != null || earliestDate.getYear() != null) {
+		if (earliestDate.getYear() != null) {
 			int compareResult = DateUtils.compareDates(earliestDate, latestDate);
 			if (compareResult == 1) {
 				Date temp;
@@ -283,9 +289,6 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 		Date latestDate = (Date) stack.pop();
 		Date earliestDate = (Date) stack.pop();
 
-		logger.warn("In exitCertainDate: ");
-		logger.warn(stack.toString());
-		
 		// Set null eras to the default.
 
 		if (earliestDate.getEra() == null) {
@@ -453,8 +456,6 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 	@Override
 	public void exitDate(DateContext ctx) {
 		if (ctx.exception != null) return;
-		logger.warn("in exitDate: ");
-		logger.warn(stack.toString());
 
 		// Expect the canonical year-month-day-era ordering
 		// to be on the stack.
@@ -586,13 +587,12 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 		stack.push(dayOfMonth);
 
 		if (dayOfMonth > 31 || dayOfMonth <= 0) {
-			throw new StructuredDateFormatException("unexpected day of month '" + Integer.toString(dayOfMonth) + "'");
+			throw new StructuredDateFormatException("unexpected day of month '" + dayOfMonth + "'");
 		}
 		if (year == 0) {
-			throw new StructuredDateFormatException("unexpected year '" + Integer.toString(year) + "'");
+			throw new StructuredDateFormatException("unexpected year '" + year + "'");
 		}
 	}
-
 
 	@Override
 	public void exitInvStrDateEraLastDate(InvStrDateEraLastDateContext ctx) {
@@ -1247,19 +1247,21 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 
 	@Override
 	public void exitRomanStringDate(RomanStringDateContext ctx) {
-		if (ctx.exception != null) return;
+		if (ctx.exception != null) {
+			return;
+		}
 
 		// Need to find out whether it is a MONTH, SHORTMONTH, ROMANMONTH here in order to disambiguate the order
 		// Find if there is a month or SHORTMONTH
 		Integer month = (ctx.MONTH() != null && ctx.SHORTMONTH() == null && ctx.ROMANMONTH() == null) ?
-				  		  (Integer) DateUtils.getMonthByName(ctx.MONTH().getText()) :
-				 		  null ;
+						(Integer) DateUtils.getMonthByName(ctx.MONTH().getText()) :
+						null;
 
 		// it was not a MONTH, so it will either be a SHORTMONTH or ROMANMONTH
 		if (month == null) {
-			month =  ctx.ROMANMONTH() == null ?
+			month = ctx.ROMANMONTH() == null ?
 					(Integer) DateUtils.getMonthByName(ctx.SHORTMONTH().getText()) :
-					(Integer) DateUtils.romanToDecimal(ctx.ROMANMONTH().getText()) ;
+					(Integer) DateUtils.romanToDecimal(ctx.ROMANMONTH().getText());
 		}
 
 		// Expect the canonical year-month-day-era ordering
@@ -1289,7 +1291,6 @@ public class ANTLRStructuredDateEvaluator extends StructuredDateBaseListener imp
 	@Override
 	public void exitRomanMonth(RomanMonthContext ctx) {
 		int num = DateUtils.romanToDecimal(ctx.ROMANMONTH().getText());
-
 		stack.push(num);
 	}
 

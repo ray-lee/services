@@ -20,28 +20,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *//**
- *  This document is a part of the source code and related artifacts
- *  for CollectionSpace, an open source collections management system
- *  for museums and related institutions:
-
- *  http://www.collectionspace.org
- *  http://wiki.collectionspace.org
-
- *  Copyright 2009 University of California at Berkeley
-
- *  Licensed under the Educational Community License (ECL), Version 2.0.
- *  You may not use this file except in compliance with this License.
-
- *  You may obtain a copy of the ECL 2.0 License at
-
- *  https://source.collectionspace.org/collection-space/LICENSE.txt
-
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
  */
 package org.collectionspace.authentication.spring;
 
@@ -75,17 +53,19 @@ public class CSpaceUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         String password = null;
         String salt = null;
+        Boolean requireSSO = null;
         Set<CSpaceTenant> tenants = null;
         Set<GrantedAuthority> grantedAuthorities = null;
         
         try {
             password = realm.getPassword(username);
             salt = realm.getSalt(username);
+            requireSSO = realm.isRequireSSO(username);
             tenants = getTenants(username);
             if (tenants == null || tenants.isEmpty()) {
-            	String msg = String.format("The account '%s' is not associated with any tenants.  Please contact your administrator.",
-            			username);
-            	throw new AccountException(msg);
+                String msg = String.format("The account '%s' is not associated with any tenants.  " +
+                                           "Please contact your administrator.", username);
+                throw new AccountException(msg);
             }
             grantedAuthorities = getAuthorities(username);
         }
@@ -101,6 +81,7 @@ public class CSpaceUserDetailsService implements UserDetailsService {
                 username,
                 password,
                 salt,
+                requireSSO,
                 tenants,
                 grantedAuthorities);
                 
