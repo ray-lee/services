@@ -7,6 +7,9 @@
 	<style name="SubTitle" forecolor="#666666" fontName="SansSerif" fontSize="18"/>
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
+	<parameter name="deurnfields" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["objectname"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="tenantid" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA[15]]></defaultValueExpression>
 	</parameter>
@@ -25,10 +28,7 @@ h1.name AS "csid",
 co.objectnumber objectNumber,
 sd.datedisplaydate fieldCollectionDate,
 ong.objectName objectName,
-case when (bd.item is not null and bd.item <> '') then
- regexp_replace(bd.item, '^.*\)''(.*)''$', '\1')
- else ''
-end AS description
+bd.item AS description
 FROM hierarchy h1
 JOIN groups_common gc ON (gc.id=h1.id)
 LEFT OUTER JOIN relations_common rc1 ON (h1.name=rc1.subjectcsid)
@@ -64,14 +64,14 @@ order by objectNumber]]>
 				</textElement>
 				<text><![CDATA[Object Group Report]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
 				<reportElement uuid="ffbefba5-bdd8-47eb-a9f6-d85d1f1e3c44" style="SubTitle" stretchType="RelativeToTallestObject" x="70" y="65" width="244" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 				<textElement verticalAlignment="Top">
 					<font fontName="SansSerif" size="14"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{grouptitle}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement uuid="70cd7a91-bca3-48c4-9123-ab94514d6b31" style="Detail" stretchType="RelativeToTallestObject" x="320" y="65" width="250" height="40" backcolor="#CCCCCC"/>
 				<textElement verticalAlignment="Top">
 					<font fontName="SansSerif" isItalic="false"/>
@@ -92,7 +92,7 @@ order by objectNumber]]>
 				</textElement>
 				<text><![CDATA[Owner:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
 				<reportElement uuid="eb709d53-8668-436c-8cbe-f1ac018a2682" stretchType="RelativeToTallestObject" x="70" y="85" width="244" height="20"/>
 				<textElement>
 					<font size="14"/>
@@ -147,28 +147,28 @@ order by objectNumber]]>
 	</pageHeader>
 	<detail>
 		<band height="21" splitType="Stretch">
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement uuid="c9f761c7-d296-4000-99be-22a8cb4c6d0d" style="Detail" positionType="Float" stretchType="RelativeToTallestObject" x="0" y="2" width="92" height="15"/>
 				<textElement>
 					<font fontName="SansSerif" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{objectnumber}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement uuid="86b252eb-eff5-4353-b989-67cbaedafb55" style="Detail" stretchType="RelativeToTallestObject" mode="Transparent" x="95" y="2" width="120" height="15"/>
 				<textElement>
 					<font fontName="SansSerif" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{objectname}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement uuid="acf79eab-fcac-4beb-8309-10b1f434ee32" style="Detail" stretchType="RelativeToTallestObject" mode="Transparent" x="335" y="2" width="235" height="15"/>
 				<textElement>
 					<font fontName="SansSerif" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement uuid="ebef13fb-c2c2-42a2-bc7a-0aa2ad7f1a65" style="Detail" stretchType="RelativeToTallestObject" mode="Transparent" x="217" y="2" width="114" height="15"/>
 				<textElement>
 					<font fontName="SansSerif" size="9"/>
@@ -210,17 +210,6 @@ order by objectNumber]]>
 				</textElement>
 				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
 			</textField>
-			<image onErrorType="Icon">
-				<reportElement uuid="44c4bdb0-9df3-4c99-bfd3-c0994fa5fe8d" x="450" y="0" width="120" height="20"/>
-                                <imageExpression><![CDATA["https://raw.githubusercontent.com/cspace-deployment/services/master/services/report/3rdparty/jasper-cs-report/src/main/resources/images/cspaceLogo3.png"]]></imageExpression>
-			</image>
-			<staticText>
-				<reportElement uuid="0074b0c4-86b0-4c0e-b613-1fa1230b0fcd" x="371" y="1" width="70" height="17"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font size="12"/>
-				</textElement>
-				<text><![CDATA[powered by]]></text>
-			</staticText>
 		</band>
 	</pageFooter>
 	<lastPageFooter>
@@ -253,17 +242,6 @@ order by objectNumber]]>
 				</textElement>
 				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
-			<image onErrorType="Icon">
-				<reportElement uuid="20a7701e-defe-4c7b-bef9-999bcbc9fe13" x="450" y="0" width="120" height="20"/>
-				<imageExpression><![CDATA["https://raw.githubusercontent.com/cspace-deployment/services/master/services/report/3rdparty/jasper-cs-report/src/main/resources/images/cspaceLogo3.png"]]></imageExpression>
-			</image>
-			<staticText>
-				<reportElement uuid="775624fe-8bb6-4605-b9c7-ba7274e0332c" x="371" y="1" width="70" height="17"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font size="12"/>
-				</textElement>
-				<text><![CDATA[powered by]]></text>
-			</staticText>
 		</band>
 	</lastPageFooter>
 	<summary>

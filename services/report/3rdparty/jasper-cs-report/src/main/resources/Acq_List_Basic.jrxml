@@ -11,6 +11,9 @@
 	<style name="SubTitle" forecolor="#666666" fontName="SansSerif" fontSize="18"/>
 	<style name="Column header" forecolor="#666666" fontName="SansSerif" fontSize="12" isBold="true"/>
 	<style name="Detail" fontName="SansSerif" fontSize="12"/>
+	<parameter name="deurnfields" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["objectname,objectproductionorganizationrole,objectproductionpersonrole,computedcurrentlocation"]]></defaultValueExpression>
+	</parameter>
 	<parameter name="tenantid" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA["101"]]></defaultValueExpression>
 	</parameter>
@@ -29,7 +32,7 @@
 						ptg.termdisplayname opperson,
 						objectproductionpeople,
 						datedisplaydate,
-						numberofobjects,
+						objectCountGroup.objectcount numberofobjects,
 						dimensionsummary,
 						computedcurrentlocation
 	FROM acquisitions_common ac
@@ -60,6 +63,8 @@
 	LEFT OUTER JOIN measuredpartgroup mpg ON (mpg.id = h10.id)
 	LEFT OUTER JOIN collectionspace_core core ON (coc.id = core.id)
 	LEFT OUTER JOIN misc misc ON (misc.id = coc.id)
+	LEFT OUTER JOIN hierarchy countHierarchy ON (coc.id = countHierarchy.parentid AND countHierarchy.primarytype='objectCountGroup' AND countHierarchy.pos=0)
+	LEFT OUTER JOIN objectcountgroup objectCountGroup ON (countHierarchy.id = objectCountGroup.id)
 	WHERE core.tenantid = $P{tenantid} AND misc.lifecyclestate != 'deleted'
 	AND h1.name = $P{csid}]]>
 	</queryString>

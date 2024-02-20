@@ -47,7 +47,7 @@ public class StructuredDateEvaluatorTest {
 			}
 
 			Assert.assertEquals(actualStructuredDate, expectedStructuredDate);
-			logger.info(displayDate +  " was successfully parsed.");
+			logger.debug("{} was successfully parsed.", displayDate);
 		}
 	}
 
