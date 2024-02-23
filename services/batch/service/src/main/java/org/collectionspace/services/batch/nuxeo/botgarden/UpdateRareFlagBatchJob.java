@@ -131,7 +131,7 @@ public class UpdateRareFlagBatchJob extends AbstractBatchJob {
 			// Filter out results where the taxon is referenced in the correct field, but isn't the primary value.
 			
 			PoxPayloadOut collectionObjectPayload = findCollectionObjectByCsid(collectionObjectCsid);
-			String primaryTaxonRefName = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.TAXON_SCHEMA_NAME, 
+			String primaryTaxonRefName = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.TAXON_SCHEMA_NAME,
 					CollectionObjectNaturalHistoryConstants.TAXON_FIELD_NAME);
 						
 			if (primaryTaxonRefName.equals(taxonRefName)) {	
@@ -193,9 +193,9 @@ public class UpdateRareFlagBatchJob extends AbstractBatchJob {
 			logger.debug("skipping deleted collectionobject: " + collectionObjectCsid);
 		}
 		else {
-			String taxonRefName = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.TAXON_SCHEMA_NAME, 
+			String taxonRefName = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.TAXON_SCHEMA_NAME,
 					CollectionObjectNaturalHistoryConstants.TAXON_FIELD_NAME);
-			String oldIsRare = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.RARE_FLAG_SCHEMA_NAME, 
+			String oldIsRare = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.RARE_FLAG_SCHEMA_NAME,
 					CollectionObjectNaturalHistoryConstants.RARE_FLAG_FIELD_NAME);
 			
 			if (oldIsRare == null) {
@@ -217,7 +217,7 @@ public class UpdateRareFlagBatchJob extends AbstractBatchJob {
 				if (taxonPayload != null) {
 					// UCBG-369: Changing this so that it only checks the primary conservation category.
 					
-					String conservationCategory = getFieldValue(taxonPayload, TaxonNaturalHistoryConstants.CONSERVATION_CATEGORY_SCHEMA_NAME, 
+					String conservationCategory = getFieldValue(taxonPayload, TaxonNaturalHistoryConstants.CONSERVATION_CATEGORY_SCHEMA_NAME,
 							TaxonNaturalHistoryConstants.CONSERVATION_CATEGORY_FIELD_NAME);
 
 					if (isRare(conservationCategory)) {

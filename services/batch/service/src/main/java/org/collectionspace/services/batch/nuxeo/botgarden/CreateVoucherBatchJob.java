@@ -82,7 +82,7 @@ public class CreateVoucherBatchJob extends AbstractBatchJob {
 		InvocationResults results = new InvocationResults();
 
 		PoxPayloadOut collectionObjectPayload = findCollectionObjectByCsid(collectionObjectCsid);
-		String collectionObjectWorkflowState = getFieldValue(collectionObjectPayload, CollectionObjectBotGardenConstants.WORKFLOW_STATE_SCHEMA_NAME, 
+		String collectionObjectWorkflowState = getFieldValue(collectionObjectPayload, CollectionObjectBotGardenConstants.WORKFLOW_STATE_SCHEMA_NAME,
 				CollectionObjectBotGardenConstants.WORKFLOW_STATE_FIELD_NAME);
 		
 		if (collectionObjectWorkflowState.equals(WorkflowClient.WORKFLOWSTATE_DELETED)) {
@@ -163,8 +163,8 @@ public class CreateVoucherBatchJob extends AbstractBatchJob {
 	
 	private String getReverseFieldCollectionPlace(PoxPayloadOut collectionObjectPayload) throws URISyntaxException, DocumentException, Exception {
 		String reverseDisplayName = null;
-		String fieldCollectionPlaceRefName = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.FIELD_COLLECTION_PLACE_SCHEMA_NAME, 
-				CollectionObjectNaturalHistoryConstants.FIELD_COLLECTION_PLACE_FIELD_NAME);		
+		String fieldCollectionPlaceRefName = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.FIELD_COLLECTION_PLACE_SCHEMA_NAME,
+				CollectionObjectNaturalHistoryConstants.FIELD_COLLECTION_PLACE_FIELD_NAME);
 
 		if (StringUtils.isNotBlank(fieldCollectionPlaceRefName)) {			
 			PoxPayloadOut placePayload = null;
@@ -204,19 +204,19 @@ public class CreateVoucherBatchJob extends AbstractBatchJob {
 	
 	private String getAnnotation(PoxPayloadOut collectionObjectPayload) {
 		String annotation = "";
-		String determinationKind = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_KIND_SCHEMA_NAME, 
+		String determinationKind = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_KIND_SCHEMA_NAME,
 				CollectionObjectNaturalHistoryConstants.DETERMINATION_KIND_FIELD_NAME);
 
 		if (determinationKind.equals(CollectionObjectNaturalHistoryConstants.DETERMINATION_KIND_DETERMINATION_VALUE)) {
-			String determinationBy = getDisplayNameFromRefName(getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_BY_SCHEMA_NAME, 
+			String determinationBy = getDisplayNameFromRefName(getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_BY_SCHEMA_NAME,
 					CollectionObjectNaturalHistoryConstants.DETERMINATION_BY_FIELD_NAME));
 			
 			if (StringUtils.isNotBlank(determinationBy)) {
 				annotation += "det. by " + determinationBy;
 
-				String determinationInstitution = getDisplayNameFromRefName(getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_INSTITUTION_SCHEMA_NAME, 
+				String determinationInstitution = getDisplayNameFromRefName(getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_INSTITUTION_SCHEMA_NAME,
 						CollectionObjectNaturalHistoryConstants.DETERMINATION_INSTITUTION_FIELD_NAME));
-				String determinationDate = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_DATE_SCHEMA_NAME, 
+				String determinationDate = getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.DETERMINATION_DATE_SCHEMA_NAME,
 						CollectionObjectNaturalHistoryConstants.DETERMINATION_DATE_FIELD_NAME);
 
 				if (StringUtils.isNotBlank(determinationInstitution)) {

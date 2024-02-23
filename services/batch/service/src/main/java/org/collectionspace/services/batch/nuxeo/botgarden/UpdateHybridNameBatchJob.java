@@ -1,7 +1,7 @@
 package org.collectionspace.services.batch.nuxeo.botgarden;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Iterator;
 
@@ -23,7 +23,7 @@ public class UpdateHybridNameBatchJob extends AbstractBatchJob {
     final Logger logger = LoggerFactory.getLogger(UpdateHybridNameBatchJob.class);
 
     public UpdateHybridNameBatchJob() {
-        setSupportedInvocationModes(Arrays.asList(INVOCATION_MODE_LIST));
+        setSupportedInvocationModes(Collections.singletonList(INVOCATION_MODE_LIST));
     }
 
     @Override
@@ -100,10 +100,9 @@ public class UpdateHybridNameBatchJob extends AbstractBatchJob {
         ResourceMap resource = getResourceMap();
         NuxeoBasedResource collectionObjectResource = (NuxeoBasedResource) resource.get(CollectionObjectClient.SERVICE_NAME);
         byte[] responseBytes = collectionObjectResource.update(getServiceContext(), resource, createUriInfo(), csid, payload);
-        
-        if (logger.isDebugEnabled()) {
-            logger.debug(String.format("Batch resource: Resonse from collectionobject (cataloging record) update: %s", new String(responseBytes)));
-        }
+
+        logger.debug("Batch resource: Response from CollectionObject (cataloging record) update: {}",
+                     new String(responseBytes));
     }
 
     public void updateElement(Element termGroupElement) {
@@ -111,13 +110,13 @@ public class UpdateHybridNameBatchJob extends AbstractBatchJob {
 
         Node hybridFlagNode = termGroupElement.selectSingleNode(TaxonConstants.HYBRID_FLAG);
         String affinityTaxon = termGroupElement.selectSingleNode(TaxonConstants.AFF_TAXON).getText();
-        affinityTaxon = affinityTaxon.equals("") ? "" : RefNameUtils.getDisplayName(affinityTaxon);
+        affinityTaxon = affinityTaxon.isEmpty() ? "" : RefNameUtils.getDisplayName(affinityTaxon);
 
         String taxon = termGroupElement.selectSingleNode(TaxonConstants.TAXON_NAME).getText();
-        taxon = taxon.equals("") ? "" : RefNameUtils.getDisplayName(taxon);
+        taxon = taxon.isEmpty() ? "" : RefNameUtils.getDisplayName(taxon);
 
 
-        if (hybridFlagNode.getText() != "true") {
+        if (!hybridFlagNode.getText().equals("true")) {
             if (affinityTaxon == null) {
                 taxonomicIdentHybridName = taxon;
             } if (affinityTaxon != null) {
@@ -155,33 +154,31 @@ public class UpdateHybridNameBatchJob extends AbstractBatchJob {
             String femaleParentName = RefNameUtils.getDisplayName(femaleParentNode.selectSingleNode(TaxonConstants.TAXON_HYBRID_PARENT).getText());
 
             int maleParentGenusIndex = maleParentName.indexOf(' ');
-            
+
             String maleParentGenus = maleParentGenusIndex != -1 ? maleParentName.substring(0, maleParentGenusIndex) : maleParentName;
             String femaleParentGenus = femaleParentName.indexOf(' ') != -1 ? femaleParentName.substring(0, femaleParentName.indexOf(' ')) : femaleParentName;
 
             String maleParentRest = maleParentGenusIndex != -1 ? maleParentName.substring(maleParentGenusIndex + 1) : maleParentName;
 
-            if (affinityTaxon == null || affinityTaxon.equals("")) {
-                if (femaleParentName == null || femaleParentName.equals("")) {
+            if (affinityTaxon == null || affinityTaxon.isEmpty()) {
+                if (femaleParentName.isEmpty()) {
                     taxonomicIdentHybridName = "";
-                } else if (maleParentName == null || maleParentName.equals("")) {
+                } else if (maleParentName.isEmpty()) {
                     taxonomicIdentHybridName = "";
                 } else if (femaleParentGenus.equals(maleParentGenus)) {
-                    taxonomicIdentHybridName = femaleParentName + " × " + maleParentGenus.substring(0,1) + ". " + maleParentRest;
+                    taxonomicIdentHybridName = femaleParentName + " × " + maleParentGenus.charAt(0) + ". " + maleParentRest;
                 } else {
                     taxonomicIdentHybridName = femaleParentName + " × " + maleParentName;
                 }
             } else {
-                if (maleParentName == null || maleParentName.equals("")) {
+                if (maleParentName.isEmpty()) {
                     taxonomicIdentHybridName = "";
                 } else if (femaleParentGenus.equals(maleParentGenus)) {
-                    taxonomicIdentHybridName = affinityTaxon + " × " + maleParentGenus.substring(0,1) + ". " + maleParentRest;
+                    taxonomicIdentHybridName = affinityTaxon + " × " + maleParentGenus.charAt(0) + ". " + maleParentRest;
                 } else {
                     taxonomicIdentHybridName = affinityTaxon + " × " + maleParentName;
                 }
-                
             }
-
         }
 
         Node hybridNameNode = termGroupElement.selectSingleNode(TaxonConstants.TAXON_HYBRID_NAME);

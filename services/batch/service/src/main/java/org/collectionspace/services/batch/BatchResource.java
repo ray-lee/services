@@ -48,6 +48,7 @@ import org.collectionspace.services.authorization.PermissionException;
 import org.collectionspace.services.authorization.URIResourceImpl;
 import org.collectionspace.services.authorization.perms.ActionType;
 
+import java.io.InputStream;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -96,7 +97,14 @@ public class BatchResource extends NuxeoBasedResource {
             MultivaluedMap<String, String> queryParams = ctx.getQueryParams();
             DocumentHandler handler = createDocumentHandler(ctx);
             String docType = queryParams.getFirst(IQueryManager.SEARCH_TYPE_DOCTYPE);
+            String className = queryParams.getFirst(IQueryManager.SEARCH_TYPE_CLASS_NAME);
             List<String> modes = queryParams.get(IQueryManager.SEARCH_TYPE_INVOCATION_MODE);
+            String combine = queryParams.getFirst(IQueryManager.SEARCH_COMBINE_QUERY_PARAM);
+
+            String qualifier = (combine != null && combine.equals(IQueryManager.SEARCH_COMBINE_OR))
+                ? IQueryManager.SEARCH_QUALIFIER_OR
+                : IQueryManager.SEARCH_QUALIFIER_AND;
+
             String whereClause = null;
             DocumentFilter documentFilter = null;
             String common_part = ctx.getCommonPartLabel();
@@ -105,14 +113,21 @@ public class BatchResource extends NuxeoBasedResource {
                 whereClause = QueryManager.createWhereClauseForInvocableByDocType(
                 		common_part, docType);
                 documentFilter = handler.getDocumentFilter();
-                documentFilter.appendWhereClause(whereClause, IQueryManager.SEARCH_QUALIFIER_AND);
+                documentFilter.appendWhereClause(whereClause, qualifier);
+            }
+
+            if (className != null && !className.isEmpty()) {
+                whereClause = QueryManager.createWhereClauseForInvocableByClassName(
+                        common_part, className);
+                documentFilter = handler.getDocumentFilter();
+                documentFilter.appendWhereClause(whereClause, qualifier);
             }
 
             if (modes != null && !modes.isEmpty()) {
                 whereClause = QueryManager.createWhereClauseForInvocableByMode(
                 		common_part, modes);
                 documentFilter = handler.getDocumentFilter();
-                documentFilter.appendWhereClause(whereClause, IQueryManager.SEARCH_QUALIFIER_AND);
+                documentFilter.appendWhereClause(whereClause, qualifier);
             }
 
             if (whereClause !=null && logger.isDebugEnabled()) {
@@ -281,6 +296,19 @@ public class BatchResource extends NuxeoBasedResource {
         	String msg = String.format("%s Could not invoke batch job with CSID='%s'.",
         			ServiceMessages.POST_FAILED, csid);
             throw bigReThrow(e, msg);
+        }
+    }
+
+    public static InputStream getBatchMetadataInputStream(String batchName) {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+        try {
+            Class<?> clazz = classLoader.loadClass(batchName);
+            String metadataFileName = clazz.getSimpleName() + ".xml";
+
+            return clazz.getResourceAsStream(metadataFileName);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

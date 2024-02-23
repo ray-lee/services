@@ -73,7 +73,7 @@ public class UpdateDeadFlagBatchJob extends AbstractBatchJob {
 		String actionCode = getFieldValue(payload, MovementBotGardenConstants.ACTION_CODE_SCHEMA_NAME, MovementBotGardenConstants.ACTION_CODE_FIELD_NAME);
 		logger.debug("actionCode=" + actionCode);
 		
-		if (RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.DEAD_ACTION_CODE) || 
+		if (RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.DEAD_ACTION_CODE) ||
 				RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.REVIVED_ACTION_CODE)) {
 			String actionDate = getFieldValue(payload, MovementBotGardenConstants.ACTION_DATE_SCHEMA_NAME, 
 					MovementBotGardenConstants.ACTION_DATE_FIELD_NAME);
@@ -120,7 +120,7 @@ public class UpdateDeadFlagBatchJob extends AbstractBatchJob {
 				MovementBotGardenConstants.ACTION_CODE_FIELD_NAME);
 		logger.debug("actionCode=" + actionCode);
 		
-		if (RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.DEAD_ACTION_CODE) || 
+		if (RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.DEAD_ACTION_CODE) ||
 				RefNameUtils.doShortIDsMatch(actionCode, MovementBotGardenConstants.REVIVED_ACTION_CODE)) {
 			String actionDate = getFieldValue(payload, MovementBotGardenConstants.ACTION_DATE_SCHEMA_NAME, 
 					MovementBotGardenConstants.ACTION_DATE_FIELD_NAME);

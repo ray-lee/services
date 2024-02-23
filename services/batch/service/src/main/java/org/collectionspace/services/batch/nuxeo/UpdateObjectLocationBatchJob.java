@@ -30,7 +30,6 @@ import org.collectionspace.services.common.invocable.InvocationResults;
 import org.collectionspace.services.common.query.UriInfoImpl;
 import org.collectionspace.services.jaxb.AbstractCommonList;
 import org.dom4j.DocumentException;
-//import org.jboss.resteasy.specimpl.UriInfoImpl;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -75,18 +74,17 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
                 INVOCATION_MODE_GROUP, INVOCATION_MODE_NO_CONTEXT));
     }
 
-	@Override
-	public void run(BatchCommon batchCommon) {
-		String errMsg = String.format("%s class does not support run(BatchCommon batchCommon) method.", getClass().getName());
-		throw new java.lang.UnsupportedOperationException(errMsg);
-	}
+    @Override
+    @Deprecated
+    public void run() {
+        run(null);
+    }
 
     /**
      * The main work logic of the batch job. Will be called after setContext.
      */
     @Override
-    public void run() {
-
+    public void run(BatchCommon batchCommon) {
         setCompletionStatus(STATUS_MIN_PROGRESS);
 
         try {
@@ -137,7 +135,6 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
             String errMsg = "Error encountered in " + CLASSNAME + ": " + e.getLocalizedMessage();
             setErrorResult(errMsg);
         }
-
     }
 
     private InvocationResults updateComputedCurrentLocations(List<String> csids) {
@@ -153,7 +150,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
 
             // For each CollectionObject record
             for (String collectionObjectCsid : csids) {
-            	
+
             	// Log progress at INFO level
             	if (processed % logInterval == 0) {
 	            	logger.info(String.format("Recalculated computed location for %d of %d cataloging records.",
@@ -213,20 +210,20 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         getResults().setNumAffected(numUpdated);
         return getResults();
     }
-    
+
     //
     // Returns the number of distinct/unique CSID values in the list
     //
     private int getNumberOfDistinceRecords(AbstractCommonList abstractCommonList) {
     	Set<String> resultSet = new HashSet<String>();
-    	
+
         for (AbstractCommonList.ListItem listItem : abstractCommonList.getListItem()) {
 	        String csid = AbstractCommonListUtils.ListItemGetElementValue(listItem, CSID_ELEMENT_NAME);
 	        if (!Tools.isBlank(csid)) {
 	            resultSet.add(csid);
 	        }
         }
-    	
+
         return resultSet.size();
     }
 
@@ -239,7 +236,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         String updateDate;
         String mostRecentLocationDate = "";
         String comparisonUpdateDate = "";
-        
+
         //
         // If there is only one related movement record, then return it as the most recent
         // movement record -if it's current location element is not empty.
@@ -252,7 +249,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
             }
             return mostRecentMovement;
         }
-        
+
         for (AbstractCommonList.ListItem movementListItem : relatedMovements.getListItem()) {
             movementCsid = AbstractCommonListUtils.ListItemGetElementValue(movementListItem, CSID_ELEMENT_NAME);
             if (Tools.isBlank(movementCsid)) {
@@ -289,13 +286,13 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
                     currentLocation));
                  continue;
             }
-           
+
             if (logger.isTraceEnabled()) {
                 logger.trace("Location date value = " + locationDate);
                 logger.trace("Update date value = " + updateDate);
                 logger.trace("Current location value = " + currentLocation);
             }
-            
+
             // If this record's location date value is more recent than that of other
             // Movement records processed so far, set the current Movement record
             // as the most recent Movement.
@@ -321,7 +318,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
             }
 
         }
-        
+
         return mostRecentMovement;
     }
 
@@ -359,7 +356,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         if (!shouldUpdateLocation(previousComputedCurrentLocation, computedCurrentLocation)) {
             return numUpdated;
         }
-    
+
         // Perform the update only if there is a non-blank object number available.
         //
         // In the default CollectionObject validation handler, the object number
@@ -401,7 +398,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         if (logger.isTraceEnabled()) {
             logger.trace("Update payload: " + "\n" + collectionObjectUpdatePayload);
         }
-        
+
         //
         // Update the record and save the response for debugging message
         //
@@ -413,7 +410,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         if (logger.isDebugEnabled()) {
 	        logger.debug(String.format("Batch resource: Resonse from collectionobject (cataloging record) update: %s", new String(responseBytes)));
         }
-        
+
         if (logger.isTraceEnabled()) {
             logger.trace("Computed current location value for CollectionObject " + collectionObjectCsid
                     + " was set to " + computedCurrentLocation);
@@ -421,7 +418,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
 
         return numUpdated;
     }
-    
+
     protected boolean shouldUpdateLocation(String previousLocation, String currentLocation) {
         boolean shouldUpdate = true;
         if (Tools.isBlank(previousLocation) && Tools.isBlank(currentLocation)) {
@@ -443,7 +440,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
 
     protected PoxPayloadOut findByCsid(NuxeoBasedResource resource, String csid) throws URISyntaxException, DocumentException {
     	PoxPayloadOut result = null;
-    	
+
     	try {
 			result = resource.getWithParentCtx(getServiceContext(), csid);
 		} catch (Exception e) {
@@ -455,7 +452,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
 				logger.error(msg);
 			}
 		}
-    	
+
     	return result;
     }
 
@@ -476,10 +473,10 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         URI uri = new URI(null, null, null, queryString, null);
         return createUriInfo(uri.getRawQuery());
     }
-    
+
     protected UriInfo setupQueryParamForUpdateRecords() throws URISyntaxException {
     	UriInfo result = null;
-    	
+
     	//
     	// Check first to see if we've got a query param.  It will override any invocation context value
     	//
@@ -488,16 +485,16 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
     		//
     		// Since there is no query param, let's check the invocation context
     		//
-    		updateCoreValues = getInvocationContext().getUpdateCoreValues();    		
+    		updateCoreValues = getInvocationContext().getUpdateCoreValues();
     	}
-    	
+
     	//
     	// If we found a value, then use it to create a query parameter
     	//
     	if (Tools.notBlank(updateCoreValues)) {
         	result = createUriInfo(IClientQueryParams.UPDATE_CORE_VALUES + "=" + updateCoreValues);
     	}
-    	
+
     	return result;
     }
 
@@ -531,7 +528,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
     private boolean isRecordDeleted(NuxeoBasedResource resource, String collectionObjectCsid)
             throws URISyntaxException, DocumentException {
         boolean isDeleted = false;
-        
+
         byte[] workflowResponse = resource.getWorkflowWithExistingContext(getServiceContext(), createUriInfo(), collectionObjectCsid);
         if (workflowResponse != null) {
             PoxPayloadOut payloadOut = new PoxPayloadOut(workflowResponse);
@@ -542,7 +539,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
                 isDeleted = true;
             }
         }
-        
+
         return isDeleted;
     }
 
@@ -553,7 +550,7 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         uriInfo.getQueryParameters().add(WorkflowClient.WORKFLOW_QUERY_DELETED_QP, Boolean.FALSE.toString());
         return uriInfo;
     }
-    
+
     private UriInfo addFilterForPageSize(UriInfo uriInfo, long startPage, long pageSize) throws URISyntaxException {
     	if (uriInfo == null) {
             uriInfo = createUriInfo();
@@ -641,13 +638,13 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         }
         return csids;
     }
-    
+
     private void appendItemsToCsidsList(List<String> existingList, AbstractCommonList abstractCommonList) {
         for (AbstractCommonList.ListItem listitem : abstractCommonList.getListItem()) {
         	existingList.add(AbstractCommonListUtils.ListItemGetCSID(listitem));
         }
     }
-    
+
     private List<String> getMemberCsidsFromGroup(String serviceName, String groupCsid) throws URISyntaxException, DocumentException {
         ResourceMap resourcemap = getResourceMap();
         NuxeoBasedResource resource = (NuxeoBasedResource) resourcemap.get(serviceName);
@@ -673,19 +670,19 @@ public class UpdateObjectLocationBatchJob extends AbstractBatchInvocable {
         long currentPage = 0;
         long pageSize = DEFAULT_PAGE_SIZE;
         List<String> noContextCsids = new ArrayList<String>();
-        
+
         while (morePages == true) {
 	        uriInfo = addFilterForPageSize(uriInfo, currentPage, pageSize);
 	        AbstractCommonList collectionObjects = collectionObjectResource.getList(getServiceContext(), uriInfo);
 	        appendItemsToCsidsList(noContextCsids, collectionObjects);
-	        
+
 	        if (collectionObjects.getItemsInPage() == pageSize) { // We know we're at the last page when the number of items returned in the last request is less than the page size.
 	        	currentPage++;
 	        } else {
-	        	morePages = false;	        	
+	        	morePages = false;
 	        }
         }
-        
+
         return noContextCsids;
     }
 }

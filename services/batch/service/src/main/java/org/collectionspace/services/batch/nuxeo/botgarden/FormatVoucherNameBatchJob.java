@@ -138,13 +138,13 @@ public class FormatVoucherNameBatchJob extends AbstractBatchJob {
 			
 			name.setName(getDisplayNameFromRefName(getFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.TAXON_SCHEMA_NAME,
 					CollectionObjectNaturalHistoryConstants.TAXON_FIELD_NAME)));
-			name.setHybrid(getBooleanFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.HYBRID_FLAG_SCHEMA_NAME, 
+			name.setHybrid(getBooleanFieldValue(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.HYBRID_FLAG_SCHEMA_NAME,
 					CollectionObjectNaturalHistoryConstants.HYBRID_FLAG_FIELD_NAME));
 
 			if (name.isHybrid()) {
-				List<String> hybridParents = this.getFieldValues(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.HYBRID_PARENT_SCHEMA_NAME, 
+				List<String> hybridParents = this.getFieldValues(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.HYBRID_PARENT_SCHEMA_NAME,
 						CollectionObjectNaturalHistoryConstants.HYBRID_PARENT_FIELD_NAME);
-				List<String> hybridQualifiers = this.getFieldValues(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.HYBRID_QUALIFIER_SCHEMA_NAME, 
+				List<String> hybridQualifiers = this.getFieldValues(collectionObjectPayload, CollectionObjectNaturalHistoryConstants.HYBRID_QUALIFIER_SCHEMA_NAME,
 						CollectionObjectNaturalHistoryConstants.HYBRID_QUALIFIER_FIELD_NAME);
 
 				int femaleIndex = hybridQualifiers.indexOf(CollectionObjectNaturalHistoryConstants.HYBRID_QUALIFIER_FEMALE_VALUE);
