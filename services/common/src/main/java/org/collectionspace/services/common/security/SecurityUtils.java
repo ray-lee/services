@@ -22,10 +22,10 @@
  */
 package org.collectionspace.services.common.security;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.io.UnsupportedEncodingException;
+import java.util.Set;
 import java.net.URISyntaxException;
 import java.util.StringTokenizer;
 
@@ -36,8 +36,12 @@ import org.collectionspace.services.client.CollectionSpaceClient;
 import org.collectionspace.services.client.index.IndexClient;
 import org.collectionspace.services.client.workflow.WorkflowClient;
 import org.collectionspace.services.common.api.Tools;
+import org.collectionspace.services.config.AssertionAttributeProbeType;
+import org.collectionspace.services.config.AssertionNameIDProbeType;
+import org.collectionspace.services.config.AssertionProbesType;
 import org.collectionspace.services.config.service.ServiceBindingType;
 import org.collectionspace.authentication.AuthN;
+import org.collectionspace.authentication.spring.CSpacePasswordEncoderFactory;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -45,39 +49,13 @@ import javax.ws.rs.core.UriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.security.authentication.encoding.BasePasswordEncoder;
-import org.jboss.crypto.digest.DigestCallback;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.jboss.resteasy.spi.HttpRequest;
-import org.jboss.security.Base64Encoder;
-import org.jboss.security.Base64Utils;
-
-/**
- * Extends Spring Security's base class for encoding passwords.  We use only the
- * mergePasswordAndSalt() method.
- * @author remillet
- *
- */
-class CSpacePasswordEncoder extends BasePasswordEncoder {
-	public CSpacePasswordEncoder() {
-		//Do nothing
-	}
-
-	String mergePasswordAndSalt(String password, String salt) {
-		return this.mergePasswordAndSalt(password, salt, false);
-	}
-
-	@Override
-	public String encodePassword(String rawPass, Object salt) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isPasswordValid(String encPass, String rawPass, Object salt) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-}
+import org.opensaml.core.xml.XMLObject;
+import org.opensaml.core.xml.schema.XSString;
+import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.Attribute;
+import org.opensaml.saml.saml2.core.AttributeStatement;
 
 /**
  *
@@ -94,23 +72,37 @@ public class SecurityUtils {
     public static final String BASE64_ENCODING = "BASE64";
     public static final String BASE16_ENCODING = "HEX";
     public static final String RFC2617_ENCODING = "RFC2617";
-    private static char MD5_HEX[] = "0123456789abcdef".toCharArray();
+
+    private static final List<Object> DEFAULT_SAML_ASSERTION_USERNAME_PROBES = new ArrayList<>();
+
+    static {
+        DEFAULT_SAML_ASSERTION_USERNAME_PROBES.add(new AssertionNameIDProbeType());
+
+        String[] attributeNames = new String[]{
+            "urn:oid:0.9.2342.19200300.100.1.3",
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+            "email",
+            "mail"
+        };
+
+        for (String attributeName : attributeNames) {
+            AssertionAttributeProbeType attributeProbe = new AssertionAttributeProbeType();
+            attributeProbe.setName(attributeName);
+
+            DEFAULT_SAML_ASSERTION_USERNAME_PROBES.add(attributeProbe);
+        }
+    }
 
     /**
      * createPasswordHash creates password has using configured digest algorithm
      * and encoding
-     * @param user
      * @param password in cleartext
      * @return hashed password
      */
-    public static String createPasswordHash(String username, String password, String salt) {
-        //TODO: externalize digest algo and encoding
-        return createPasswordHash("SHA-256", //digest algo
-                "base64", //encoding
-                null, //charset
-                username,
-                password,
-                salt);
+    public static String createPasswordHash(String password) {
+        PasswordEncoder encoder = CSpacePasswordEncoderFactory.createDefaultPasswordEncoder();
+
+        return encoder.encode(password);
     }
 
     /**
@@ -352,117 +344,67 @@ public class SecurityUtils {
         return result;
     }
 
-    public static String createPasswordHash(String hashAlgorithm, String hashEncoding, String hashCharset,
-    		String username, String password, String salt)
-    {
-        return createPasswordHash(hashAlgorithm, hashEncoding, hashCharset, username, password, salt, null);
-    }
+    /*
+     * Retrieve the possible CSpace usernames from a SAML assertion.
+     */
+    public static Set<String> findSamlAssertionCandidateUsernames(Assertion assertion, AssertionProbesType assertionProbes) {
+        Set<String> candidateUsernames = new LinkedHashSet<>();
+        List<Object> probes = null;
 
-    public static String createPasswordHash(String hashAlgorithm, String hashEncoding, String hashCharset,
-    		String username, String password, String salt, DigestCallback callback)
-    {
-    	CSpacePasswordEncoder passwordEncoder = new CSpacePasswordEncoder();
-    	String saltedPassword = passwordEncoder.mergePasswordAndSalt(password, salt); //
-
-        String passwordHash = null;
-        byte passBytes[];
-        try
-        {
-            if(hashCharset == null)
-                passBytes = saltedPassword.getBytes();
-            else
-                passBytes = saltedPassword.getBytes(hashCharset);
-        }
-        catch(UnsupportedEncodingException uee)
-        {
-            logger.error((new StringBuilder()).append("charset ").append(hashCharset).append(" not found. Using platform default.").toString(), uee);
-            passBytes = saltedPassword.getBytes();
-        }
-        try
-        {
-            MessageDigest md = MessageDigest.getInstance(hashAlgorithm);
-            if(callback != null)
-                callback.preDigest(md);
-            md.update(passBytes);
-            if(callback != null)
-                callback.postDigest(md);
-            byte hash[] = md.digest();
-            if(hashEncoding.equalsIgnoreCase("BASE64"))
-                passwordHash = encodeBase64(hash);
-            else
-            if(hashEncoding.equalsIgnoreCase("HEX"))
-                passwordHash = encodeBase16(hash);
-            else
-            if(hashEncoding.equalsIgnoreCase("RFC2617"))
-                passwordHash = encodeRFC2617(hash);
-            else
-                logger.error((new StringBuilder()).append("Unsupported hash encoding format ").append(hashEncoding).toString());
-        }
-        catch(Exception e)
-        {
-            logger.error("Password hash calculation failed ", e);
-        }
-        return passwordHash;
-    }
-
-    public static String encodeRFC2617(byte data[])
-    {
-        char hash[] = new char[32];
-        for(int i = 0; i < 16; i++)
-        {
-            int j = data[i] >> 4 & 0xf;
-            hash[i * 2] = MD5_HEX[j];
-            j = data[i] & 0xf;
-            hash[i * 2 + 1] = MD5_HEX[j];
+        if (assertionProbes != null) {
+            probes = assertionProbes.getNameIdOrAttribute();
         }
 
-        return new String(hash);
-    }
-
-    public static String encodeBase16(byte bytes[])
-    {
-        StringBuffer sb = new StringBuffer(bytes.length * 2);
-        for(int i = 0; i < bytes.length; i++)
-        {
-            byte b = bytes[i];
-            char c = (char)(b >> 4 & 0xf);
-            if(c > '\t')
-                c = (char)((c - 10) + 97);
-            else
-                c += '0';
-            sb.append(c);
-            c = (char)(b & 0xf);
-            if(c > '\t')
-                c = (char)((c - 10) + 97);
-            else
-                c += '0';
-            sb.append(c);
+        if (probes == null || probes.size() == 0) {
+            probes = DEFAULT_SAML_ASSERTION_USERNAME_PROBES;
         }
 
-        return sb.toString();
-    }
+        for (Object probe : probes) {
+            if (probe instanceof AssertionNameIDProbeType) {
+                String subjectNameID = assertion.getSubject().getNameID().getValue();
 
-    public static String encodeBase64(byte bytes[])
-    {
-        String base64 = null;
-        try
-        {
-            base64 = Base64Encoder.encode(bytes);
+                if (subjectNameID != null && subjectNameID.contains("@")) {
+                    candidateUsernames.add(subjectNameID);
+                }
+            } else if (probe instanceof AssertionAttributeProbeType) {
+                String attributeName = ((AssertionAttributeProbeType) probe).getName();
+                List<String> values = getSamlAssertionAttributeValues(assertion, attributeName);
+
+                if (values != null) {
+                    candidateUsernames.addAll(values);
+                }
+            }
         }
-        catch(Exception e) { }
-        return base64;
+
+        return candidateUsernames;
     }
 
-    public static String tob64(byte buffer[])
-    {
-        return Base64Utils.tob64(buffer);
+    private static List<String> getSamlAssertionAttributeValues(Assertion assertion, String attributeName) {
+        List<String> values = new ArrayList<>();
+
+        for (AttributeStatement statement : assertion.getAttributeStatements()) {
+            for (Attribute attribute : statement.getAttributes()) {
+                String name = attribute.getName();
+
+                if (name.equals(attributeName)) {
+                    List<XMLObject> attributeValues = attribute.getAttributeValues();
+
+                    if (attributeValues != null) {
+                        for (XMLObject value : attributeValues) {
+                            if (value instanceof XSString) {
+                                XSString stringValue = (XSString) value;
+                                String candidateValue = stringValue.getValue();
+
+                                if (candidateValue != null && candidateValue.contains("@")) {
+                                    values.add(candidateValue);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return values;
     }
-
-    public static byte[] fromb64(String str)
-        throws NumberFormatException
-    {
-        return Base64Utils.fromb64(str);
-    }
-
-
 }

@@ -5,6 +5,12 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Enumeration;
+
+import javax.management.JMException;
 import javax.servlet.ServletContext;
 
 import org.apache.catalina.util.ServerInfo;
@@ -43,6 +49,7 @@ public class NuxeoConnectorEmbedded {
 	private volatile boolean initialized = false; // use volatile for lazy
 													// initialization in
 													// singleton
+	private ClassLoader classLoader;
 	public NuxeoFrameworkBootstrap fb;
 	private ServletContext servletContext;
 	private RepositoryClientConfigType repositoryClientConfig;
@@ -100,32 +107,6 @@ public class NuxeoConnectorEmbedded {
 
 		return result;
 	}
-	
-	//
-	// For testing of CC-https://jira.ets.berkeley.edu/jira/browse/CC-1268
-	// FIXME: CC-1268 - Not for production
-	//
-	private void runCCdash1268(CoreSession coreSession) throws Exception {
-		final String PICTURES_TO_MIGRATE_QUERY = "SELECT ecm:uuid FROM Document "
-	            + "WHERE ecm:mixinType = 'Picture' AND ecm:isProxy = 0 AND views/*/title = 'Original' "
-	            + "AND content/data IS NULL";
-
-		String msg = String.format("Checking for candidate Pictures that Nuxeo needs to migrate.  Using this query: %s", PICTURES_TO_MIGRATE_QUERY);
-		logger.info(msg);
-
-		DocumentModelList queryResult = coreSession.query(PICTURES_TO_MIGRATE_QUERY);
-		if (queryResult != null && queryResult.isEmpty() == false) {
-			msg = String.format("Found %d candidate Pictures for migration by Nuxeo.", queryResult.size());
-			logger.info(msg);
-			for (DocumentModel docModel : queryResult) {
-				msg = String.format("Candidate for Nuxeo migration: ID='%s'\tname='%s'\tType='%s'",
-						docModel.getId(), docModel.getName(), docModel.getType());
-				logger.info(msg);
-			}
-		} else {
-			logger.info("No candidate Pictures found.");
-		}
-	}
 
 	//
 	// Start/boot the Nuxeo EP server instance
@@ -138,14 +119,14 @@ public class NuxeoConnectorEmbedded {
 					+ nuxeoHomeDir.getCanonicalPath());
 		}
 
-		ClassLoader cl = NuxeoConnectorEmbedded.class.getClassLoader();
+		classLoader = NuxeoConnectorEmbedded.class.getClassLoader();
 
-		fb = new NuxeoFrameworkBootstrap(cl, nuxeoHomeDir);
+		fb = new NuxeoFrameworkBootstrap(classLoader, nuxeoHomeDir);
 		fb.setHostName("Tomcat");
 		fb.setHostVersion(ServerInfo.getServerNumber());
 
 		fb.initialize();
-		fb.start(new MutableClassLoaderDelegate(cl));
+		fb.start(new MutableClassLoaderDelegate(classLoader));
 
 		// Test to see if we can connect to the default repository
 		boolean transactionStarted = false;
@@ -159,14 +140,7 @@ public class NuxeoConnectorEmbedded {
 		try {
 			Repository defaultRepo = Framework.getService(RepositoryManager.class).getDefaultRepository();
 			coreSession = CoreInstance.openCoreSession(defaultRepo.getName(), new SystemPrincipal(null));
-			//
-			// CC-1268 - Not for production
-			//
-			//runCCdash1268(coreSession); // FIXME: CC-1268 - Not for production
-			//
-			// CC-1268 - Not for production
-			//
-			} catch (Throwable t) {
+        } catch (Throwable t) {
 			logger.error(t.getMessage());
 			throw new RuntimeException("Could not start the Nuxeo EP Framework", t);
 		} finally {
@@ -180,6 +154,25 @@ public class NuxeoConnectorEmbedded {
 		}
 	}
 
+	private void stopNuxeoEP() {
+		try {
+			fb.stop(new MutableClassLoaderDelegate(classLoader));
+			Enumeration<Driver> drivers = DriverManager.getDrivers();
+			while (drivers.hasMoreElements()) {
+				Driver driver = drivers.nextElement();
+				try {
+					DriverManager.deregisterDriver(driver);
+					logger.info("Deregister JDBC driver: {}", driver);
+				} catch (SQLException e) {
+					logger.error("Error deregistering JDBC driver {}", driver, e);
+				}
+			}
+		} catch (IllegalArgumentException | ReflectiveOperationException | JMException e) {
+			logger.error("CollectionSpace was unable to shutdown Nuxeo cleanly.", e);
+		}
+	}
+
+
 	/**
 	 * release releases resources occupied by Nuxeo remoting client runtime
 	 *
@@ -189,6 +182,7 @@ public class NuxeoConnectorEmbedded {
 		if (initialized == true) {
 			try {
 				client.tryDisconnect();
+				stopNuxeoEP();
 			} catch (Exception e) {
 				logger.error("Failed to disconnect Nuxeo connection.", e);
 				throw e;
