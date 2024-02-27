@@ -10,7 +10,7 @@ public class UCJepsCollectionObjectValidatorHandler extends CollectionObjectVali
 		// Allow an empty object number.
 
 	}
-	
+
 	@Override
 	protected void handleCreate() throws InvalidDocumentException {
 		// Allow an empty object number.

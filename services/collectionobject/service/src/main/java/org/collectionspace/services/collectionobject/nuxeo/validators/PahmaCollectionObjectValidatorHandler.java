@@ -7,7 +7,7 @@ public class PahmaCollectionObjectValidatorHandler extends CollectionObjectValid
 
 	@Override
 	protected void handleUpdate() throws InvalidDocumentException {
-        // PAHMA-473: Disable non-empty objectNumber requirement, so that updates don't need to retrieve the current objectNumber.
+				// PAHMA-473: Disable non-empty objectNumber requirement, so that updates don't need to retrieve the current objectNumber.
 
 	}
 }

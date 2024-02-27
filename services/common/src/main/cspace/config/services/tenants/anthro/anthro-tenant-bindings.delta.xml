@@ -29,11 +29,17 @@
 							"collectionobjects_common:colors",
 							"collectionobjects_common:computedCurrentLocation",
 							"collectionobjects_common:contentConcepts",
+							"collectionobjects_common:contentDescription",
+							"collectionobjects_common:contentEvents",
+							"collectionobjects_common:contentOrganizations",
+							"collectionobjects_common:contentPersons",
 							"collectionobjects_common:fieldCollectionDateGroup",
 							"collectionobjects_common:fieldCollectors",
 							"collectionobjects_common:materialGroupList",
 							"collectionobjects_common:measuredPartGroupList",
 							"collectionobjects_common:numberOfObjects",
+							"collectionobjects_common:objectCountGroupList",
+							"collectionobjects_common:objectHistoryNote",
 							"collectionobjects_common:objectNameList",
 							"collectionobjects_common:objectNumber",
 							"collectionobjects_common:objectProductionDateGroupList",
@@ -43,10 +49,15 @@
 							"collectionobjects_common:objectProductionPlaceGroupList",
 							"collectionobjects_common:objectStatusList",
 							"collectionobjects_common:otherNumberList",
+							"collectionobjects_common:ownersContributionNote",
 							"collectionobjects_common:publishToList",
 							"collectionobjects_common:responsibleDepartments",
+							"collectionobjects_common:rightsGroupList.rightStatement",
+							"collectionobjects_common:rightsGroupList.standardizedRightStatement",
+							"collectionobjects_common:rightsInGroupList.rightReproductionStatement",
 							"collectionobjects_common:techniqueGroupList",
 							"collectionobjects_common:titleGroupList",
+							"collectionobjects_common:viewersContributionNote",
 							"collectionobjects_naturalhistory_extension:taxonomicIdentGroupList",
 							"collectionspace_core:*",
 							"collectionspace_denorm:*",
@@ -94,15 +105,58 @@
 						"collectionspace_denorm:hasMedia": {
 							"type": "boolean"
 						},
+						"collectionspace_denorm:mediaAltText": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
 						"collectionspace_denorm:prodYears": {
 							"type": "integer"
 						},
 						"collectionspace_denorm:collectionYears": {
 							"type": "integer"
 						},
+						"collectionspace_denorm:exhibition": {
+							"type": "object",
+							"properties": {
+								"title": {
+									"type": "keyword",
+									"copy_to": "all_field"
+								},
+								"generalNote": {
+									"type": "text",
+									"copy_to": "all_field"
+								},
+								"curatorialNote": {
+									"type": "text",
+									"copy_to": "all_field"
+								}
+							}
+						},
+						"collectionspace_denorm:materialGroupList": {
+							"type": "object",
+							"properties": {
+								"material": {
+									"type": "keyword",
+									"copy_to": "all_field"
+								}
+							}
+						},
+						"collectionspace_denorm:objectNameList": {
+							"type": "object",
+							"properties": {
+								"objectName": {
+									"type": "keyword",
+									"copy_to": "all_field"
+								}
+							}
+						},
 
 						"collectionobjects_common:objectNumber": {
 							"type": "keyword",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:briefDescriptions": {
+							"type": "text",
 							"copy_to": "all_field"
 						},
 						"collectionobjects_common:titleGroupList": {
@@ -158,7 +212,13 @@
 							"properties": {
 								"objectProductionPeople": {
 									"type": "keyword",
-									"copy_to": "all_field"
+									"copy_to": "all_field",
+									"fields": {
+										"displayName": {
+											"type": "keyword",
+											"normalizer": "refname_displayname_normalizer"
+										}
+									}
 								}
 							}
 						},
@@ -176,7 +236,13 @@
 							"properties": {
 								"objectProductionPlace": {
 									"type": "keyword",
-									"copy_to": "all_field"
+									"copy_to": "all_field",
+									"fields": {
+										"displayName": {
+											"type": "keyword",
+											"normalizer": "refname_displayname_normalizer"
+										}
+									}
 								}
 							}
 						},
@@ -198,6 +264,40 @@
 							"copy_to": "all_field"
 						},
 						"collectionobjects_common:contentConcepts": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
+						},
+						"collectionobjects_common:contentDescription": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:contentEvents": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
+						},
+						"collectionobjects_common:contentOrganizations": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
+						},
+						"collectionobjects_common:contentPersons": {
 							"type": "keyword",
 							"copy_to": "all_field",
 							"fields": {
@@ -230,6 +330,18 @@
 									}
 								}
 							}
+						},
+						"collectionobjects_common:objectHistoryNote": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:ownersContributionNote": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:viewersContributionNote": {
+							"type": "text",
+							"copy_to": "all_field"
 						},
 
 						"media_common:blobCsid": {

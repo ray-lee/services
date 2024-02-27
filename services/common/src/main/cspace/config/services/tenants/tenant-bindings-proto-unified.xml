@@ -2,6 +2,12 @@
 <tenant:TenantBindingConfig xmlns:merge="http://xmlmerge.el4j.elca.ch" xmlns:tenant="http://collectionspace.org/services/config/tenant">
 
 	<tenant:tenantBinding>
+		<tenant:uiConfig>
+			<tenant:loginSuccessUrl>authorize</tenant:loginSuccessUrl>
+			<tenant:authorizationSuccessUrl>authorized</tenant:authorizationSuccessUrl>
+			<tenant:logoutSuccessUrl>logout?success</tenant:logoutSuccessUrl>
+		</tenant:uiConfig>
+
 		<tenant:eventListenerConfigurations id="default">
 			<tenant:eventListenerConfig id="UpdateObjectLocationOnMove">
 				<tenant:className>org.collectionspace.services.listener.UpdateObjectLocationOnMove</tenant:className>
@@ -67,21 +73,21 @@
 				<service:params>
 					<service:property>
 						<service:key>sqlScriptName</service:key>
+						<service:value>unaccent_text_search_configuration.sql</service:value>
+					</service:property>
+					<service:property>
+						<service:key>sqlScriptName</service:key>
 						<service:value>grant_reporters_privileges.sql</service:value>
 					</service:property>
 					<service:property>
 						<service:key>sqlScriptName</service:key>
 						<service:value>fnc-public-getdispl.sql</service:value>
 					</service:property>
-					<service:property>
-						<service:key>sqlScriptName</service:key>
-						<service:value>fnc-public-get_deplname.sql</service:value>
-					</service:property>
 				</service:params>
 			</service:initHandler>
 		</tenant:serviceBindings>
 		<!-- end runsqlscripts service meta-data -->
-		
+
 		<!-- begin idgenerator service meta-data -->
 		<tenant:serviceBindings id="idgenerators" merge:matcher="id" name="idgenerators" type="utility"
 			version="1.0">
@@ -330,6 +336,20 @@
 			</service:DocHandlerParams>
 			<service:validatorHandler xmlns:service="http://collectionspace.org/services/config/service">org.collectionspace.services.batch.nuxeo.BatchValidatorHandler
 			</service:validatorHandler>
+			<service:properties xmlns:service="http://collectionspace.org/services/config/service" xmlns:types="http://collectionspace.org/services/config/types">
+				<types:item>
+					<types:key>batch</types:key>
+					<types:value>org.collectionspace.services.batch.nuxeo.MergeAuthorityItemsBatchJob</types:value>
+				</types:item>
+				<types:item>
+					<types:key>batch</types:key>
+					<types:value>org.collectionspace.services.batch.nuxeo.UpdateInventoryStatusBatchJob</types:value>
+				</types:item>
+				<types:item>
+					<types:key>batch</types:key>
+					<types:value>org.collectionspace.services.batch.nuxeo.UpdateObjectLocationBatchJob</types:value>
+				</types:item>
+			</service:properties>
 			<service:object xmlns:service="http://collectionspace.org/services/config/service" name="Batch"
 				version="1.0">
 				<service:part id="0" control_group="Managed" versionable="true" auditable="false" label="batch-system"
@@ -399,6 +419,44 @@
 			</service:object>
 		</tenant:serviceBindings>
 		<!-- end imports service meta-data -->
+
+		<!-- begin export service meta-data -->
+		<tenant:serviceBindings id="Exports" merge:matcher="id" name="Exports" type="utility" version="1.0">
+			<service:repositoryDomain xmlns:service="http://collectionspace.org/services/config/service">default-domain</service:repositoryDomain>
+			<service:documentHandler xmlns:service="http://collectionspace.org/services/config/service">org.collectionspace.services.export.nuxeo.ExportDocumentModelHandler
+			</service:documentHandler>
+			<service:DocHandlerParams xmlns:service="http://collectionspace.org/services/config/service">
+				<service:params>
+					<service:ListResultsFields>
+					</service:ListResultsFields>
+				</service:params>
+			</service:DocHandlerParams>
+			<service:object xmlns:service="http://collectionspace.org/services/config/service" name="Export"
+				version="1.0">
+				<service:part id="0" control_group="Managed" versionable="true" auditable="false" label="exports-system"
+					updated="" order="0">
+					<service:content contentType="application/xml">
+						<service:xmlContent namespaceURI="http://collectionspace.org/services/config/system"
+							schemaLocation="http://collectionspace.org/services/config/system http://collectionspace.org/services/config/system/system-response.xsd" />
+					</service:content>
+				</service:part>
+				<service:part id="1" control_group="Managed" versionable="true" auditable="false" label="exports_common"
+					updated="" order="1">
+					<service:content contentType="application/xml">
+						<service:xmlContent namespaceURI="http://collectionspace.org/services/export"
+							schemaLocation="http://collectionspace.org/services/export http://services.collectionspace.org/export/exports_common.xsd" />
+					</service:content>
+				</service:part>
+				<service:part id="2" control_group="Managed" versionable="true" auditable="false" label="collectionspace_core"
+					updated="" order="2">
+					<service:content contentType="application/xml">
+						<service:xmlContent namespaceURI="http://collectionspace.org/collectionspace_core/"
+							schemaLocation="http://collectionspace.org/collectionspace_core/ http://services.collectionspace.org/collectionspace_core.xsd" />
+					</service:content>
+				</service:part>
+			</service:object>
+		</tenant:serviceBindings>
+		<!-- end export service meta-data -->
 
 		<!-- begin Workflow service meta-data -->
 		<tenant:serviceBindings id="Workflow" merge:matcher="id" name="Workflow" type="utility"
@@ -515,61 +573,170 @@
 			<service:initHandler xmlns:service="http://collectionspace.org/services/config/service">
 				<service:classname>org.collectionspace.services.report.nuxeo.ReportPostInitHandler</service:classname>
 				<service:params>
-                   <service:property>
-                           <service:key>readerRoleName</service:key>
-                           <service:value>reader</service:value>
-                   </service:property>
+					<service:property>
+						<service:key>readerRoleName</service:key>
+						<service:value>reader</service:value>
+					</service:property>
 				</service:params>
 			</service:initHandler>
-			<service:properties xmlns:service="http://collectionspace.org/services/config/service">
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:displayName>XML</types:displayName>
-		          <types:value>application/xml</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:displayName>HTML</types:displayName>
-		          <types:value>text/html</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:displayName>PDF</types:displayName>
-		          <types:value>application/pdf</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>text/csv</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>text/tab-separated-values</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>application/msword</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>application/vnd.ms-excel</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>application/vnd.ms-powerpoint</types:value>
-		        </types:item>
-		        <types:item xmlns:types="http://collectionspace.org/services/config/types">
-		          <types:key>outputMIME</types:key>
-		          <types:value>application/vnd.openxmlformats-officedocument.presentationml.presentation</types:value>
-		        </types:item>
-	      	</service:properties>
+			<service:properties xmlns:service="http://collectionspace.org/services/config/service" xmlns:types="http://collectionspace.org/services/config/types">
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:displayName>XML</types:displayName>
+					<types:value>application/xml</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:displayName>HTML</types:displayName>
+					<types:value>text/html</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:displayName>PDF</types:displayName>
+					<types:value>application/pdf</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>text/csv</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>text/tab-separated-values</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>application/msword</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>application/vnd.ms-excel</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>application/vnd.ms-powerpoint</types:value>
+				</types:item>
+				<types:item>
+					<types:key>outputMIME</types:key>
+					<types:value>application/vnd.openxmlformats-officedocument.presentationml.presentation</types:value>
+				</types:item>
+
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>accessions</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>acq_basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>Acq_List_Basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>box_list</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>CC_List_Basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>coreAcquisition</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>coreGroupObject</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>coreIntake</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>coreLoanIn</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>coreLoanOut</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>coreObjectExit</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>deaccessions</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>deed_of_gift</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>Exhibition_List_Basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>Group_List_Basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>incoming_loan</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>incoming_loan_letter</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>LoansIn_List_Basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>LoansOut_List_Basic</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>obj_computed_location</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>object_valuation</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>outgoing_loan_letter</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>referral</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>systematicInventory</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>condition</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>outgoing_loan</types:value>
+				</types:item>
+				<types:item>
+					<types:key>report</types:key>
+					<types:value>borrowing_receipt</types:value>
+				</types:item>
+			</service:properties>
 			<service:object xmlns:service="http://collectionspace.org/services/config/service" name="Report"
 				version="1.0">
 				<service:part id="0" control_group="Managed" versionable="true" auditable="false" label="reports-system"
@@ -1001,9 +1168,15 @@
 							"collectionobjects_common:colors",
 							"collectionobjects_common:computedCurrentLocation",
 							"collectionobjects_common:contentConcepts",
+							"collectionobjects_common:contentDescription",
+							"collectionobjects_common:contentEvents",
+							"collectionobjects_common:contentOrganizations",
+							"collectionobjects_common:contentPersons",
 							"collectionobjects_common:materialGroupList",
 							"collectionobjects_common:measuredPartGroupList",
 							"collectionobjects_common:numberOfObjects",
+							"collectionobjects_common:objectCountGroupList",
+							"collectionobjects_common:objectHistoryNote",
 							"collectionobjects_common:objectNameList",
 							"collectionobjects_common:objectNumber",
 							"collectionobjects_common:objectProductionDateGroupList",
@@ -1013,10 +1186,15 @@
 							"collectionobjects_common:objectProductionPlaceGroupList",
 							"collectionobjects_common:objectStatusList",
 							"collectionobjects_common:otherNumberList",
+							"collectionobjects_common:ownersContributionNote",
 							"collectionobjects_common:publishToList",
 							"collectionobjects_common:responsibleDepartments",
+							"collectionobjects_common:rightsGroupList.rightStatement",
+							"collectionobjects_common:rightsGroupList.standardizedRightStatement",
+							"collectionobjects_common:rightsInGroupList.rightReproductionStatement",
 							"collectionobjects_common:techniqueGroupList",
 							"collectionobjects_common:titleGroupList",
+							"collectionobjects_common:viewersContributionNote",
 							"collectionspace_core:*",
 							"collectionspace_denorm:*",
 							"ecm:currentLifeCycleState",
@@ -1063,12 +1241,55 @@
 						"collectionspace_denorm:hasMedia": {
 							"type": "boolean"
 						},
+						"collectionspace_denorm:mediaAltText": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
 						"collectionspace_denorm:prodYears": {
 							"type": "integer"
+						},
+						"collectionspace_denorm:exhibition": {
+							"type": "object",
+							"properties": {
+								"title": {
+									"type": "keyword",
+									"copy_to": "all_field"
+								},
+								"generalNote": {
+									"type": "text",
+									"copy_to": "all_field"
+								},
+								"curatorialNote": {
+									"type": "text",
+									"copy_to": "all_field"
+								}
+							}
+						},
+						"collectionspace_denorm:materialGroupList": {
+							"type": "object",
+							"properties": {
+								"material": {
+									"type": "keyword",
+									"copy_to": "all_field"
+								}
+							}
+						},
+						"collectionspace_denorm:objectNameList": {
+							"type": "object",
+							"properties": {
+								"objectName": {
+									"type": "keyword",
+									"copy_to": "all_field"
+								}
+							}
 						},
 
 						"collectionobjects_common:objectNumber": {
 							"type": "keyword",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:briefDescriptions": {
+							"type": "text",
 							"copy_to": "all_field"
 						},
 						"collectionobjects_common:titleGroupList": {
@@ -1173,6 +1394,40 @@
 								}
 							}
 						},
+						"collectionobjects_common:contentDescription": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:contentEvents": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
+						},
+						"collectionobjects_common:contentOrganizations": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
+						},
+						"collectionobjects_common:contentPersons": {
+							"type": "keyword",
+							"copy_to": "all_field",
+							"fields": {
+								"displayName": {
+									"type": "keyword",
+									"normalizer": "refname_displayname_normalizer"
+								}
+							}
+						},
 						"collectionobjects_common:techniqueGroupList": {
 							"type": "object",
 							"properties": {
@@ -1181,6 +1436,18 @@
 									"copy_to": "all_field"
 								}
 							}
+						},
+						"collectionobjects_common:objectHistoryNote": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:ownersContributionNote": {
+							"type": "text",
+							"copy_to": "all_field"
+						},
+						"collectionobjects_common:viewersContributionNote": {
+							"type": "text",
+							"copy_to": "all_field"
 						},
 
 						"media_common:blobCsid": {
