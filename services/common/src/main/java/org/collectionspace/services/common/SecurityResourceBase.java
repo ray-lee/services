@@ -143,17 +143,17 @@ public abstract class SecurityResourceBase<IT, OT> extends AbstractCollectionSpa
             throw bigReThrow(e, ServiceMessages.LIST_FAILED);
         }
     }
-
+    
     protected OT sanitize(DocumentHandler handler, OT outputObject) {
         DocumentWrapper<OT> wrapDoc = new DocumentWrapperImpl<OT>(outputObject);
         handler.sanitize(wrapDoc);
         return outputObject;
-    }
+    }    
 
     public Object update(String csid, IT theUpdate, Class<?> objectClass) {
         return update((UriInfo)null, csid, theUpdate, objectClass);
     }
-
+    
     public Object update(UriInfo ui, String csid, IT theUpdate, Class objectClass) {
         if (logger.isDebugEnabled()) {
             logger.debug("updateRole with csid=" + csid);
@@ -168,7 +168,7 @@ public abstract class SecurityResourceBase<IT, OT> extends AbstractCollectionSpa
             throw bigReThrow(e, ServiceMessages.PUT_FAILED, csid);
         }
     }
-
+    
     public Object update(ServiceContext<?, ?> parentCtx, UriInfo ui, String csid, IT theUpdate, Class objectClass) {
     	return update(parentCtx, ui, csid, theUpdate, objectClass, true);
     }

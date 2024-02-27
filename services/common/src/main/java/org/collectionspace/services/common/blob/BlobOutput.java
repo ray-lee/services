@@ -28,9 +28,11 @@ public class BlobOutput {
 	public void setMimeType(String mimeType) {
 		this.mimeType = mimeType;
 	}
+
 	public void setBlobFile(File file) {
 		this.blobFile = file;
 	}
+
 	public File getBlobFile() {
 		return this.blobFile;
 	}
