@@ -78,7 +78,7 @@ public class ServiceMain {
 	public static final String VER_MAJOR = "6";
 	public static final String VER_MINOR = "0";
 	public static final String VER_PATCH = "0";
-	public static final String VER_BUILD = "UCB-14.rc1";
+	public static final String VER_BUILD = "UCB-14";
 
 	private static final int PRIMARY_REPOSITORY_DOMAIN = 0;
 
