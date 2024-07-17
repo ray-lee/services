@@ -10,21 +10,28 @@ BEGIN
     -- For new install, if collectionobjects_common.numberofobjects does not exist, there is nothing to migrate.
 
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collectionobjects_common' AND column_name='numberofobjects') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collectionobjects_pahma' AND column_name='inventorycount') THEN
+            CREATE TEMP TABLE collectionobjects_pahma (inventorycount VARCHAR);
+        END IF;
+
         FOR trow IN
             -- Get record in collectionobjects_common that does not have an existing/matching record in objectcountgroup:
 
-            SELECT id AS parentid, numberofobjects
-            FROM public.collectionobjects_common
-            WHERE id NOT IN (
+            SELECT cc.id AS parentid, cc.numberofobjects, cp.inventorycount
+            FROM public.collectionobjects_common cc
+            LEFT OUTER JOIN collectionobjects_pahma cp ON cc.id = cp.id
+            WHERE cc.id NOT IN (
                 SELECT cc.id
                 FROM public.collectionobjects_common cc
+                JOIN collectionobjects_pahma cp ON cc.id = cp.id
                 JOIN public.hierarchy h ON (cc.id = h.parentid)
                 JOIN public.objectcountgroup ocg ON (
                     h.id = ocg.id
                     AND cc.numberofobjects IS NOT DISTINCT FROM ocg.objectcount
+                    AND cp.inventorycount IS NOT DISTINCT FROM ocg.objectcountnote
                 )
             )
-            AND (numberofobjects IS NOT NULL)
+            AND (cc.numberofobjects IS NOT NULL OR cp.inventorycount IS NOT NULL)
 
             LOOP
                 -- Get max pos value for the collectionobject record's object count group, and generate a new uuid:
@@ -61,10 +68,12 @@ BEGIN
 
                 INSERT INTO public.objectcountgroup (
                     id,
-                    objectcount)
+                    objectcount,
+                    objectcountnote)
                 VALUES (
                     uuid,
-                    trow.numberofobjects);
+                    trow.numberofobjects,
+                    trow.inventorycount);
 
             END LOOP;
 
