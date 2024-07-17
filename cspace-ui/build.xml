@@ -67,13 +67,13 @@
 
 	<target name="download_cspace_ui_js" depends="ensure_staging_dir" unless="${cspace.ui.build}">
 		<exec executable="curl" failonerror="true">
-			<arg line="-o ${staging.dir}/${cspace.ui.library.name}@${cspace.ui.version}.min.js --fail --insecure --location https://cdn.jsdelivr.net/npm/cspace-ui@${cspace.ui.version}/dist/${cspace.ui.library.name}.min.js"/>
+			<arg line="-o ${staging.dir}/${cspace.ui.library.name}@${cspace.ui.version}.min.js --fail --insecure --location https://cdn.jsdelivr.net/npm/@ucb-cspace/cspace-ui@${cspace.ui.version}/dist/${cspace.ui.library.name}.min.js"/>
 		</exec>
 	</target>
 
 	<target name="download_service_ui_js" depends="ensure_staging_dir" unless="${cspace.ui.build}">
 		<exec executable="curl" failonerror="true">
-			<arg line="-o ${staging.dir}/${service.ui.library.name}@${cspace.ui.version}.min.js --fail --insecure --location https://cdn.jsdelivr.net/npm/cspace-ui@${cspace.ui.version}/dist/${service.ui.library.name}.min.js"/>
+			<arg line="-o ${staging.dir}/${service.ui.library.name}@${cspace.ui.version}.min.js --fail --insecure --location https://cdn.jsdelivr.net/npm/@ucb-cspace/cspace-ui@${cspace.ui.version}/dist/${service.ui.library.name}.min.js"/>
 		</exec>
 	</target>
 
