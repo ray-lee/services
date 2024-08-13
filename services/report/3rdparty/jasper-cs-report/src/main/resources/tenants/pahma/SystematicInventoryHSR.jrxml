@@ -32,15 +32,18 @@
   GETDISPL(ca.computedcrate) AS computedCrate,
   c.objectnumber AS objectNumber,
   cp.sortableobjectnumber AS sortableObjectNumber,
-  c.numberofobjects AS objectCount,
+  ocg.objectCount AS objectCount,
   ong.objectName AS objectName,
   bd.item AS briefDescription,
-  cp.inventorycount AS countNote
+  ocg.objectCountNote AS countNote
 FROM collectionobjects_common c
 LEFT OUTER JOIN hierarchy h1 ON (c.id = h1.parentid AND h1.pos = 0 AND h1.name = 'collectionobjects_common:objectNameList')
 LEFT OUTER JOIN objectnamegroup ong ON (ong.id = h1.id)
 LEFT OUTER JOIN collectionobjects_pahma cp ON (c.id = cp.id)
 LEFT OUTER JOIN collectionobjects_anthropology ca ON (c.id = ca.id)
+LEFT OUTER JOIN hierarchy hocg ON (c.id = hocg.parentid AND hocg.pos = 0 AND hocg.name = 'collectionobjects_common:obje
+ctCountGroupList')
+LEFT OUTER JOIN objectcountgroup ocg ON (hocg.id = ocg.id)
 JOIN misc ms ON (c.id = ms.id AND ms.lifecyclestate <> 'deleted')
 FULL OUTER JOIN collectionobjects_common_briefdescriptions bd ON bd.id = c.id AND bd.pos = 0
 WHERE REPLACE(GETDISPL(c.computedcurrentlocation), ' ', '0') >= REPLACE($P{startLocDispl}, ' ', '0')
