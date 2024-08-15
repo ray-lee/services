@@ -5,13 +5,20 @@ DECLARE
     trow record;
     maxpos int;
     uuid varchar(36);
+    objectcounttype varchar;
 BEGIN
 
     -- For new install, if collectionobjects_common.numberofobjects does not exist, there is nothing to migrate.
 
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collectionobjects_common' AND column_name='numberofobjects') THEN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collectionobjects_pahma' AND column_name='inventorycount') THEN
+            -- If this isn't PAHMA, create a temp (empty) collectionobjects_pahma table so that the rest of this script will work.
             CREATE TEMP TABLE collectionobjects_pahma (inventorycount VARCHAR);
+        END IF;
+
+        IF starts_with(current_database(), 'pahma') THEN
+            -- If this is PAHMA, set object count type to piece count.
+            objectcounttype = 'urn:cspace:pahma.cspace.berkeley.edu:vocabularies:name(objectcounttypes):item:name(piece_count)''piece count''';
         END IF;
 
         FOR trow IN
@@ -69,11 +76,13 @@ BEGIN
                 INSERT INTO public.objectcountgroup (
                     id,
                     objectcount,
-                    objectcountnote)
+                    objectcountnote,
+                    objectcounttype)
                 VALUES (
                     uuid,
                     trow.numberofobjects,
-                    trow.inventorycount);
+                    trow.inventorycount,
+                    objectcounttype);
 
             END LOOP;
 
