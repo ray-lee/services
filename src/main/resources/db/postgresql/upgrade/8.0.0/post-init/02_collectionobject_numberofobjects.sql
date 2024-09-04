@@ -13,7 +13,7 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collectionobjects_common' AND column_name='numberofobjects') THEN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collectionobjects_pahma' AND column_name='inventorycount') THEN
             -- If this isn't PAHMA, create a temp (empty) collectionobjects_pahma table so that the rest of this script will work.
-            CREATE TEMP TABLE collectionobjects_pahma (inventorycount VARCHAR);
+            CREATE TEMP TABLE collectionobjects_pahma (id VARCHAR, inventorycount VARCHAR);
         END IF;
 
         IF starts_with(current_database(), 'pahma') THEN
