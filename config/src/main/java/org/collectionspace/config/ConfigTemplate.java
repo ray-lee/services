@@ -19,10 +19,8 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 
 public class ConfigTemplate {
-  private static final String CORE_SHORT_NAME = "core";
-
   private static final List<String> TENANT_SHORT_NAMES = Arrays.asList(
-    CORE_SHORT_NAME,
+    "core",
     "anthro",
     "bonsai",
     "botgarden",
@@ -35,48 +33,15 @@ public class ConfigTemplate {
 
   public static void main(String[] args) {
     GoogleSheetWriter writer = new GoogleSheetWriter();
-    Map<String, RecordType> coreRecordTypes = readCoreRecordTypes();
-
-    writer.setCoreRecordTypes(coreRecordTypes);
-
-    generateTemplates(writer);
-  }
-
-  public static void generateTemplates(GoogleSheetWriter writer) {
 
     for (String tenantShortName : TENANT_SHORT_NAMES) {
-      generateTemplate(writer, tenantShortName);
+      writer.addTenant(tenantShortName, getRecordTypes(tenantShortName));
     }
+
+    writer.write();
   }
 
-  public static Map<String, RecordType> readCoreRecordTypes() {
-    Map<String, Object> config = null;
-
-    try {
-      config = parseConfig(CORE_SHORT_NAME);
-    }
-    catch (Exception e) {
-      System.err.println("Error reading config: " + e);
-    }
-
-    if (config == null) {
-      return null;
-    }
-
-    Map<String, Object> messageOverridesConfig = (Map<String, Object>) config.get("messages");
-    Map<String, Object> recordTypesConfig = (Map<String, Object>) config.get("recordTypes");
-    Map<String, RecordType> recordTypes = new HashMap<>();
-
-    for (Object recordTypeConfig : recordTypesConfig.values()) {
-      RecordType recordType = getConfiguredRecordType((Map<String, Object>) recordTypeConfig, messageOverridesConfig);
-
-      recordTypes.put(recordType.getId(), recordType);
-    }
-
-    return recordTypes;
-  }
-
-  public static void generateTemplate(GoogleSheetWriter writer, String tenantShortName) {
+  public static List<RecordType> getRecordTypes(String tenantShortName) {
     Map<String, Object> config = null;
 
     try {
@@ -87,7 +52,7 @@ public class ConfigTemplate {
     }
 
     if (config == null) {
-      return;
+      return null;
     }
 
     Map<String, Object> messageOverridesConfig = (Map<String, Object>) config.get("messages");
@@ -105,7 +70,7 @@ public class ConfigTemplate {
       }
     });
 
-    writer.write(tenantShortName, recordTypes);
+    return recordTypes;
   }
 
   public static RecordType getConfiguredRecordType(
@@ -303,7 +268,7 @@ public class ConfigTemplate {
     }
 
     if (component != null) {
-      System.out.println(component.getId() + ": " + component.getName() + "|" + component.getFullName() + " " + component.getTemplatePositions().toString());
+      // System.out.println(component.getId() + ": " + component.getName() + "|" + component.getFullName() + " " + component.getTemplatePositions().toString());
       components.put(component.getId(), component);
     }
 

@@ -1,13 +1,16 @@
 package org.collectionspace.config;
 
 import java.io.FileInputStream;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,146 +57,82 @@ public class GoogleSheetWriter {
   private static final String VERSION = "8.1";
   private static final String CREDENTIAL_FILE = "/home/collectionspace/ray-dev-9b15b19210bc.json";
   private static final String CONFIG_FOLDER_ID = "1YLNRN2QQiYVqvlhutmGognpcHUl50evC";
+  private static final String COMBINED_SPREADSHEET_NAME = "all profiles";
   private static final int QUOTA_TIME_SECS = 60;
-  private static final int QUOTA_WRITE_REQUEST_LIMIT = 55;
+  private static final int QUOTA_WRITE_REQUEST_LIMIT = 50;
   // private static final String SPREADSHEET_ID = "1fax09p6PuQORdOEv1BkBwxGQHFaaA8cv4Mql88Jg18c";
+
+  private static final CellFormat DEFAULT_CELL_FORMAT = new CellFormat()
+    .setWrapStrategy("CLIP")
+    .setVerticalAlignment("TOP");
+
+  private static final CellFormat HEADER_CELL_FORMAT = DEFAULT_CELL_FORMAT.clone()
+    .setWrapStrategy("WRAP")
+    .setHorizontalAlignment("CENTER")
+    .setVerticalAlignment("MIDDLE")
+    .setTextFormat(
+      new TextFormat().setBold(true)
+    );
+
+  private static final String COL_TITLE_PROFILE = "Profile";
+  private static final String COL_TITLE_RECORD_TYPE_NAME = "Record Type Name";
+  private static final String COL_TITLE_COMPONENT_ID = "Component ID";
+  private static final String COL_TITLE_COMPONENT_NAME = "Component Name";
+  private static final String COL_TITLE_COMPONENT_FULL_NAME = "Component Full Name";
+  private static final String COL_TITLE_PROFILE_AND_COMPONENT_ID = "Profile:ID";
+  private static final String COL_TITLE_COMPONENT_HELP_TEXT = "Component Help Text";
+  private static final String COL_TITLE_COMPONENT_EFFECTIVE_HELP_TEXT = "Effective Component Help Text";
 
   private Drive driveService;
   private Sheets sheetsService;
-  private Map<String, Sheet> sheetsByRecordType;
   private Map<String, Map<String, Integer>> componentRowNumbersByRecordType;
-  private Map<String, RecordType> coreRecordTypes;
-
-  private int requestCount = 0;
+  private Map<String, List<RecordType>> recordTypesByTenantShortName = new LinkedHashMap<>();
+  private Map<String, Map<String, Integer>> columnIndexesByRecordType = new HashMap<>();
   private int requestSincePauseCount = 0;
+  private String accountId;
 
   public GoogleSheetWriter() {
     this.driveService = buildDriveService();
     this.sheetsService = buildSheetsService();
   }
 
-  public void write(String name, List<RecordType> recordTypes) {
+  public void addTenant(String tenantShortName, List<RecordType> recordTypes) {
+    recordTypesByTenantShortName.put(tenantShortName, recordTypes);
+  }
+
+  public void write() {
     if (sheetsService == null) {
       return;
     }
-
-    sheetsByRecordType = new HashMap<String, Sheet>();
-    componentRowNumbersByRecordType = new HashMap<String, Map<String, Integer>>();
 
     String versionFolderId = findOrCreateFolder(CONFIG_FOLDER_ID, VERSION);
-    String spreadsheetId = findOrCreateSpreadsheet(versionFolderId, name);
+    String spreadsheetId = findOrCreateSpreadsheet(versionFolderId, COMBINED_SPREADSHEET_NAME);
 
-    writeSpreadsheet(spreadsheetId, recordTypes);
+    writeSpreadsheet(spreadsheetId);
   }
 
-  public void writeSpreadsheet(String spreadsheetId, List<RecordType> recordTypes) {
-    writeNotes(spreadsheetId, recordTypes);
+  public void writeSpreadsheet(String spreadsheetId) {
+    Set<String> recordTypeIds = collectRecordTypes();
 
-    sheetsByRecordType = getSheetsByRecordType(spreadsheetId);
-
-    for (RecordType recordType : recordTypes) {
-      String serviceType = recordType.getServiceType();
-
-      if (
-        serviceType.equals("object")
-        || serviceType.equals("procedure")
-        || serviceType.equals("authority")
-      ) {
-        int recordTypeRequestCount = writeRecordType(spreadsheetId, recordType);
-
-        requestCount = requestCount + recordTypeRequestCount;
-        requestSincePauseCount = requestSincePauseCount + recordTypeRequestCount;
-
-        System.out.println("Requests sent: " + requestCount);
-
-        if (requestSincePauseCount >= QUOTA_WRITE_REQUEST_LIMIT) {
-          System.out.println("Pausing for quota at " + requestCount + " requests");
-
-          try {
-            Thread.sleep((QUOTA_TIME_SECS + 1) * 1000);
-          } catch (Exception e) {
-            System.err.println(e);
-          }
-
-          requestSincePauseCount = 0;
-        }
-      }
+    for (String recordTypeId : recordTypeIds) {
+      writeRecordType(spreadsheetId, recordTypeId);
     }
   }
 
-  public void writeNotes(String spreadsheetId, List<RecordType> recordTypes) {
-    if (sheetsService == null) {
-      return;
-    }
+  private Set<String> collectRecordTypes() {
+    Set<String> result = new LinkedHashSet<>();
 
-    String notesSheetName = "Sheet1";
-    Spreadsheet sp = null;
+    for (String tenantShortName : recordTypesByTenantShortName.keySet()) {
+      List<RecordType> recordTypes = recordTypesByTenantShortName.get(tenantShortName);
 
-    try {
-      sp = sheetsService.spreadsheets().get(spreadsheetId).execute();
-    } catch (Exception e) {
-      System.err.println(e);
-    }
-
-    Integer sheetId = null;
-
-    if (sp != null) {
-      List<Sheet> sheets = sp.getSheets();
-
-      for (Sheet sheet : sheets) {
-        if (sheet.getProperties().getTitle().equals(notesSheetName)) {
-          sheetId = sheet.getProperties().getSheetId();
-
-          break;
+      for (RecordType recordType : recordTypes) {
+        if (shouldIncludeRecordType(recordType)) {
+          result.add(recordType.getId());
         }
       }
     }
 
-    if (sheetId == null) {
-      sheetId = createSheet(spreadsheetId, notesSheetName);
-    }
-
-    List<RecordType> customizedRecordTypes = findCustomizedRecordTypes(recordTypes);
-
-    if (customizedRecordTypes.size() > 0) {
-      String desc = "";
-
-      for (RecordType recordType : customizedRecordTypes) {
-        desc += recordType.getName() + " (" + recordType.getId() + ")\n";
-      }
-
-      List<Request> requests = new ArrayList<>();
-      List<RowData> newRows = new ArrayList<RowData>();
-      List<CellData> rowCells = new ArrayList<>();
-
-      rowCells.add(
-        new CellData()
-          .setUserEnteredValue(
-            new ExtendedValue().setStringValue(
-              "Record types have been customized with fields that don't exist in core, or fields that are relabeled from core:\n" + desc
-            )
-          )
-      );
-
-      newRows.add(new RowData().setValues(rowCells));
-
-      requests.add(
-        new Request().setAppendCells(
-          new AppendCellsRequest()
-            .setSheetId(sheetId)
-            .setFields("*")
-            .setRows(newRows)
-        )
-      );
-
-      BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
-
-      try {
-        sheetsService.spreadsheets().batchUpdate(spreadsheetId, body).execute();
-      } catch(Exception e) {
-        System.err.println(e);
-      }
-    }
+    return result;
   }
 
   private Map<String, Sheet> getSheetsByRecordType(String spreadsheetId) {
@@ -231,207 +170,54 @@ public class GoogleSheetWriter {
     return title;
   }
 
-  private List<RecordType> findCustomizedRecordTypes(List<RecordType> recordTypes) {
-    List<RecordType> customizedRecordTypes = new ArrayList<>();
-
-    for (RecordType recordType : recordTypes) {
-      String serviceType = recordType.getServiceType();
-
-      if (
-        serviceType.equals("object")
-        || serviceType.equals("procedure")
-        || serviceType.equals("authority")
-      ) {
-        if (isCustomizedFromCore(recordType)) {
-          customizedRecordTypes.add(recordType);
-        }
-      }
-    }
-
-    return customizedRecordTypes;
-  }
-
-  private boolean isCustomizedFromCore(RecordType recordType) {
-    for (ConfigurableFormComponent formComponent : recordType.getFormComponents().values()) {
-      if (getCoreNameIfDiffers(recordType, formComponent) != null) {
-        return true;
-      };
-
-      if (!isExistsInCore(recordType, formComponent)) {
-        return true;
-      }
-    };
-
-    return false;
-  }
-
-  public int writeRecordType(String spreadsheetId, RecordType recordType) {
-    System.out.println("Writing record type: " + recordType.getId());
+  public void writeRecordType(String spreadsheetId, String recordTypeId) {
+    System.out.println("Writing record type " + recordTypeId);
 
     if (sheetsService == null) {
-      return 0;
+      return;
     }
 
-    String recordTypeId = recordType.getId();
-    Sheet sheet = sheetsByRecordType.get(recordTypeId);
-    Integer sheetId;
-    boolean newSheetCreated = false;
-
-    if (sheet == null) {
-      sheetId = createSheetForRecordType(spreadsheetId, recordType);
-      newSheetCreated = true;
-
-      componentRowNumbersByRecordType.put(recordType.getId(), new HashMap<String, Integer>());
-    } else {
-      sheetId = sheet.getProperties().getSheetId();
-
-      readSheetForRecordType(spreadsheetId, sheet, recordType);
-    }
-
-    List<Request> requests = new ArrayList<>();
+    Integer sheetId = findSheet(spreadsheetId, recordTypeId);
 
     if (sheetId != null) {
-      List<RowData> newRows = new ArrayList<RowData>();
+      // TODO: Update an existing sheet
 
-      CellFormat defaultFormat = new CellFormat()
-        .setWrapStrategy("CLIP")
-        .setVerticalAlignment("TOP");
+      System.out.println("Sheet for record type " + recordTypeId + " already exists, skipping");
 
-      CellFormat headerFormat = defaultFormat.clone()
-        .setWrapStrategy("WRAP")
-        .setHorizontalAlignment("CENTER")
-        .setVerticalAlignment("MIDDLE")
-        .setTextFormat(
-          new TextFormat().setBold(true)
-        );
+      return;
+    }
 
-      if (newSheetCreated) {
-        List<CellData> headerCells = new ArrayList<>();
+    if (sheetId == null) {
+      sheetId = createSheet(spreadsheetId, recordTypeId);
 
-        for (Form form : recordType.getForms()) {
-          headerCells.add(
-            new CellData()
-              .setUserEnteredFormat(headerFormat)
-              .setUserEnteredValue(
-                new ExtendedValue().setStringValue(form.getName() + " Position (" + form.getId() + ")")
-              )
-          );
+      if (sheetId != null) {
+        writeSheetHeaders(spreadsheetId, sheetId, recordTypeId);
+      }
+    }
+
+    if (sheetId != null) {
+      List<Request> requests = new ArrayList<>();
+
+      for (String tenantShortName : recordTypesByTenantShortName.keySet()) {
+        List<RecordType> recordTypes = recordTypesByTenantShortName.get(tenantShortName);
+        RecordType recordType = null;
+
+        for (RecordType candidateRecordType : recordTypes) {
+          if (candidateRecordType.getId().equals(recordTypeId)) {
+            recordType = candidateRecordType;
+
+            break;
+          }
         }
 
-        headerCells.addAll(Arrays.asList(
-          new CellData()
-            .setUserEnteredFormat(headerFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue("ID")
-            ),
-          new CellData()
-            .setUserEnteredFormat(headerFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue("In Core")
-            ),
-          new CellData()
-            .setUserEnteredFormat(headerFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue("Core Name/Full Name (if different)")
-            ),
-          new CellData()
-            .setUserEnteredFormat(headerFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue("Name")
-            ),
-          new CellData()
-            .setUserEnteredFormat(headerFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue("Full Name")
-            ),
-          new CellData()
-            .setUserEnteredFormat(headerFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue("Help Text")
-            )
-        ));
-
-        newRows.add(new RowData().setValues(headerCells));
-      }
-
-      for (ConfigurableFormComponent formComponent : recordType.getFormComponents().values()) {
-        Map<String, Integer> componentRowNumbers = componentRowNumbersByRecordType.get(recordType.getId());
-
-        if (componentRowNumbers != null && componentRowNumbers.containsKey(formComponent.getId())) {
-          continue;
+        if (recordType != null) {
+          requests.addAll(getRecordTypeUpdateRequests(sheetId, tenantShortName, recordType));
         }
-
-        Map<String, Integer> templatePositions = formComponent.getTemplatePositions();
-        List<CellData> rowCells = new ArrayList<>();
-
-        for (Form form : recordType.getForms()) {
-          Integer position = templatePositions.get(form.getId());
-          Double number = (position == null) ?  null : Double.valueOf(position);
-
-          rowCells.add(
-            new CellData()
-              .setUserEnteredFormat(defaultFormat)
-              .setUserEnteredValue(
-                new ExtendedValue().setNumberValue(number)
-              )
-          );
-        }
-
-        String coreNameIfDiffers = getCoreNameIfDiffers(recordType, formComponent);
-        Boolean existsInCore = isExistsInCore(recordType, formComponent);
-
-        rowCells.addAll(Arrays.asList(
-          new CellData()
-            .setUserEnteredFormat(
-              defaultFormat.clone()
-                .setHorizontalAlignment("RIGHT")
-            )
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue(formComponent.getId())
-            ),
-          new CellData()
-            .setUserEnteredFormat(defaultFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setBoolValue(existsInCore)
-          ),
-            new CellData()
-            .setUserEnteredFormat(defaultFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue(coreNameIfDiffers)
-            ),
-          new CellData()
-            .setUserEnteredFormat(defaultFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue(formComponent.getName())
-            ),
-          new CellData()
-            .setUserEnteredFormat(defaultFormat)
-            .setUserEnteredValue(
-              new ExtendedValue().setStringValue(formComponent.getFullName())
-            ),
-          new CellData()
-            .setUserEnteredFormat(
-              defaultFormat.clone()
-                .setWrapStrategy("WRAP")
-            )
-        ));
-
-        newRows.add(new RowData().setValues(rowCells));
       }
 
-      if (newRows.size() > 0) {
-        requests.add(
-          new Request().setAppendCells(
-            new AppendCellsRequest()
-              .setSheetId(sheetId)
-              .setFields("*")
-              .setRows(newRows)
-          )
-        );
-      }
-
-      int nameColumnIndex = recordType.getForms().size() + 1;
-      int helpTextColumnIndex = nameColumnIndex + 2;
+      int nameColumnIndex = getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_NAME);
+      int helpTextColumnIndex = getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_HELP_TEXT);
+      int profileAndIdColumnIndex = getColumnIndex(recordTypeId, COL_TITLE_PROFILE_AND_COMPONENT_ID);
 
       requests.add(
         new Request().setAutoResizeDimensions(
@@ -453,12 +239,30 @@ public class GoogleSheetWriter {
                 .setSheetId(sheetId)
                 .setDimension("COLUMNS")
                 .setStartIndex(helpTextColumnIndex)
-                .setEndIndex(helpTextColumnIndex + 1)
+                .setEndIndex(helpTextColumnIndex + 2)
             )
             .setFields("*")
             .setProperties(
               new DimensionProperties()
                 .setPixelSize(300)
+            )
+        )
+      );
+
+      requests.add(
+        new Request().setUpdateDimensionProperties(
+          new UpdateDimensionPropertiesRequest()
+            .setRange(
+              new DimensionRange()
+                .setSheetId(sheetId)
+                .setDimension("COLUMNS")
+                .setStartIndex(profileAndIdColumnIndex)
+                .setEndIndex(profileAndIdColumnIndex + 1)
+            )
+            .setFields("*")
+            .setProperties(
+              new DimensionProperties()
+                .setHiddenByUser(true)
             )
         )
       );
@@ -471,86 +275,255 @@ public class GoogleSheetWriter {
                 .setRange(
                   new GridRange()
                     .setSheetId(sheetId)
-                    .setStartColumnIndex(0)
-                    .setEndColumnIndex(helpTextColumnIndex)
-                    .setStartRowIndex(0)
+                )
+                .setUnprotectedRanges(
+                  Arrays.asList(
+                    new GridRange()
+                      .setSheetId(sheetId)
+                      .setStartColumnIndex(helpTextColumnIndex)
+                      .setEndColumnIndex(helpTextColumnIndex + 1)
+                      .setStartRowIndex(0)
+                  )
+                )
+                .setEditors(
+                  new Editors()
+                    .setUsers(Arrays.asList(accountId))
                 )
                 .setDescription("These cells are informational only. Do not edit.")
                 .setRequestingUserCanEdit(true)
             )
         )
       );
+
+      batchUpdateSpreadsheet(spreadsheetId, requests);
+    }
+  }
+
+  private List<Request> getRecordTypeUpdateRequests(Integer sheetId, String tenantShortName, RecordType recordType) {
+    List<Request> requests = new ArrayList<>();
+    String profileId = tenantShortName.equals("core") ? "_" + tenantShortName : tenantShortName;
+    String recordTypeId = recordType.getId();
+
+    System.out.println("Generating update requests for record type " + recordTypeId + " in tenant " + tenantShortName);
+
+    List<RowData> newRows = new ArrayList<RowData>();
+
+    for (ConfigurableFormComponent formComponent : recordType.getFormComponents().values()) {
+      Map<String, Integer> templatePositions = formComponent.getTemplatePositions();
+      List<CellData> rowCells = initializeRow(recordTypeId);
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_PROFILE),
+        new CellData()
+          .setUserEnteredFormat(DEFAULT_CELL_FORMAT)
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(profileId)
+          )
+      );
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_RECORD_TYPE_NAME),
+        new CellData()
+          .setUserEnteredFormat(DEFAULT_CELL_FORMAT)
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(recordType.getName())
+          )
+      );
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_ID),
+        new CellData()
+          .setUserEnteredFormat(
+            DEFAULT_CELL_FORMAT.clone()
+              .setHorizontalAlignment("RIGHT")
+          )
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(formComponent.getId())
+          )
+      );
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_NAME),
+        new CellData()
+          .setUserEnteredFormat(DEFAULT_CELL_FORMAT)
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(formComponent.getName())
+          )
+      );
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_FULL_NAME),
+        new CellData()
+          .setUserEnteredFormat(DEFAULT_CELL_FORMAT)
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(formComponent.getFullName())
+          )
+      );
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_PROFILE_AND_COMPONENT_ID),
+        new CellData()
+          .setUserEnteredFormat(
+            DEFAULT_CELL_FORMAT.clone()
+              .setHorizontalAlignment("RIGHT")
+          )
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(profileId + ":" + formComponent.getId())
+          )
+      );
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_HELP_TEXT),
+        new CellData()
+          .setUserEnteredFormat(
+            DEFAULT_CELL_FORMAT.clone()
+              .setWrapStrategy("WRAP")
+          )
+      );
+
+      String componentIdLetter = getColumnLetter(recordTypeId, COL_TITLE_COMPONENT_ID);
+      String profileAndIdLetter = getColumnLetter(recordTypeId, COL_TITLE_PROFILE_AND_COMPONENT_ID);
+      String helpTextLetter = getColumnLetter(recordTypeId, COL_TITLE_COMPONENT_HELP_TEXT);
+
+      rowCells.set(
+        getColumnIndex(recordTypeId, COL_TITLE_COMPONENT_EFFECTIVE_HELP_TEXT),
+        new CellData()
+          .setUserEnteredFormat(
+            DEFAULT_CELL_FORMAT.clone()
+              .setWrapStrategy("WRAP")
+          )
+          .setUserEnteredValue(
+            new ExtendedValue().setFormulaValue(String.format(
+              "=IF(ISBLANK(%s:%s), VLOOKUP(\"_core:\" & %s:%s, %s:%s, 2, FALSE), %s:%s)",
+              helpTextLetter, helpTextLetter,
+              componentIdLetter, componentIdLetter,
+              profileAndIdLetter, helpTextLetter,
+              helpTextLetter, helpTextLetter
+            ))
+          )
+      );
+
+      for (Form form : recordType.getForms()) {
+        Integer position = templatePositions.get(form.getId());
+        Integer number = (position == null) ?  null : Integer.valueOf(position);
+        String linkTarget = null;
+
+        if (number != null) {
+          try {
+            linkTarget = String.format("https://%s.dev.collectionspace.org/cspace/%s/record/%s?template=%s&focus=%s",
+              tenantShortName, tenantShortName, recordTypeId, form.getId(), URLEncoder.encode(formComponent.getId(), "UTF-8"));
+          } catch (Exception e) {
+            linkTarget = null;
+          }
+        }
+
+        rowCells.set(
+          getColumnIndex(recordTypeId, getFormPositionHeader(form)),
+          new CellData()
+            .setUserEnteredFormat(DEFAULT_CELL_FORMAT)
+            .setUserEnteredValue(
+              number == null
+                ? null
+                : new ExtendedValue().setFormulaValue(String.format("=HYPERLINK(\"%s\", %d)", linkTarget, number))
+            )
+        );
+      }
+
+      newRows.add(new RowData().setValues(rowCells));
     }
 
-    if (requests.size() > 0) {
-      BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
+    if (newRows.size() > 0) {
+      requests.add(
+        new Request().setAppendCells(
+          new AppendCellsRequest()
+            .setSheetId(sheetId)
+            .setFields("*")
+            .setRows(newRows)
+        )
+      );
+    }
 
-      try {
-        sheetsService.spreadsheets().batchUpdate(spreadsheetId, body).execute();
+    return requests;
+  }
 
-        return requests.size();
-      } catch(Exception e) {
-        System.err.println(e);
+  public Set<String> getUniqueFormPositionColumnHeaders(String recordTypeId) {
+    Set<String> result = new LinkedHashSet<>();
+
+    for (List<RecordType> recordTypes : recordTypesByTenantShortName.values()) {
+      for (RecordType recordType : recordTypes) {
+        if (shouldIncludeRecordType(recordType) && recordType.getId().equals(recordTypeId)) {
+          for (Form form : recordType.getForms()) {
+            result.add(getFormPositionHeader(form));
+          }
+        }
       }
     }
 
-    return 0;
+    return result;
   }
 
-  private boolean isExistsInCore(RecordType recordType, ConfigurableFormComponent formComponent) {
-    if (coreRecordTypes == null) {
-      return false;
-    }
-
-    RecordType coreRecordType = coreRecordTypes.get(recordType.getId());
-
-    if (coreRecordType == null) {
-      return false;
-    }
-
-    ConfigurableFormComponent coreFormComponent = coreRecordType.getFormComponents().get(formComponent.getId());
-
-    return (coreFormComponent != null);
+  public String getFormPositionHeader(Form form) {
+    return form.getName() + " Position (" + form.getId() + ")";
   }
 
-  private String getCoreNameIfDiffers(RecordType recordType, ConfigurableFormComponent formComponent) {
-    if (coreRecordTypes == null) {
+  public Integer findOrCreateSheet(String spreadsheetId, String title, SheetCreatedHandler sheetCreatedHandler) {
+    if (sheetsService == null) {
       return null;
     }
 
-    RecordType coreRecordType = coreRecordTypes.get(recordType.getId());
+    Integer sheetId = findSheet(spreadsheetId, title);
 
-    if (coreRecordType == null) {
+    if (sheetId != null) {
+      return sheetId;
+    }
+
+    sheetId = createSheet(spreadsheetId, title);
+
+    if (sheetId != null && sheetCreatedHandler != null) {
+      sheetCreatedHandler.onSheetCreated(spreadsheetId, sheetId);
+    }
+
+    return sheetId;
+  }
+
+  public Integer findSheet(String spreadsheetId, String title) {
+    if (sheetsService == null) {
       return null;
     }
 
-    ConfigurableFormComponent coreFormComponent = coreRecordType.getFormComponents().get(formComponent.getId());
+    Spreadsheet sp = null;
 
-    if (
-      coreFormComponent != null
-      && (
-        !StringUtils.equals(coreFormComponent.getName(), formComponent.getName())
-        || !StringUtils.equals(coreFormComponent.getFullName(), formComponent.getFullName())
-      )
-    ) {
-      return (coreFormComponent.getName() + "/" + coreFormComponent.getFullName());
+    try {
+      sp = sheetsService.spreadsheets().get(spreadsheetId).execute();
+    } catch (Exception e) {
+      System.err.println(e);
+    }
+
+    if (sp != null) {
+      List<Sheet> sheets = sp.getSheets();
+
+      for (Sheet sheet : sheets) {
+        if (sheet.getProperties().getTitle().equals(title)) {
+          return sheet.getProperties().getSheetId();
+        }
+      }
     }
 
     return null;
   }
 
-  public Integer createSheetForRecordType(String spreadsheetId, RecordType recordType) {
-    return createSheet(spreadsheetId, recordType.getName() + " (" + recordType.getId() + ")");
-  }
+  public Integer createSheet(String spreadsheetId, String title) {
+    if (sheetsService == null) {
+      return null;
+    }
 
-  public Integer createSheet(String spreadsheetId, String name) {
     List<Request> requests = new ArrayList<>();
 
     requests.add(
       new Request().setAddSheet(
         new AddSheetRequest().setProperties(
           new SheetProperties()
-            .setTitle(name)
+            .setTitle(title)
             .setGridProperties(
               new GridProperties().setFrozenRowCount(1)
             )
@@ -558,14 +531,7 @@ public class GoogleSheetWriter {
       )
     );
 
-    BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
-    BatchUpdateSpreadsheetResponse batchUpdateResponse = null;
-
-    try {
-      batchUpdateResponse = sheetsService.spreadsheets().batchUpdate(spreadsheetId, body).execute();
-    } catch(Exception e) {
-      System.err.println(e);
-    }
+    BatchUpdateSpreadsheetResponse batchUpdateResponse = batchUpdateSpreadsheet(spreadsheetId, requests);
 
     if (batchUpdateResponse == null) {
       return null;
@@ -576,64 +542,199 @@ public class GoogleSheetWriter {
     return addSheetResponse.getProperties().getSheetId();
   }
 
-  public void readSheetForRecordType(String spreadsheetId, Sheet sheet, RecordType recordType) {
+  public void writeSheetHeaders(String spreadsheetId, Integer sheetId, String recordTypeId) {
     if (sheetsService == null) {
       return;
     }
 
-    String sheetTitle = sheet.getProperties().getTitle();
-    String headerRowRange = "'" + sheetTitle + "'!1:1";
-    ValueRange headerRowResult = null;
+    List<Request> requests = new ArrayList<>();
+    List<RowData> newRows = new ArrayList<RowData>();
+    List<CellData> headerCells = new ArrayList<>();
 
-    try {
-      headerRowResult = sheetsService.spreadsheets().values().get(spreadsheetId, headerRowRange).execute();
-    } catch (Exception e) {
-      System.err.println(e);
+    headerCells.addAll(Arrays.asList(
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_PROFILE)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_RECORD_TYPE_NAME)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_COMPONENT_ID)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_COMPONENT_NAME)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_COMPONENT_FULL_NAME)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_PROFILE_AND_COMPONENT_ID)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_COMPONENT_HELP_TEXT)
+        ),
+      new CellData()
+        .setUserEnteredFormat(HEADER_CELL_FORMAT)
+        .setUserEnteredValue(
+          new ExtendedValue().setStringValue(COL_TITLE_COMPONENT_EFFECTIVE_HELP_TEXT)
+        )
+    ));
+
+    for (String headerText : getUniqueFormPositionColumnHeaders(recordTypeId)) {
+      headerCells.add(
+        new CellData()
+          .setUserEnteredFormat(HEADER_CELL_FORMAT)
+          .setUserEnteredValue(
+            new ExtendedValue().setStringValue(headerText)
+          )
+      );
     }
 
-    if (headerRowResult == null) {
-      return;
+    saveColumnIndexes(recordTypeId, headerCells);
+
+    newRows.add(new RowData().setValues(headerCells));
+
+    requests.add(
+      new Request().setAppendCells(
+        new AppendCellsRequest()
+          .setSheetId(sheetId)
+          .setFields("*")
+          .setRows(newRows)
+      )
+    );
+
+    batchUpdateSpreadsheet(spreadsheetId, requests);
+  }
+
+  public void saveColumnIndexes(String recordTypeId, List<CellData> headerCells) {
+    Map<String, Integer> columnIndexesByName = columnIndexesByRecordType.get(recordTypeId);
+
+    if (columnIndexesByName == null) {
+      columnIndexesByName = new HashMap<String, Integer>();
+
+      columnIndexesByRecordType.put(recordTypeId, columnIndexesByName);
     }
 
-    List<List<Object>> values = headerRowResult.getValues();
-    List<Object> headerRow = (values == null) ? new ArrayList<Object>() : values.get(0);
-    int idColumnIndex = (headerRow == null) ? -1 : headerRow.indexOf("ID");
-
-    if (idColumnIndex < 0) {
-      return;
-    }
-
-    char idColumnChar = (char) (65 + idColumnIndex);
-    String idColumnRange = "'" + sheetTitle + "'!" + idColumnChar + ":" + idColumnChar;
-    ValueRange idColumnResult = null;
-
-    try {
-      idColumnResult = sheetsService.spreadsheets().values().get(spreadsheetId, idColumnRange).execute();
-    } catch (Exception e) {
-      System.err.println(e);
-    }
-
-    if (idColumnResult == null) {
-      return;
-    }
-
-    Map<String, Integer> componentRowNumbers = componentRowNumbersByRecordType.get(recordType.getId());
-
-    if (componentRowNumbers == null) {
-      componentRowNumbers = new HashMap<String, Integer>();
-
-      componentRowNumbersByRecordType.put(recordType.getId(), componentRowNumbers);
-    }
-
-    List<List<Object>> rows = idColumnResult.getValues();
-
-    for (int rowIndex = 1; rowIndex < rows.size(); rowIndex++) {
-      List<Object> row = rows.get(rowIndex);
-      String componentId = (String) row.get(0);
-
-      componentRowNumbers.put(componentId, rowIndex + 1);
+    for (int i = 0; i < headerCells.size(); i++) {
+      columnIndexesByName.put(headerCells.get(i).getUserEnteredValue().getStringValue(), i);
     }
   }
+
+  public int getColumnIndex(String recordTypeId, String columnName) {
+    Map<String, Integer> columnIndexesByName = columnIndexesByRecordType.get(recordTypeId);
+
+    if (columnIndexesByName != null) {
+      return columnIndexesByName.get(columnName);
+    }
+
+    return -1;
+  }
+
+  public String getColumnLetter(String recordTypeId, String columnName) {
+    int index = getColumnIndex(recordTypeId, columnName);
+
+    if (index >= 0) {
+      return String.valueOf((char) ('A' + index));
+    }
+
+    return null;
+  }
+
+  public List<CellData> initializeRow(String recordTypeId) {
+    Map<String, Integer> columnIndexesByName = columnIndexesByRecordType.get(recordTypeId);
+    List<CellData> rowCells = new ArrayList<>();
+
+    if (columnIndexesByName != null) {
+      for (int i = 0; i < columnIndexesByName.size(); i++) {
+        rowCells.add(new CellData());
+      }
+    }
+
+    return rowCells;
+  }
+
+  public boolean shouldIncludeRecordType(RecordType recordType) {
+    String serviceType = recordType.getServiceType();
+
+    return (
+      serviceType.equals("object")
+      || serviceType.equals("procedure")
+      || serviceType.equals("authority")
+    );
+  }
+
+  // public void readSheetForRecordType(String spreadsheetId, Sheet sheet, RecordType recordType) {
+  //   if (sheetsService == null) {
+  //     return;
+  //   }
+
+  //   String sheetTitle = sheet.getProperties().getTitle();
+  //   String headerRowRange = "'" + sheetTitle + "'!1:1";
+  //   ValueRange headerRowResult = null;
+
+  //   try {
+  //     headerRowResult = sheetsService.spreadsheets().values().get(spreadsheetId, headerRowRange).execute();
+  //   } catch (Exception e) {
+  //     System.err.println(e);
+  //   }
+
+  //   if (headerRowResult == null) {
+  //     return;
+  //   }
+
+  //   List<List<Object>> values = headerRowResult.getValues();
+  //   List<Object> headerRow = (values == null) ? new ArrayList<Object>() : values.get(0);
+  //   int idColumnIndex = (headerRow == null) ? -1 : headerRow.indexOf("ID");
+
+  //   if (idColumnIndex < 0) {
+  //     return;
+  //   }
+
+  //   char idColumnChar = (char) (65 + idColumnIndex);
+  //   String idColumnRange = "'" + sheetTitle + "'!" + idColumnChar + ":" + idColumnChar;
+  //   ValueRange idColumnResult = null;
+
+  //   try {
+  //     idColumnResult = sheetsService.spreadsheets().values().get(spreadsheetId, idColumnRange).execute();
+  //   } catch (Exception e) {
+  //     System.err.println(e);
+  //   }
+
+  //   if (idColumnResult == null) {
+  //     return;
+  //   }
+
+  //   Map<String, Integer> componentRowNumbers = componentRowNumbersByRecordType.get(recordType.getId());
+
+  //   if (componentRowNumbers == null) {
+  //     componentRowNumbers = new HashMap<String, Integer>();
+
+  //     componentRowNumbersByRecordType.put(recordType.getId(), componentRowNumbers);
+  //   }
+
+  //   List<List<Object>> rows = idColumnResult.getValues();
+
+  //   for (int rowIndex = 1; rowIndex < rows.size(); rowIndex++) {
+  //     List<Object> row = rows.get(rowIndex);
+  //     String componentId = (String) row.get(0);
+
+  //     componentRowNumbers.put(componentId, rowIndex + 1);
+  //   }
+  // }
 
   // public void read() {
   //   if (sheetsService == null) {
@@ -683,6 +784,10 @@ public class GoogleSheetWriter {
     if (credential == null) {
       return null;
     }
+
+    accountId = credential.getServiceAccountId();
+
+    System.out.println("Using account ID: " + accountId);
 
     JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
     NetHttpTransport httpTransport = null;
@@ -805,7 +910,48 @@ public class GoogleSheetWriter {
     return driveService;
   }
 
-  public void setCoreRecordTypes(Map<String, RecordType> coreRecordTypes) {
-    this.coreRecordTypes = coreRecordTypes;
+  public BatchUpdateSpreadsheetResponse batchUpdateSpreadsheet(String spreadsheetId, List<Request> requests) {
+    BatchUpdateSpreadsheetResponse batchUpdateResponse = null;
+
+    if (requests.size() > 0) {
+      if (requestSincePauseCount >= QUOTA_WRITE_REQUEST_LIMIT) {
+        System.out.println("Pausing for quota at " + requestSincePauseCount + " requests");
+
+        try {
+          Thread.sleep((QUOTA_TIME_SECS + 1) * 1000);
+        } catch (Exception e) {
+          System.err.println(e);
+        }
+
+        requestSincePauseCount = 0;
+      }
+
+      System.out.println("Sending batch update of " + requests.size() + " requests");
+
+      BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
+
+      try {
+        batchUpdateResponse = sheetsService.spreadsheets().batchUpdate(spreadsheetId, body).execute();
+        requestSincePauseCount += requests.size();
+      } catch(Exception e) {
+        System.err.println(e);
+        System.out.println("Batch update failed. Waiting 30 seconds to retry.");
+
+        try {
+          Thread.sleep(30 * 1000);
+        } catch (Exception ex) {
+          System.err.println(ex);
+        }
+
+        try {
+          batchUpdateResponse = sheetsService.spreadsheets().batchUpdate(spreadsheetId, body).execute();
+          requestSincePauseCount += requests.size();
+        } catch (Exception ex) {
+          System.err.println(ex);
+        }
+      }
+    }
+
+    return batchUpdateResponse;
   }
 }
